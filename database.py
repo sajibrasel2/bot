@@ -326,3 +326,13 @@ async def is_bot_admin(user_id: int) -> bool:
             await cur.execute("SELECT 1 FROM bot_admins WHERE user_id=%s", (user_id,))
             row = await cur.fetchone()
             return row is not None
+
+
+async def get_all_chat_ids() -> list:
+    """Returns a list of all unique chat IDs stored in chat_settings."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT chat_id FROM chat_settings")
+            rows = await cur.fetchall()
+            return [row[0] for row in rows]

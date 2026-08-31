@@ -15,7 +15,7 @@ from config import BOT_TOKEN
 from database import init_db
 
 # ── Modules ──────────────────────────────────────
-from modules import help, welcome, spam, moderation, admin, notes
+from modules import help, welcome, spam, moderation, admin, notes, promo
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -86,6 +86,7 @@ def main() -> None:
     admin.register(app)       # pin/lock/rules/promote
     notes.register(app)       # save/get/notes
     spam.register(app)        # message filter (last — catches all text)
+    promo.register(app)       # repeating promotional broadcast task
 
     app.add_error_handler(error_handler)
 
