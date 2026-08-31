@@ -200,7 +200,7 @@ async def reset_goodbye(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def register(app) -> None:
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_member))
-    app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER,  handle_left_member))
+    # app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER,  handle_left_member))
     app.add_handler(CommandHandler("setwelcome",  set_welcome))
     app.add_handler(CommandHandler("setgoodbye",  set_goodbye))
     app.add_handler(CommandHandler("welcome",     toggle_welcome))
