@@ -1,1 +1,11 @@
+# DO NOT REMOVE. CLOUDLINUX CONSTANT HAWK CONTROL PANEL START
+<IfModule Litespeed>
+PassengerEnabled on
+PassengerAppEnv development
+PassengerAppRoot /home/techandc/public_html/bot
+PassengerBaseURI /bot
+PassengerPython /home/techandc/virtualenv/public_html/bot/3.11/bin/python
+</IfModule>
+# DO NOT REMOVE. CLOUDLINUX CONSTANT HAWK CONTROL PANEL END
+
 DirectoryIndex index.html
