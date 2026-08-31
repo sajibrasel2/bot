@@ -114,12 +114,14 @@ async def init_db() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             await cur.execute(
-                "INSERT IGNORE INTO bot_admins (user_id, username, first_name) VALUES (%s, %s, %s)",
+                "INSERT INTO bot_admins (user_id, username, first_name) VALUES (%s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
                 (5888198325, "nikitaa92", "Nikita")
             )
             await cur.execute(
-                "INSERT IGNORE INTO bot_admins (user_id, username, first_name) VALUES (%s, %s, %s)",
-                (8904339611, "sajibrasel2", "Sajib")
+                "INSERT INTO bot_admins (user_id, username, first_name) VALUES (%s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
+                (8904339611, "nikitaa92", "নিকিতা জাহান")
             )
 
 
