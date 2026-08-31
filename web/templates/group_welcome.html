@@ -1,0 +1,165 @@
+﻿{% extends "base.html" %}
+{% block title %}ওয়েলকাম সেটিংস{% endblock %}
+{% block page_title %}<i class="fa-solid fa-hand-wave" style="color:#22c55e"></i> ওয়েলকাম / গুডবাই{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <a href="{{ url_for('group_overview', chat_id=chat_id) }}">গ্রুপ {{ chat_id }}</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <span>ওয়েলকাম</span>
+</div>
+
+<!-- Tab nav -->
+<div class="group-tabs">
+  <a href="{{ url_for('group_overview',   chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gauge"></i> ওভারভিউ</a>
+  <a href="{{ url_for('group_welcome',    chat_id=chat_id) }}" class="group-tab active"><i class="fa-solid fa-hand-wave"></i> ওয়েলকাম</a>
+  <a href="{{ url_for('group_spam',       chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-shield-halved"></i> স্প্যাম</a>
+  <a href="{{ url_for('group_moderation', chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gavel"></i> মডারেশন</a>
+  <a href="{{ url_for('group_notes',      chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-note-sticky"></i> নোটস</a>
+  <a href="{{ url_for('group_rules',      chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-scale-balanced"></i> নিয়ম</a>
+  <a href="{{ url_for('group_banlist', chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-user-slash"></i> ব্যান লিস্ট</a>
+</div>
+
+<form method="POST">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- Welcome -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-user-plus"></i> ওয়েলকাম মেসেজ</div>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <i class="fa-solid fa-toggle-on"></i>
+        <div>
+          <div class="toggle-label">ওয়েলকাম মেসেজ</div>
+          <div class="toggle-desc">নতুন সদস্য এলে মেসেজ পাঠাবে</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="welcome_enabled" {% if s.welcome_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="form-group" style="margin-top:14px;">
+      <label class="form-label">কাস্টম মেসেজ টেক্সট</label>
+      <textarea class="form-control" name="welcome_text" rows="7" placeholder="খালি রাখলে ডিফল্ট মেসেজ ব্যবহার হবে...">{{ s.welcome_text or '' }}</textarea>
+      <div class="form-hint">
+        Placeholders: <code>{mention}</code> <code>{first}</code> <code>{full}</code> <code>{count}</code> <code>{chatname}</code>
+      </div>
+    </div>
+
+    <div style="background:#1e2535;border-radius:8px;padding:14px;font-size:12px;color:#94a3b8;border:1px solid #2e3a52;">
+      <div style="font-weight:600;color:#5b8dee;margin-bottom:8px;"><i class="fa-solid fa-lightbulb"></i> Placeholder গাইড</div>
+      <div style="display:grid;gap:4px;">
+        <div><code style="color:#a78bfa">{mention}</code> — @মেনশন লিংক</div>
+        <div><code style="color:#a78bfa">{first}</code> — প্রথম নাম</div>
+        <div><code style="color:#a78bfa">{full}</code> — পুরো নাম</div>
+        <div><code style="color:#a78bfa">{count}</code> — সদস্য সংখ্যা</div>
+        <div><code style="color:#a78bfa">{chatname}</code> — গ্রুপের নাম</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goodbye -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-user-minus"></i> গুডবাই মেসেজ</div>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <i class="fa-solid fa-toggle-on"></i>
+        <div>
+          <div class="toggle-label">গুডবাই মেসেজ</div>
+          <div class="toggle-desc">সদস্য চলে গেলে মেসেজ পাঠাবে</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="goodbye_enabled" {% if s.goodbye_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="form-group" style="margin-top:14px;">
+      <label class="form-label">কাস্টম মেসেজ টেক্সট</label>
+      <textarea class="form-control" name="goodbye_text" rows="7" placeholder="খালি রাখলে ডিফল্ট মেসেজ ব্যবহার হবে...">{{ s.goodbye_text or '' }}</textarea>
+      <div class="form-hint">Placeholders: <code>{full}</code> <code>{first}</code> <code>{mention}</code></div>
+    </div>
+
+    <div style="background:#1e2535;border-radius:8px;padding:14px;border:1px solid #2e3a52;">
+      <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:6px;">
+        <i class="fa-solid fa-eye" style="color:#5b8dee"></i> প্রিভিউ (ডিফল্ট)
+      </div>
+      <div style="font-size:12px;color:#e2e8f0;background:#252d3d;padding:10px;border-radius:6px;line-height:1.7;">
+        👋 <b>বিদায়!</b><br>
+        😢 <b>[নাম]</b> আমাদের ছেড়ে চলে গেলেন।<br>
+        🌟 যেখানেই থাকুন ভালো থাকুন!
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── ওয়েলকাম বাটন সেটিংস ── -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fa-solid fa-arrow-pointer" style="color:#f59e0b"></i> ওয়েলকাম বাটন (Inline Button)</div>
+    <span class="badge badge-yellow">অপশনাল</span>
+  </div>
+
+  <div style="background:#252d3d;border-radius:10px;padding:16px;border:1px solid #2e3a52;margin-bottom:16px;">
+    <div style="font-size:13px;color:#94a3b8;line-height:1.9;">
+      <i class="fa-solid fa-circle-info" style="color:#5b8dee"></i>
+      ওয়েলকাম মেসেজের নিচে একটি <b style="color:#e2e8f0;">ক্লিকযোগ্য বাটন</b> দেখাবে।
+      বাটনে ক্লিক করলে ব্যবহারকারী নির্দিষ্ট লিংকে যাবে।<br><br>
+      <b style="color:#f59e0b;">💡 Telegram Invite Link ব্যবহার টিপস:</b><br>
+      গ্রুপের অ্যাডমিন প্যানেল → Invite Links → <b>Create New Link</b> এ গিয়ে
+      <b>"Require new members to be approved"</b> বা
+      <b>"Must subscribe to channel"</b> অপশন দিয়ে লিংক তৈরি করুন।
+      সেই লিংক নিচে বসান।
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="form-group">
+      <label class="form-label">বাটনের টেক্সট</label>
+      <input type="text" name="welcome_button_text" class="form-control"
+        value="{{ s.welcome_button_text or '' }}"
+        placeholder="যেমন: 🔥 গ্রুপে যোগ দিন">
+      <div class="form-hint">বাটনে কী লেখা দেখাবে। খালি রাখলে বাটন দেখাবে না।</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">বাটনের লিংক (URL)</label>
+      <input type="url" name="welcome_button_url" class="form-control"
+        value="{{ s.welcome_button_url or '' }}"
+        placeholder="https://t.me/+xxxxxx বা https://...">
+      <div class="form-hint">বাটনে ক্লিক করলে এই লিংকে যাবে।</div>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  {% if s.welcome_button_text %}
+  <div style="background:#1e2535;border-radius:8px;padding:14px;border:1px solid #2e3a52;margin-top:4px;">
+    <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:10px;">
+      <i class="fa-solid fa-eye" style="color:#5b8dee"></i> বাটন প্রিভিউ
+    </div>
+    <div style="display:inline-block;background:linear-gradient(135deg,#5b8dee,#7c3aed);color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;">
+      {{ s.welcome_button_text }}
+    </div>
+    {% if s.welcome_button_url %}
+    <div style="font-size:11px;color:#475569;margin-top:6px;">→ {{ s.welcome_button_url }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<button type="submit" class="btn btn-primary">
+  <i class="fa-solid fa-floppy-disk"></i> সেটিংস সেভ করুন
+</button>
+</form>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}ব্যান লিস্ট{% endblock %}
+{% block page_title %}<i class="fa-solid fa-user-slash" style="color:#ef4444"></i> ব্যান লিস্ট{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <a href="{{ url_for('group_overview', chat_id=chat_id) }}">গ্রুপ {{ chat_id }}</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <span>ব্যান লিস্ট</span>
+</div>
+
+<div class="group-tabs">
+  <a href="{{ url_for('group_overview',   chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gauge"></i> ওভারভিউ</a>
+  <a href="{{ url_for('group_welcome',    chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-hand-wave"></i> ওয়েলকাম</a>
+  <a href="{{ url_for('group_spam',       chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-shield-halved"></i> স্প্যাম</a>
+  <a href="{{ url_for('group_moderation', chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gavel"></i> মডারেশন</a>
+  <a href="{{ url_for('group_notes',      chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-note-sticky"></i> নোটস</a>
+  <a href="{{ url_for('group_rules',      chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-scale-balanced"></i> নিয়ম</a>
+  <a href="{{ url_for('group_banlist',    chat_id=chat_id) }}" class="group-tab active"><i class="fa-solid fa-user-slash"></i> ব্যান লিস্ট</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-user-slash"></i> ব্যান করা সদস্যরা
+    </div>
+    <span class="badge badge-red">{{ banned|length }} জন</span>
+  </div>
+
+  {% if banned %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User ID</th>
+          <th>নাম</th>
+          <th>Username</th>
+          <th>অ্যাকশন</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i, b in banned %}
+        <tr>
+          <td><span class="badge badge-red">{{ i+1 }}</span></td>
+          <td><code style="font-size:12px;color:#a78bfa;">{{ b.user.id }}</code></td>
+          <td style="font-weight:500;">{{ b.user.full_name or b.user.first_name or '—' }}</td>
+          <td style="color:#94a3b8;">
+            {% if b.user.username %}@{{ b.user.username }}{% else %}—{% endif %}
+          </td>
+          <td>
+            <form method="POST" style="display:inline;">
+              <input type="hidden" name="action" value="unban">
+              <input type="hidden" name="user_id" value="{{ b.user.id }}">
+              <button type="submit" class="btn btn-danger btn-sm"
+                onclick="return confirm('{{ b.user.full_name or b.user.id }} কে আনব্যান করবেন?')">
+                <i class="fa-solid fa-rotate-left"></i> আনব্যান
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px;color:#94a3b8;">
+    <i class="fa-solid fa-shield-check" style="font-size:44px;color:#22c55e;opacity:.4;display:block;margin-bottom:14px;"></i>
+    <div style="font-size:16px;font-weight:500;">কোনো ব্যান করা সদস্য নেই</div>
+    <div style="font-size:13px;margin-top:6px;">গ্রুপটি পরিষ্কার ✅</div>
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="alert alert-error" style="margin-top:14px;">
+    <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Info card -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fa-solid fa-circle-info"></i> তথ্য</div>
+  </div>
+  <div style="font-size:13px;color:#94a3b8;line-height:2;">
+    <div>• এই তালিকা Telegram API থেকে সরাসরি লোড হয়।</div>
+    <div>• আনব্যান করলে সদস্য গ্রুপে পুনরায় যোগ দিতে পারবেন।</div>
+    <div>• ব্যান করতে Telegram এ <code style="background:#1e2535;padding:1px 6px;border-radius:4px;">/ban @user</code> ব্যবহার করুন।</div>
+  </div>
+</div>
+{% endblock %}

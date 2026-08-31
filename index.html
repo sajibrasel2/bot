@@ -1,0 +1,2748 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>এডাল্ট জোন চ্যাট — সরাসরি কথা বলুন</title>
+  
+  <!-- FontAwesome Icons & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- ========================================================
+       ADSTERRA POPUNDER CODE FOR techndclick.site
+       ======================================================== -->
+  <script src="https://pl29788588.profitableratecpmnetwork.com/e6/af/2c/e6af2c0bfeb07b15ec93a1cd36bdf626.js"></script>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root {
+      --bg: #090b11;
+      --panel: rgba(22, 27, 43, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      
+      --pink: #ff2a85;
+      --blue: #00d2ff;
+      --purple: #8b5cf6;
+      --green: #10b981;
+      --yellow: #fbbf24;
+      --red: #ef4444;
+      
+      --gradient-pink: linear-gradient(135deg, #ff2a85, #ff7300);
+      --gradient-blue: linear-gradient(135deg, #00d2ff, #0066ff);
+      --gradient-purple: linear-gradient(135deg, #8b5cf6, #ec4899);
+      --gradient-gold: linear-gradient(135deg, #fbbf24, #f59e0b);
+      
+      --shadow-pink: 0 8px 30px rgba(255, 42, 133, 0.3);
+      --shadow-blue: 0 8px 30px rgba(0, 210, 255, 0.3);
+      --shadow-purple: 0 8px 30px rgba(139, 92, 246, 0.3);
+      
+      --radius: 20px;
+      --font-outfit: 'Outfit', sans-serif;
+      --font-bengali: 'Hind Siliguri', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-bengali), sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Background Neon Blobs */
+    .bg-blobs {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.25;
+      animation: floatBlob 20s infinite alternate ease-in-out;
+    }
+
+    .blob-1 {
+      width: 400px;
+      height: 400px;
+      background: var(--pink);
+      top: -100px;
+      right: -50px;
+    }
+
+    .blob-2 {
+      width: 500px;
+      height: 500px;
+      background: var(--blue);
+      bottom: -150px;
+      left: -100px;
+      animation-delay: -5s;
+    }
+
+    .blob-3 {
+      width: 300px;
+      height: 300px;
+      background: var(--purple);
+      top: 40%;
+      right: 20%;
+      animation-delay: -10s;
+    }
+
+    @keyframes floatBlob {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(60px, 40px) scale(1.15); }
+    }
+
+    /* Header / Navbar */
+    header {
+      width: 100%;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(9, 11, 17, 0.85);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 45px;
+      height: 45px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      box-shadow: var(--shadow-pink);
+    }
+
+    .logo-text {
+      font-family: var(--font-outfit);
+      font-weight: 800;
+      font-size: 22px;
+      background: linear-gradient(to right, #fff, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .live-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      50% { transform: scale(1.2); opacity: 0.5; box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    }
+
+    /* Container Layout */
+    .container {
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 30px 20px 100px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    /* Ads Section 1: Header Banner (Real Adsterra Banner) */
+    .ad-banner-top {
+      width: 100%;
+      background: linear-gradient(135deg, rgba(22, 27, 43, 0.8), rgba(15, 23, 42, 0.9));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      min-height: 105px;
+    }
+
+    .ad-label {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: rgba(251, 191, 36, 0.15);
+      border-bottom-left-radius: 8px;
+      border-left: 1px solid rgba(251, 191, 36, 0.2);
+      border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+      color: var(--yellow);
+      font-size: 9px;
+      padding: 2px 8px;
+      font-family: var(--font-outfit);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Hero / Stat Section */
+    .hero-panel {
+      background: var(--panel);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .hero-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 35px auto;
+      line-height: 1.6;
+    }
+
+    /* Counters Grid */
+    .counter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      max-width: 750px;
+      margin: 0 auto;
+    }
+
+    .counter-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .counter-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .counter-card.boys-card:hover {
+      border-color: rgba(0, 210, 255, 0.4);
+      box-shadow: 0 10px 30px rgba(0, 210, 255, 0.1);
+    }
+
+    .counter-card.girls-card:hover {
+      border-color: rgba(255, 42, 133, 0.4);
+      box-shadow: 0 10px 30px rgba(255, 42, 133, 0.1);
+    }
+
+    .counter-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 15px;
+    }
+
+    .boys-card .counter-icon {
+      background: rgba(0, 210, 255, 0.1);
+      color: var(--blue);
+      border: 1px solid rgba(0, 210, 255, 0.2);
+    }
+
+    .girls-card .counter-icon {
+      background: rgba(255, 42, 133, 0.1);
+      color: var(--pink);
+      border: 1px solid rgba(255, 42, 133, 0.2);
+    }
+
+    .counter-number {
+      font-family: var(--font-outfit);
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 5px;
+    }
+
+    .boys-card .counter-number {
+      color: var(--blue);
+      text-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
+    }
+
+    .girls-card .counter-number {
+      color: var(--pink);
+      text-shadow: 0 0 20px rgba(255, 42, 133, 0.2);
+    }
+
+    .counter-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .counter-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-dot-mini {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .boys-card .status-dot-mini {
+      background-color: var(--blue);
+      box-shadow: 0 0 8px var(--blue);
+    }
+
+    .girls-card .status-dot-mini {
+      background-color: var(--pink);
+      box-shadow: 0 0 8px var(--pink);
+    }
+
+    /* Avatars Stack */
+    .avatar-stack {
+      display: flex;
+      margin-top: 15px;
+    }
+
+    .avatar-stack span {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #0f1322;
+      margin-left: -8px;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .avatar-stack span:first-child {
+      margin-left: 0;
+    }
+
+    /* Main Actions panel */
+    .actions-panel {
+      background: var(--panel);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 35px 25px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .actions-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .actions-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .actions-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Button CSS styling */
+    .chat-btn {
+      position: relative;
+      border: none;
+      border-radius: 16px;
+      padding: 22px 20px;
+      font-family: var(--font-bengali);
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .chat-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+      transition: 0.5s;
+    }
+
+    .chat-btn:hover::after {
+      left: 100%;
+    }
+
+    .chat-btn:hover {
+      transform: translateY(-4px);
+    }
+
+    .chat-btn-subtext {
+      font-size: 12px;
+      font-weight: 400;
+      opacity: 0.85;
+    }
+
+    .chat-btn i {
+      font-size: 24px;
+      margin-bottom: 2px;
+      transition: transform 0.3s;
+    }
+
+    .chat-btn:hover i {
+      transform: scale(1.15) rotate(-5deg);
+    }
+
+    .btn-girls {
+      background: var(--gradient-pink);
+      box-shadow: var(--shadow-pink);
+    }
+    .btn-girls:hover {
+      box-shadow: 0 12px 35px rgba(255, 42, 133, 0.5);
+    }
+
+    .btn-boys {
+      background: var(--gradient-blue);
+      box-shadow: var(--shadow-blue);
+    }
+    .btn-boys:hover {
+      box-shadow: 0 12px 35px rgba(0, 210, 255, 0.5);
+    }
+
+    .btn-match {
+      background: var(--gradient-purple);
+      box-shadow: var(--shadow-purple);
+    }
+    .btn-match:hover {
+      box-shadow: 0 12px 35px rgba(139, 92, 246, 0.5);
+    }
+
+    .btn-telegram {
+      background: linear-gradient(135deg, #229ed9, #0088cc);
+      box-shadow: 0 8px 30px rgba(0, 136, 204, 0.3);
+    }
+    .btn-telegram:hover {
+      box-shadow: 0 12px 35px rgba(0, 136, 204, 0.5);
+    }
+
+    /* Native Ad Section (Feeds style) */
+    .native-ads-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .native-ad-card {
+      background: rgba(22, 27, 43, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .native-ad-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 42, 133, 0.25);
+      background: rgba(22, 27, 43, 0.8);
+    }
+
+    .native-ad-img {
+      width: 70px;
+      height: 70px;
+      border-radius: 12px;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+      background-color: var(--panel);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .native-ad-info {
+      flex: 1;
+    }
+
+    .native-ad-badge {
+      display: inline-block;
+      font-size: 9px;
+      background: rgba(255, 42, 133, 0.15);
+      color: var(--pink);
+      border: 1px solid rgba(255, 42, 133, 0.25);
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+      font-family: var(--font-outfit);
+      font-weight: 600;
+    }
+
+    .native-ad-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .native-ad-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    .native-ad-action {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .native-ad-card:hover .native-ad-action {
+      color: var(--pink);
+    }
+
+    /* Banner Ad Bottom - Sticky (Real Adsterra Banner) */
+    .ad-banner-sticky {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(9, 11, 17, 0.95);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      padding: 10px 20px;
+      z-index: 99;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ad-sticky-close-bar {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: -5px;
+    }
+
+    .ad-sticky-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px;
+      transition: color 0.2s;
+    }
+
+    .ad-sticky-close:hover {
+      color: #fff;
+    }
+
+    /* Modal / Popup for clicking interaction */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(5, 7, 12, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #111522;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      max-width: 480px;
+      width: 100%;
+      padding: 30px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      transform: scale(0.9);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.05);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .modal-icon-container {
+      width: 70px;
+      height: 70px;
+      border-radius: 20px;
+      background: rgba(139, 92, 246, 0.1);
+      color: var(--purple);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 15px auto;
+    }
+
+    /* Modal States */
+    .modal-state {
+      display: none;
+    }
+
+    .modal-state.active {
+      display: block;
+    }
+
+    /* Matching Screen animation */
+    .loader-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(0, 210, 255, 0.1);
+      border-top: 3px solid var(--blue);
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-step-text {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .loading-step-sub {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--pink));
+      width: 0%;
+      transition: width 0.1s linear;
+      border-radius: 50px;
+    }
+
+    /* Verification Screen (Ads focused) */
+    .ad-card-modal {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ad-card-modal:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 42, 133, 0.3);
+    }
+
+    .ad-card-modal .modal-ad-badge {
+      display: inline-block;
+      font-size: 9px;
+      background: var(--gradient-gold);
+      color: #000;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .ad-card-modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--pink);
+      margin-bottom: 5px;
+    }
+
+    .ad-card-modal-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .modal-verify-btn {
+      width: 100%;
+      background: var(--gradient-pink);
+      border: none;
+      padding: 16px;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: var(--shadow-pink);
+      transition: all 0.3s;
+    }
+
+    .modal-verify-btn:hover {
+      box-shadow: 0 8px 25px rgba(255, 42, 133, 0.4);
+      transform: translateY(-2px);
+    }
+
+    /* Toast Notification Container */
+    .toast-container {
+      position: fixed;
+      bottom: 80px;
+      left: 20px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      max-width: 320px;
+      width: calc(100% - 40px);
+    }
+
+    .toast-notification {
+      background: rgba(17, 21, 34, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 42, 133, 0.25);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      pointer-events: auto;
+      cursor: pointer;
+      animation: slideInLeft 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .toast-notification:hover {
+      transform: translateY(-2px);
+      border-color: var(--pink);
+      box-shadow: 0 12px 30px rgba(255, 42, 133, 0.15);
+    }
+
+    @keyframes slideInLeft {
+      0% { transform: translateX(-100%); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      border: 2px solid var(--pink);
+      flex-shrink: 0;
+    }
+
+    .toast-avatar .status-badge {
+      width: 9px;
+      height: 9px;
+      background-color: var(--green);
+      border-radius: 50%;
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      border: 1.5px solid #111522;
+    }
+
+    .toast-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .toast-name-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toast-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .toast-time {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: var(--font-outfit);
+    }
+
+    .toast-msg {
+      font-size: 12px;
+      color: var(--text);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Inbox Floating Button */
+    .inbox-float-btn {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--gradient-pink);
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 998;
+      box-shadow: var(--shadow-pink);
+      animation: pulseButton 2s infinite;
+      transition: all 0.3s;
+    }
+
+    .inbox-float-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 10px 30px rgba(255, 42, 133, 0.5);
+    }
+
+    @keyframes pulseButton {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 42, 133, 0.4); }
+      50% { box-shadow: 0 0 0 12px rgba(255, 42, 133, 0); }
+    }
+
+    .inbox-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background-color: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      font-family: var(--font-outfit);
+      padding: 3px 7px;
+      border-radius: 50px;
+      border: 2px solid #090b11;
+      display: none;
+      box-shadow: 0 2px 10px rgba(239, 68, 68, 0.5);
+    }
+
+    /* Inbox Drawer Styles */
+    .inbox-drawer {
+      position: fixed;
+      top: 0;
+      right: -360px;
+      width: 340px;
+      height: 100%;
+      background: rgba(11, 15, 26, 0.96);
+      backdrop-filter: blur(20px);
+      border-left: 1px solid var(--border);
+      box-shadow: -10px 0 40px rgba(0,0,0,0.6);
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .inbox-drawer.active {
+      right: 0;
+    }
+
+    .inbox-drawer-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .inbox-drawer-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .inbox-close-btn {
+      background: rgba(255,255,255,0.05);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .inbox-close-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    .inbox-drawer-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 0;
+      position: relative;
+    }
+
+    .inbox-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 250px;
+      color: var(--muted);
+      text-align: center;
+      padding: 20px;
+      gap: 15px;
+    }
+
+    .inbox-empty-state i {
+      font-size: 40px;
+      color: rgba(255,255,255,0.03);
+    }
+
+    .inbox-empty-state p {
+      font-size: 13px;
+    }
+
+    /* Inbox List Row */
+    .inbox-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+      position: relative;
+    }
+
+    .inbox-row:hover {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .inbox-row.unread {
+      background: rgba(255, 42, 133, 0.05);
+    }
+
+    .inbox-row-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .inbox-row-avatar .status-dot {
+      width: 9px;
+      height: 9px;
+      background-color: var(--green);
+      border-radius: 50%;
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      border: 1.5px solid #111522;
+    }
+
+    .inbox-row-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .inbox-row-name-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .inbox-row-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .inbox-row-time {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-outfit);
+    }
+
+    .inbox-row-msg {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .inbox-row.unread .inbox-row-msg {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .inbox-row-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--pink);
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: none;
+    }
+
+    .inbox-row.unread .inbox-row-dot {
+      display: block;
+      box-shadow: 0 0 8px var(--pink);
+    }
+
+    /* Chat Detail Screen (Sliding within Drawer) */
+    .chat-detail-view {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      width: 100%;
+      height: 100%;
+      background: #0b0f1a;
+      display: flex;
+      flex-direction: column;
+      transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      z-index: 1002;
+    }
+
+    .chat-detail-view.active {
+      left: 0;
+    }
+
+    .chat-detail-header {
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(22, 27, 43, 0.2);
+    }
+
+    .chat-back-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 5px;
+      transition: color 0.2s;
+    }
+
+    .chat-back-btn:hover {
+      color: #fff;
+    }
+
+    .chat-header-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .chat-header-info {
+      flex: 1;
+    }
+
+    .chat-header-info h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .chat-header-status {
+      font-size: 11px;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 1px;
+    }
+
+    .chat-messages-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .chat-bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      position: relative;
+    }
+
+    .chat-bubble.received {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .chat-bubble.sent {
+      background: var(--gradient-pink);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 15px rgba(255, 42, 133, 0.2);
+    }
+
+    .chat-bubble-time {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 5px;
+      text-align: right;
+      font-family: var(--font-outfit);
+    }
+
+    .chat-bubble.sent .chat-bubble-time {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .chat-input-area {
+      padding: 15px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      background: rgba(9, 11, 17, 0.4);
+      cursor: pointer;
+    }
+
+    .chat-input-area input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 15px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .chat-send-btn {
+      background: var(--gradient-pink);
+      border: none;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    /* Interactive 18+ Warning Overlay */
+    .warning-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(5, 7, 12, 0.98);
+      backdrop-filter: blur(20px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: opacity 0.5s ease;
+    }
+
+    .warning-card {
+      background: #111522;
+      border: 1px solid rgba(255, 42, 133, 0.2);
+      border-radius: 24px;
+      max-width: 440px;
+      width: 100%;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+    }
+
+    .warning-icon {
+      font-size: 50px;
+      margin-bottom: 20px;
+      animation: pulseIcon 2.2s infinite;
+    }
+
+    @keyframes pulseIcon {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .warning-card h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .warning-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .warning-buttons {
+      display: flex;
+      gap: 15px;
+    }
+
+    .warning-btn {
+      flex: 1;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-yes {
+      background: var(--gradient-pink);
+      color: #fff;
+      box-shadow: var(--shadow-pink);
+    }
+
+    .btn-yes:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 42, 133, 0.4);
+    }
+
+    .btn-no {
+      background: rgba(255,255,255,0.05);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-no:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    /* Simulated Incoming Call Box */
+    .incoming-call-box {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      width: 320px;
+      background: rgba(17, 21, 34, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+      z-index: 1000;
+      transform: translateY(-150%);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .incoming-call-box.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .call-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      border: 2px solid var(--green);
+      animation: pulseCallBorder 1.5s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulseCallBorder {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+      100% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    }
+
+    .call-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .call-tag {
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 600;
+      display: block;
+      animation: blinkText 1.5s infinite;
+    }
+
+    @keyframes blinkText {
+      50% { opacity: 0.5; }
+    }
+
+    .call-info h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .call-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .call-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+
+    .btn-decline {
+      background-color: var(--red);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-decline:hover {
+      transform: scale(1.08);
+    }
+
+    .btn-accept {
+      background-color: var(--green);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      animation: pulseAccept 1.5s infinite;
+    }
+
+    .btn-accept:hover {
+      transform: scale(1.08);
+    }
+
+    @keyframes pulseAccept {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Interactive Match Wheel */
+    .wheel-panel {
+      background: var(--panel);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 35px 30px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .wheel-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .wheel-header p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 30px;
+    }
+
+    .wheel-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    .wheel-wrapper {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      border: 8px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.2), inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 32px;
+      color: var(--pink);
+      z-index: 10;
+      filter: drop-shadow(0 4px 5px rgba(0,0,0,0.5));
+      animation: bouncePointer 1s infinite alternate;
+    }
+
+    @keyframes bouncePointer {
+      0% { transform: translate(-50%, 0); }
+      100% { transform: translate(-50%, 4px); }
+    }
+
+    .wheel-canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      transition: transform 4s cubic-bezier(0.1, 0.8, 0.3, 1);
+      transform: rotate(0deg);
+    }
+
+    .wheel-segment {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      background-color: var(--bg);
+      transform-origin: 100% 100%;
+      transform: rotate(calc(45deg * var(--i))) skewY(-45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wheel-segment span {
+      position: absolute;
+      transform: skewY(45deg) rotate(22.5deg);
+      left: 22px;
+      bottom: 22px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    .wheel-spin-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background: #fff;
+      color: #000;
+      border: 4px solid #111522;
+      font-family: var(--font-bengali);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      z-index: 5;
+      transition: all 0.2s;
+      line-height: 1.3;
+    }
+
+    .wheel-spin-btn:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 0 0 15px rgba(255,255,255,0.4);
+    }
+
+    @media(max-width: 768px) {
+      .incoming-call-box {
+        top: 20px;
+        right: 20px;
+        width: calc(100% - 40px);
+      }
+      .toast-container {
+        bottom: 150px;
+      }
+      .inbox-float-btn {
+        bottom: 150px;
+      }
+      .ad-banner-top {
+        padding: 10px 5px;
+        min-height: 80px;
+      }
+    }
+
+    /* Categories Panel Styles */
+    .categories-panel {
+      background: var(--panel);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 35px 25px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .categories-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .categories-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .categories-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .category-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .category-card:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 42, 133, 0.3);
+      box-shadow: 0 8px 25px rgba(255, 42, 133, 0.08);
+    }
+
+    .category-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .category-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .category-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+
+    .category-count {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .category-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--green);
+      display: inline-block;
+    }
+
+    .category-action {
+      font-size: 14px;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+
+    .category-card:hover .category-action {
+      color: var(--pink);
+      transform: translateX(3px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 18+ Verification Splash Screen -->
+  <div class="warning-overlay" id="warning-overlay">
+    <div class="warning-card">
+      <div class="warning-icon">🔞</div>
+      <h2>১৮+ সতর্কতা!</h2>
+      <p>এই সাইটটিতে প্রাপ্তবয়স্কদের জন্য সংবেদনশীল কন্টেন্ট এবং লাইভ চ্যাট রুম রয়েছে। আপনার বয়স কি ১৮ বছরের বেশি?</p>
+      <div class="warning-buttons">
+        <button class="warning-btn btn-yes" onclick="verifyAge(true)">হ্যাঁ, আমি ১৮+</button>
+        <button class="warning-btn btn-no" onclick="verifyAge(false)">না, বয়স কম</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulated Video/Voice Calling Panel -->
+  <div class="incoming-call-box" id="incoming-call-box">
+    <div class="call-avatar" id="call-active-avatar" style="background: linear-gradient(135deg, #db2777, #f472b6);"><i class="fa-solid fa-user-dress"></i></div>
+    <div class="call-info">
+      <span class="call-tag">ইনকামিং ভিডিও কল...</span>
+      <h4 id="call-active-name">মিতু (২১)</h4>
+    </div>
+    <div class="call-actions">
+      <button class="call-btn btn-decline" onclick="handleCall(false)">
+        <i class="fa-solid fa-phone-slash"></i>
+      </button>
+      <button class="call-btn btn-accept" onclick="handleCall(true)">
+        <i class="fa-solid fa-video"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Background Blobs -->
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="logo">
+      <div class="logo-icon">
+        <i class="fa-solid fa-fire"></i>
+      </div>
+      <div class="logo-text">Adult Zone Live</div>
+    </a>
+    
+    <div class="header-right">
+      <div class="live-status">
+        <span class="live-dot"></span>
+        <span>সরাসরি চ্যাট লাইন চালু</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <div class="container">
+
+    <!-- TOP SPONSORED BANNER (Adsterra 468x60 Banner) -->
+    <div class="ad-banner-top">
+      <div class="ad-label">Sponsored</div>
+      <div style="width:100%; display:flex; justify-content:center; align-items:center;">
+        <script>
+          atOptions = {
+            'key' : '3ca358c9ad7530f34af0e7de8e9d6a3b',
+            'format' : 'iframe',
+            'height' : 60,
+            'width' : 468,
+            'params' : {}
+          };
+        </script>
+        <script src="https://www.highrevenueformat.com/3ca358c9ad7530f34af0e7de8e9d6a3b/invoke.js"></script>
+      </div>
+    </div>
+
+    <!-- HERO PANEL WITH DYNAMIC STATS -->
+    <section class="hero-panel">
+      <h1 class="hero-title">এডাল্ট জোন চ্যাট - সরাসরি চ্যাট পার্টনার খুঁজুন</h1>
+      <p class="hero-subtitle">আমাদের চ্যাট রুমে এই মুহূর্তে দেশ ও দেশের বাইরে থেকে শত শত ছেলে ও মেয়ে লাইভ যুক্ত রয়েছে। নিচে সরাসরি ইউজার কাউন্ট ও লিংক দেওয়া হল।</p>
+      
+      <div class="counter-grid">
+        <!-- Boys Card -->
+        <div class="counter-card boys-card">
+          <div class="counter-icon">
+            <i class="fa-solid fa-mars"></i>
+          </div>
+          <div class="counter-number" id="boys-counter">211</div>
+          <div class="counter-label">ছেলে একটিভ</div>
+          <div class="counter-sub">
+            <span class="status-dot-mini"></span>
+            <span>লাইভ ও অনলাইন</span>
+          </div>
+          
+          <div class="avatar-stack">
+            <span style="background-image: linear-gradient(135deg, #0088cc, #00d2ff);"><i class="fa-solid fa-user"></i></span>
+            <span style="background-image: linear-gradient(135deg, #1d4ed8, #3b82f6);"><i class="fa-solid fa-user"></i></span>
+            <span style="background-image: linear-gradient(135deg, #4f46e5, #6366f1);"><i class="fa-solid fa-user"></i></span>
+            <span style="background-color: rgba(255,255,255,0.05); font-family: var(--font-outfit);">+208</span>
+          </div>
+        </div>
+
+        <!-- Girls Card -->
+        <div class="counter-card girls-card">
+          <div class="counter-icon">
+            <i class="fa-solid fa-venus"></i>
+          </div>
+          <div class="counter-number" id="girls-counter">185</div>
+          <div class="counter-label">মেয়ে একটিভ</div>
+          <div class="counter-sub">
+            <span class="status-dot-mini"></span>
+            <span>লাইভ ও অনলাইন</span>
+          </div>
+
+          <div class="avatar-stack">
+            <span style="background-image: linear-gradient(135deg, #db2777, #f472b6);"><i class="fa-solid fa-user-dress"></i></span>
+            <span style="background-image: linear-gradient(135deg, #be185d, #ec4899);"><i class="fa-solid fa-user-dress"></i></span>
+            <span style="background-image: linear-gradient(135deg, #9d174d, #f43f5e);"><i class="fa-solid fa-user-dress"></i></span>
+            <span style="background-color: rgba(255,255,255,0.05); font-family: var(--font-outfit);">+182</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Match Spinner Wheel -->
+    <section class="wheel-panel">
+      <div class="wheel-header">
+        <h2>🎡 লাকি ম্যাচিং হুইল — ২ সেকেন্ডে পার্টনার খুঁজুন!</h2>
+        <p>নিচের ম্যাচিং হুইল ঘুরিয়ে সরাসরি ভিডিও কল বা চ্যাটের জন্য মেয়ে সিলেক্ট করুন।</p>
+      </div>
+      <div class="wheel-container">
+        <div class="wheel-wrapper">
+          <div class="wheel-pointer"><i class="fa-solid fa-caret-down"></i></div>
+          <div class="wheel-canvas" id="wheel-canvas">
+            <div class="wheel-segment" style="--i:1; --bg:#ff2a85;"><span>রিয়া (২১)</span></div>
+            <div class="wheel-segment" style="--i:2; --bg:#8b5cf6;"><span>মিম (২০)</span></div>
+            <div class="wheel-segment" style="--i:3; --bg:#00d2ff;"><span>সুমি (২২)</span></div>
+            <div class="wheel-segment" style="--i:4; --bg:#fbbf24;"><span>প্রিয়া (১৯)</span></div>
+            <div class="wheel-segment" style="--i:5; --bg:#ff2a85;"><span>মারিয়া (২৩)</span></div>
+            <div class="wheel-segment" style="--i:6; --bg:#8b5cf6;"><span>সাদিয়া (২১)</span></div>
+            <div class="wheel-segment" style="--i:7; --bg:#00d2ff;"><span>বৃষ্টি (২০)</span></div>
+            <div class="wheel-segment" style="--i:8; --bg:#fbbf24;"><span>জান্নাত (২২)</span></div>
+          </div>
+          <button class="wheel-spin-btn" onclick="spinWheel()">ম্যাচিং<br>করুন</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATEGORIES SECTION -->
+    <section class="categories-panel">
+      <div class="categories-header">
+        <h2 class="categories-title"><i class="fa-solid fa-tags" style="color: var(--pink);"></i> ক্যাটাগরি অনুযায়ী চ্যাট পার্টনার খুঁজুন</h2>
+        <p class="categories-subtitle">আপনার পছন্দের ক্যাটাগরি বেছে নিন এবং সরাসরি লাইভ চ্যাটে যুক্ত হোন</p>
+      </div>
+
+      <div class="categories-grid">
+        <!-- Card 1: Bhabhi -->
+        <div class="category-card" onclick="openChatModal('girls')">
+          <div class="category-icon" style="background: rgba(255, 42, 133, 0.1); color: var(--pink);">
+            <i class="fa-solid fa-user-tie"></i>
+          </div>
+          <div class="category-info">
+            <h3 class="category-name">ভাবি (Bhabhi)</h3>
+            <span class="category-count"><span class="category-dot"></span> ৪২ জন একটিভ</span>
+          </div>
+          <div class="category-action"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+
+        <!-- Card 2: Boudi -->
+        <div class="category-card" onclick="openChatModal('girls')">
+          <div class="category-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--purple);">
+            <i class="fa-solid fa-child-dress"></i>
+          </div>
+          <div class="category-info">
+            <h3 class="category-name">বৌদি (Boudi)</h3>
+            <span class="category-count"><span class="category-dot"></span> ৩৫ জন একটিভ</span>
+          </div>
+          <div class="category-action"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+
+        <!-- Card 3: Middle-aged -->
+        <div class="category-card" onclick="openChatModal('girls')">
+          <div class="category-icon" style="background: rgba(251, 191, 36, 0.1); color: var(--yellow);">
+            <i class="fa-solid fa-user-clock"></i>
+          </div>
+          <div class="category-info">
+            <h3 class="category-name">মধ্যবয়সী (Mature)</h3>
+            <span class="category-count"><span class="category-dot"></span> ২৯ জন একটিভ</span>
+          </div>
+          <div class="category-action"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+
+        <!-- Card 4: Private University -->
+        <div class="category-card" onclick="openChatModal('girls')">
+          <div class="category-icon" style="background: rgba(0, 210, 255, 0.1); color: var(--blue);">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div class="category-info">
+            <h3 class="category-name">প্রাইভেট ইউনিভার্সিটি</h3>
+            <span class="category-count"><span class="category-dot"></span> ৪৮ জন একটিভ</span>
+          </div>
+          <div class="category-action"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+
+        <!-- Card 5: College Girl -->
+        <div class="category-card" onclick="openChatModal('girls')">
+          <div class="category-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--green);">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div class="category-info">
+            <h3 class="category-name">কলেজ গার্ল (College Girl)</h3>
+            <span class="category-count"><span class="category-dot"></span> ৫২ জন একটিভ</span>
+          </div>
+          <div class="category-action"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+
+        <!-- Card 6: Housewife -->
+        <div class="category-card" onclick="openChatModal('girls')">
+          <div class="category-icon" style="background: rgba(255, 42, 133, 0.1); color: var(--pink);">
+            <i class="fa-solid fa-house-chimney-user"></i>
+          </div>
+          <div class="category-info">
+            <h3 class="category-name">হাউজওয়াইফ (Housewife)</h3>
+            <span class="category-count"><span class="category-dot"></span> ৩১ জন একটিভ</span>
+          </div>
+          <div class="category-action"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAIN ACTION BUTTONS -->
+    <section class="actions-panel">
+      <div class="actions-header">
+        <h2 class="actions-title">নিচের বাটনগুলোতে ক্লিক করে ম্যাচিং শুরু করুন</h2>
+        <p class="actions-subtitle">যে কোনো একটি অপশন বেছে নিন এবং সরাসরি কানেক্ট করুন</p>
+      </div>
+
+      <div class="buttons-grid">
+        <!-- Button 1: Girls Chat -->
+        <button class="chat-btn btn-girls" onclick="openChatModal('girls')">
+          <i class="fa-solid fa-comments"></i>
+          <span>মেয়েদের সাথে চ্যাট</span>
+          <span class="chat-btn-subtext">১৮৫ জন মেয়ে অনলাইন আছে</span>
+        </button>
+
+        <!-- Button 2: Boys Chat -->
+        <button class="chat-btn btn-boys" onclick="openChatModal('boys')">
+          <i class="fa-solid fa-message"></i>
+          <span>ছেলেদের সাথে চ্যাট</span>
+          <span class="chat-btn-subtext">২১১ জন ছেলে অনলাইন আছে</span>
+        </button>
+
+        <!-- Button 3: Random Video Call -->
+        <button class="chat-btn btn-match" onclick="openChatModal('video')">
+          <i class="fa-solid fa-video"></i>
+          <span>ভিডিও ম্যাচ চালু করুন</span>
+          <span class="chat-btn-subtext">সরাসরি ১-অন-১ ক্যামেরা চ্যাট</span>
+        </button>
+
+        <!-- Button 4: Telegram Group -->
+        <button class="chat-btn btn-telegram" onclick="openChatModal('telegram')">
+          <i class="fa-brands fa-telegram"></i>
+          <span>টেলিগ্রাম গ্রুপ জয়েন</span>
+          <span class="chat-btn-subtext">ফ্রি গ্রুপ চ্যাট ও ফাইল শেয়ার</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- NATIVE SPONSORED ADS FEED -->
+    <section class="native-ads-section">
+      <!-- Native Ad Card 1 -->
+      <div class="native-ad-card" onclick="triggerAdRedirect()">
+        <div class="native-ad-img" style="background: linear-gradient(135deg, #f472b6, #8b5cf6);">
+          <i class="fa-solid fa-camera-retro" style="color: #fff;"></i>
+        </div>
+        <div class="native-ad-info">
+          <span class="native-ad-badge">Sponsored</span>
+          <h3 class="native-ad-title">📹 সরাসরি ভিডিও চ্যাট ও ম্যাচিং সাইট</h3>
+          <p class="native-ad-desc">কোনো ভেরিফিকেশন ছাড়া সরাসরি আমাদের প্রিমিয়াম ভিডিও কলে অংশ নিন।</p>
+          <div class="native-ad-action">ভিডিও চ্যাট করুন <i class="fa-solid fa-angle-right"></i></div>
+        </div>
+      </div>
+
+      <!-- Native Ad Card 2 -->
+      <div class="native-ad-card" onclick="triggerAdRedirect()">
+        <div class="native-ad-img" style="background: linear-gradient(135deg, #00d2ff, #f59e0b);">
+          <i class="fa-solid fa-shield-halved" style="color: #fff;"></i>
+        </div>
+        <div class="native-ad-info">
+          <span class="native-ad-badge">Sponsored</span>
+          <h3 class="native-ad-title">🔞 নিরাপদ এডাল্ট ডেটিং ও চ্যাট নেটওয়ার্ক</h3>
+          <p class="native-ad-desc">গোপনীয়তা বজায় রেখে এলাকার মানুষের সাথে ফ্রিতে চ্যাট করুন। ১৮+ অনলি।</p>
+          <div class="native-ad-action">গোপনে ডেটিং শুরু করুন <i class="fa-solid fa-angle-right"></i></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- STICKY BOTTOM AD BANNER (Adsterra 320x50 Banner) -->
+  <div class="ad-banner-sticky" id="sticky-ad">
+    <div class="ad-sticky-close-bar">
+      <button class="ad-sticky-close" onclick="closeStickyAd(event)">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div style="width:100%; display:flex; justify-content:center; align-items:center;">
+      <script>
+        atOptions = {
+          'key' : '686d4162124a321b26260c1bacac69eb',
+          'format' : 'iframe',
+          'height' : 50,
+          'width' : 320,
+          'params' : {}
+        };
+      </script>
+      <script src="https://www.highrevenueformat.com/686d4162124a321b26260c1bacac69eb/invoke.js"></script>
+    </div>
+  </div>
+
+  <!-- Toast Notification Area -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Floating Inbox Button -->
+  <button class="inbox-float-btn" id="inbox-trigger" onclick="toggleInbox()">
+    <i class="fa-solid fa-comments"></i>
+    <span class="inbox-badge" id="inbox-badge-count">0</span>
+  </button>
+
+  <!-- Inbox Drawer System -->
+  <div class="inbox-drawer" id="inbox-drawer">
+    <!-- Header -->
+    <div class="inbox-drawer-header">
+      <h3><i class="fa-solid fa-inbox"></i> ইনবক্স (<span id="inbox-header-count">0</span>)</h3>
+      <button class="inbox-close-btn" onclick="toggleInbox()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Scrollable Inbox List Content -->
+    <div class="inbox-drawer-content" id="inbox-items-container">
+      <!-- Empty State initially -->
+      <div class="inbox-empty-state" id="inbox-empty-state">
+        <i class="fa-solid fa-comment-slash"></i>
+        <p>কোনো নতুন মেসেজ নেই। চ্যাট রুম একটিভ হতে অপেক্ষা করুন।</p>
+      </div>
+    </div>
+
+    <!-- Sliding Chat Detail View inside Drawer -->
+    <div class="chat-detail-view" id="chat-detail-view">
+      <div class="chat-detail-header">
+        <button class="chat-back-btn" onclick="showInboxList()">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <div class="chat-header-avatar" id="chat-active-avatar"></div>
+        <div class="chat-header-info">
+          <h4 id="chat-active-name">রিয়া</h4>
+          <span class="chat-header-status"><span class="status-dot-mini" style="background-color: var(--green);"></span> অনলাইন</span>
+        </div>
+      </div>
+      
+      <div class="chat-messages-body" id="chat-messages-body">
+        <!-- Message bubbles -->
+      </div>
+      
+      <div class="chat-input-area" onclick="triggerChatClick()">
+        <input type="text" placeholder="মেসেজ লিখুন..." readonly />
+        <button class="chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL / POPUP OVERLAY (AD GATEWAY) -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      
+      <!-- STATE 1: Simulated Connecting/Matching -->
+      <div class="modal-state active" id="modal-state-connecting">
+        <div class="modal-header">
+          <div class="modal-icon-container" id="modal-conn-icon">
+            <i class="fa-solid fa-circle-nodes"></i>
+          </div>
+          <h3 class="loading-step-text" id="loading-title">সার্ভারের সাথে কানেক্ট করা হচ্ছে...</h3>
+          <p class="loading-step-sub" id="loading-subtitle">অনুগ্রহ করে কয়েক সেকেন্ড অপেক্ষা করুন</p>
+        </div>
+        
+        <div class="loader-spinner"></div>
+        
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <div style="text-align: center; font-size: 12px; color: var(--muted); font-family: var(--font-outfit);" id="progress-percent">0% Completed</div>
+      </div>
+
+      <!-- STATE 2: Verification Required (Ad Gateway) -->
+      <div class="modal-state" id="modal-state-verify">
+        <div class="modal-header">
+          <div class="modal-icon-container" style="background: rgba(251, 191, 36, 0.1); color: var(--yellow); border-color: rgba(251, 191, 36, 0.2);">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+          <h3 class="loading-step-text" id="verify-main-title">ভেরিফিকেশন সম্পন্ন করুন!</h3>
+          <p class="loading-step-sub" id="verify-sub-title">মেসেজের উত্তর দিতে এবং চ্যাট আনলক করতে স্পনসর ভেরিফিকেশন করা আবশ্যক।</p>
+        </div>
+
+        <div class="ad-card-modal" onclick="triggerAdRedirect()">
+          <span class="modal-ad-badge" id="verify-ad-badge">Sponsored Ads</span>
+          <div class="ad-card-modal-title" id="verify-ad-title">🔓 সরাসরি ১-ক্লিক চ্যাট আনলক</div>
+          <div class="ad-card-modal-desc" id="verify-ad-desc">নিচের লিংকে ক্লিক করে আমাদের ভেরিফিকেশন স্পনসর কাজটি সম্পন্ন করলেই সবগুলো ইনবক্স মেসেজ আনলক হয়ে যাবে।</div>
+        </div>
+
+        <button class="modal-verify-btn" id="verify-ad-btn" onclick="triggerAdRedirect()">
+          <span>চ্যাট আনলক করুন</span>
+          <i class="fa-solid fa-shield-check"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript logic -->
+  <script>
+    // Initialize Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp) {
+      try {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.setHeaderColor('#090b11');
+        tg.setBackgroundColor('#090b11');
+      } catch (e) {
+        console.error("Telegram WebApp init error:", e);
+      }
+    }
+
+    // Initial Counter values
+    let boysCount = 211;
+    let girlsCount = 185;
+
+    // Dom elements
+    const boysCounterEl = document.getElementById('boys-counter');
+    const girlsCounterEl = document.getElementById('girls-counter');
+
+    // Simulate minor live fluctuation of user counts
+    function simulateFluctuation() {
+      // Fluctuate boys
+      const boysDiff = Math.floor(Math.random() * 5) - 2; // -2 to +2
+      boysCount = Math.max(200, Math.min(230, boysCount + boysDiff));
+      boysCounterEl.innerText = boysCount;
+
+      // Fluctuate girls
+      const girlsDiff = Math.floor(Math.random() * 5) - 2; // -2 to +2
+      girlsCount = Math.max(170, Math.min(200, girlsCount + girlsDiff));
+      girlsCounterEl.innerText = girlsCount;
+    }
+
+    // Run fluctuation every 4 seconds
+    setInterval(simulateFluctuation, 4000);
+
+    // Global variable for progress bar interval
+    let progressInterval = null;
+
+    // ========================================================
+    // Adsterra popunder, monetag links & click limit logic
+    // ========================================================
+    let adClickCount = parseInt(sessionStorage.getItem('adClickCount') || '0');
+    const directLink1 = 'https://omg10.com/4/11017767';
+    const directLink2 = 'https://www.effectivecpmnetwork.com/mgtqwzbp?key=5c4003e0ae2b0ebd387daded087bc9aa';
+    const tgLink = 'https://web.telegram.org/k/?account=3#@alltimefantasyzone';
+
+    function triggerAdRedirect() {
+      if (adClickCount < 3) {
+        // Alternating ad links
+        const targetUrl = adClickCount % 2 === 0 ? directLink1 : directLink2;
+        adClickCount++;
+        sessionStorage.setItem('adClickCount', adClickCount);
+        window.open(targetUrl, '_blank');
+        updateModalAdState();
+      } else {
+        // After 3 clicks, send to Telegram
+        window.open(tgLink, '_blank');
+        window.location.href = tgLink;
+      }
+    }
+
+    function updateModalAdState() {
+      const btn = document.getElementById('verify-ad-btn');
+      const title = document.getElementById('verify-main-title');
+      const subtitle = document.getElementById('verify-sub-title');
+      const adTitle = document.getElementById('verify-ad-title');
+      const adDesc = document.getElementById('verify-ad-desc');
+      const adBadge = document.getElementById('verify-ad-badge');
+
+      if (adClickCount >= 3) {
+        title.innerText = 'ভেরিফিকেশন সফল হয়েছে!';
+        subtitle.innerText = 'নিচের বাটনে ক্লিক করে সরাসরি আমাদের অফিশিয়াল টেলিগ্রাম গ্রুপে যুক্ত হোন।';
+        adTitle.innerText = '🎉 অলটাইম ফ্যান্টাসি জোন';
+        adDesc.innerText = 'আমাদের টেলিগ্রাম গ্রুপে ফ্রিতে জয়েন করে সরাসরি সকল মেম্বারদের সাথে চ্যাট করুন।';
+        adBadge.innerText = 'Verification Success';
+        btn.innerHTML = '<span>টেলিগ্রাম গ্রুপ জয়েন করুন</span> <i class="fa-brands fa-telegram"></i>';
+        btn.className = 'modal-verify-btn btn-telegram';
+        btn.style.boxShadow = '0 8px 25px rgba(0, 136, 204, 0.4)';
+      }
+    }
+
+    // Open Modal Flow
+    function openChatModal(type) {
+      const overlay = document.getElementById('modal-overlay');
+      const stateConnecting = document.getElementById('modal-state-connecting');
+      const stateVerify = document.getElementById('modal-state-verify');
+      const progressFill = document.getElementById('progress-fill');
+      const progressPercent = document.getElementById('progress-percent');
+      const loadingTitle = document.getElementById('loading-title');
+      const loadingSubtitle = document.getElementById('loading-subtitle');
+      const connIcon = document.getElementById('modal-conn-icon');
+
+      // Close inbox if open
+      document.getElementById('inbox-drawer').classList.remove('active');
+
+      // Open Direct Ad Click for the first 3 times they click chat/video/tg buttons
+      if (adClickCount < 3) {
+        const targetUrl = adClickCount % 2 === 0 ? directLink1 : directLink2;
+        adClickCount++;
+        sessionStorage.setItem('adClickCount', adClickCount);
+        window.open(targetUrl, '_blank');
+      } else if (type === 'telegram') {
+        // If clicks already reached, clicking Telegram button goes directly to TG link
+        window.open(tgLink, '_blank');
+        window.location.href = tgLink;
+        return;
+      }
+
+      // Reset Modal state
+      stateConnecting.classList.add('active');
+      stateVerify.classList.remove('active');
+      progressFill.style.width = '0%';
+      progressPercent.innerText = '0% Completed';
+      overlay.classList.add('active');
+
+      let currentTitle = 'সার্ভারের সাথে কানেক্ট করা হচ্ছে...';
+      let currentSubtitle = 'নিরাপদ গেটওয়ে প্রস্তুত হচ্ছে';
+      let iconHTML = '<i class="fa-solid fa-circle-nodes"></i>';
+
+      if (type === 'girls') {
+        currentTitle = 'অনলাইন মেয়েদের সাথে চ্যাট লাইন কানেক্ট করা হচ্ছে...';
+        currentSubtitle = 'সেরা ম্যাচগুলোর লাইভ সিগন্যাল লোড হচ্ছে';
+        iconHTML = '<i class="fa-solid fa-venus"></i>';
+      } else if (type === 'boys') {
+        currentTitle = 'অনলাইন ছেলেদের সাথে চ্যাট লাইন কানেক্ট করা হচ্ছে...';
+        currentSubtitle = 'একটিভ মেম্বারদের সাথে কানেকশন তৈরি হচ্ছে';
+        iconHTML = '<i class="fa-solid fa-mars"></i>';
+      } else if (type === 'video') {
+        currentTitle = 'লাইভ ভিডিও ম্যাচিং প্রোটোকল চালু হচ্ছে...';
+        currentSubtitle = 'ক্যামেরা ও ভয়েস পোর্ট ওপেন করা হচ্ছে';
+        iconHTML = '<i class="fa-solid fa-video"></i>';
+      } else if (type === 'telegram') {
+        currentTitle = 'টেলিগ্রাম চ্যাট লাউঞ্জ লিংক জেনারেট করা হচ্ছে...';
+        currentSubtitle = 'গ্রুপ ইনভাইট টোকেন সংগ্রহ করা হচ্ছে';
+        iconHTML = '<i class="fa-brands fa-telegram"></i>';
+      } else if (type === 'chatUnlock') {
+        currentTitle = 'চ্যাট রুম কানেকশন প্রসেস হচ্ছে...';
+        currentSubtitle = 'ব্যক্তিগত সিকিউর ইনবক্স চ্যানেল খোলা হচ্ছে';
+        iconHTML = '<i class="fa-solid fa-comments"></i>';
+      }
+
+      loadingTitle.innerText = currentTitle;
+      loadingSubtitle.innerText = currentSubtitle;
+      connIcon.innerHTML = iconHTML;
+
+      // Update ad texts inside verification modal based on current clicks
+      updateModalAdState();
+
+      // Simulate loading progress
+      let progress = 0;
+      clearInterval(progressInterval);
+      progressInterval = setInterval(() => {
+        progress += Math.floor(Math.random() * 8) + 3; // Increase randomly
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(progressInterval);
+          
+          // Switch to State 2: Verification Required
+          setTimeout(() => {
+            stateConnecting.classList.remove('active');
+            stateVerify.classList.add('active');
+          }, 400);
+        }
+        progressFill.style.width = progress + '%';
+        progressPercent.innerText = progress + '% Completed';
+      }, 100);
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.remove('active');
+      clearInterval(progressInterval);
+    }
+
+    // Close Sticky Ad banner
+    function closeStickyAd(event) {
+      event.stopPropagation();
+      const stickyAd = document.getElementById('sticky-ad');
+      stickyAd.style.display = 'none';
+    }
+
+    // ========================================================
+    // Interactive Age Verification Warning
+    // ========================================================
+    let ageVerified = false;
+    function verifyAge(verified) {
+      const overlay = document.getElementById('warning-overlay');
+      if (verified) {
+        ageVerified = true;
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          
+          // Trigger first notification message 1.5s after warning is closed
+          setTimeout(receiveMessage, 1500);
+          
+          // Trigger incoming phone call 10s after warning is closed
+          setTimeout(showIncomingCall, 10000);
+        }, 500);
+      } else {
+        window.location.href = 'https://www.google.com';
+      }
+    }
+
+    // ========================================================
+    // Real-time notification & Inbox system
+    // ========================================================
+
+    // 30 Girls profiles and messages
+    const girlsMessages = [
+      { name: "রিয়া", age: 21, msg: "হাই, ফ্রি আছো?", avatar: "linear-gradient(135deg, #ff2a85, #ff7300)" },
+      { name: "মিম", age: 20, msg: "আমার সাথে চ্যাট করবা?", avatar: "linear-gradient(135deg, #db2777, #f472b6)" },
+      { name: "সুমি", age: 22, msg: "হাই কলিজা......", avatar: "linear-gradient(135deg, #be185d, #ec4899)" },
+      { name: "প্রিয়া", age: 19, msg: "ভিডিও কলে আসবা সোনা?", avatar: "linear-gradient(135deg, #9d174d, #f43f5e)" },
+      { name: "মারিয়া", age: 23, msg: "তোমার সাথে একটু কথা বলতে চাই...", avatar: "linear-gradient(135deg, #8b5cf6, #ec4899)" },
+      { name: "সাদিয়া", age: 21, msg: "হাই ফ্রেন্ড, কেমন আছো?", avatar: "linear-gradient(135deg, #a755e3, #d946ef)" },
+      { name: "বৃষ্টি", age: 20, msg: "এখানে লাইভ আছি, জলদি আসো!", avatar: "linear-gradient(135deg, #db2777, #ec4899)" },
+      { name: "জান্নাত", age: 22, msg: "তোমার বাড়ি কোথায় জান?", avatar: "linear-gradient(135deg, #ff007f, #ff7f00)" },
+      { name: "মিতু", age: 19, msg: "আমাকে ফ্রেন্ড বানাবা?", avatar: "linear-gradient(135deg, #f43f5e, #be123c)" },
+      { name: "নুসরাত", age: 24, msg: "হাই কি করো? ফ্রি আছো?", avatar: "linear-gradient(135deg, #ec4899, #db2777)" },
+      { name: "তাসনিম", age: 21, msg: "আমার ভিডিও গ্রুপে জয়েন করো না!", avatar: "linear-gradient(135deg, #ff00ff, #800080)" },
+      { name: "স্নেহা", age: 20, msg: "অনলাইনে চ্যাট করতে ভালো লাগে তোমার?", avatar: "linear-gradient(135deg, #db2777, #f472b6)" },
+      { name: "রূপা", age: 22, msg: "একটু চ্যাট করবা আমার সাথে প্লিজ?", avatar: "linear-gradient(135deg, #ff2a85, #ff7300)" },
+      { name: "আনিকা", age: 19, msg: "হ্যালো, তোমাকে দেখে খুব ভালো লেগেছে!", avatar: "linear-gradient(135deg, #be185d, #ec4899)" },
+      { name: "কেয়া", age: 21, msg: "হাই সুইটহার্ট... কি করো?", avatar: "linear-gradient(135deg, #8b5cf6, #ec4899)" },
+      { name: "লিমা", age: 20, msg: "ফ্রি থাকলে জলদি ইনবক্স করো প্লিজ", avatar: "linear-gradient(135deg, #9d174d, #f43f5e)" },
+      { name: "পূজা", age: 22, msg: "তোমার ইমু বা হোয়াটসঅ্যাপ আইডি আছে?", avatar: "linear-gradient(135deg, #ff7300, #ec4899)" },
+      { name: "এশা", age: 21, msg: "সরাসরি ক্যামেরা চ্যাট করতে চাও এখন?", avatar: "linear-gradient(135deg, #db2777, #be185d)" },
+      { name: "নিপা", age: 23, msg: "মেসেজ দিচ্ছি নক দিচ্ছো না কেন গো?", avatar: "linear-gradient(135deg, #db2777, #ff007f)" },
+      { name: "শিলা", age: 22, msg: "হাই জানু, কেমন আছো বলো?", avatar: "linear-gradient(135deg, #be185d, #f43f5e)" },
+      { name: "মুন্নি", age: 20, msg: "তোমার সাথে কথা বলতে মন চাইছে...", avatar: "linear-gradient(135deg, #a755e3, #db2777)" },
+      { name: "মৌ", age: 19, msg: "হাই কলিজা, চ্যাট রুমে লাইভে আসো!", avatar: "linear-gradient(135deg, #ff2a85, #8b5cf6)" },
+      { name: "আশা", age: 21, msg: "আমার সাথে একটু ভালো কোয়ালিটি টাইম কাটাবা?", avatar: "linear-gradient(135deg, #ff7300, #ff2a85)" },
+      { name: "ফারাহ", age: 22, msg: "তোমার পার্সোনাল নাম্বারটা দিবা সোনা?", avatar: "linear-gradient(135deg, #db2777, #ec4899)" },
+      { name: "তানহা", age: 20, msg: "একটু নক দাও না সোনা... কথা বলবো!", avatar: "linear-gradient(135deg, #8b5cf6, #be185d)" },
+      { name: "ববি", age: 23, msg: "সরাসরি ভিডিও ম্যাচিং এ ক্লিক করো জান!", avatar: "linear-gradient(135deg, #9d174d, #ff7f00)" },
+      { name: "তানিয়া", age: 21, msg: "আমি কিন্তু তোমার চ্যাটের ওয়েট করছি...", avatar: "linear-gradient(135deg, #be185d, #ec4899)" },
+      { name: "নেহা", age: 22, msg: "হাই ডার্লিং, কি করো? একা আছি!", avatar: "linear-gradient(135deg, #ff007f, #ff7300)" },
+      { name: "সোনিয়া", age: 20, msg: "ভিডিও চ্যাটে আসো, একটু মজা করি!", avatar: "linear-gradient(135deg, #db2777, #8b5cf6)" },
+      { name: "লাবনী", age: 21, msg: "অনলাইন ভালো মনের একটা ফ্রেন্ড দরকার...", avatar: "linear-gradient(135deg, #be185d, #f43f5e)" }
+    ];
+
+    let receivedCount = 0;
+    let unreadCount = 0;
+    const receivedMessages = [];
+
+    // Synthesize beautiful notification chime (Web Audio API)
+    function playNotificationSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      } catch(e) {
+        console.log('Audio error:', e);
+      }
+    }
+
+    // Toggle sliding Inbox Drawer
+    function toggleInbox() {
+      const drawer = document.getElementById('inbox-drawer');
+      drawer.classList.toggle('active');
+      
+      // Clear unread count when opened
+      if(drawer.classList.contains('active')) {
+        unreadCount = 0;
+        updateBadge();
+        
+        // Remove unread class from rows
+        const unreadRows = document.querySelectorAll('.inbox-row.unread');
+        unreadRows.forEach(row => row.classList.remove('unread'));
+      }
+    }
+
+    // Show list of messages and hide specific chat
+    function showInboxList() {
+      const chatDetail = document.getElementById('chat-detail-view');
+      chatDetail.classList.remove('active');
+    }
+
+    // Click anywhere in chat input triggers ads modal
+    function triggerChatClick() {
+      openChatModal('chatUnlock');
+    }
+
+    // Render badge counts
+    function updateBadge() {
+      const badge = document.getElementById('inbox-badge-count');
+      const headerCount = document.getElementById('inbox-header-count');
+      
+      headerCount.innerText = receivedMessages.length;
+      
+      if(unreadCount > 0) {
+        badge.innerText = unreadCount;
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // Open chat for a specific girl
+    function openGirlChat(index) {
+      const girl = receivedMessages[index];
+      if(!girl) return;
+      
+      // Set Header info
+      const activeAvatar = document.getElementById('chat-active-avatar');
+      const activeName = document.getElementById('chat-active-name');
+      
+      activeAvatar.style.background = girl.avatar;
+      activeAvatar.innerHTML = `<i class="fa-solid fa-user-dress"></i>`;
+      activeName.innerText = girl.name + " (" + girl.age + ")";
+      
+      // Set Messages
+      const messagesBody = document.getElementById('chat-messages-body');
+      messagesBody.innerHTML = `
+        <div class="chat-bubble received">
+          ${girl.msg}
+          <div class="chat-bubble-time">এখনই</div>
+        </div>
+      `;
+      
+      // Slide open the Chat detail view
+      const chatDetail = document.getElementById('chat-detail-view');
+      chatDetail.classList.add('active');
+    }
+
+    // Append new incoming message
+    function receiveMessage() {
+      if (!ageVerified) return;
+      if (receivedCount >= girlsMessages.length) return; // limit to 30
+      
+      const currentMsgObj = girlsMessages[receivedCount];
+      receivedMessages.push(currentMsgObj);
+      
+      // Increment counts
+      const drawer = document.getElementById('inbox-drawer');
+      if(!drawer.classList.contains('active')) {
+        unreadCount++;
+      }
+      
+      playNotificationSound();
+      updateBadge();
+
+      // Remove Empty State if first message
+      const emptyState = document.getElementById('inbox-empty-state');
+      if(emptyState) {
+        emptyState.remove();
+      }
+
+      // Add to Inbox list
+      const listContainer = document.getElementById('inbox-items-container');
+      const itemIndex = receivedMessages.length - 1;
+      
+      const row = document.createElement('div');
+      row.className = `inbox-row ${!drawer.classList.contains('active') ? 'unread' : ''}`;
+      row.onclick = () => openGirlChat(itemIndex);
+      row.innerHTML = `
+        <div class="inbox-row-avatar" style="background: ${currentMsgObj.avatar};">
+          <i class="fa-solid fa-user-dress"></i>
+          <span class="status-dot"></span>
+        </div>
+        <div class="inbox-row-body">
+          <div class="inbox-row-name-row">
+            <span class="inbox-row-name">${currentMsgObj.name} (${currentMsgObj.age})</span>
+            <span class="inbox-row-time">এখনই</span>
+          </div>
+          <div class="inbox-row-msg">${currentMsgObj.msg}</div>
+        </div>
+        <span class="inbox-row-dot"></span>
+      `;
+      
+      // Insert at the top of list
+      listContainer.insertBefore(row, listContainer.firstChild);
+
+      // Create Toast Notification
+      const toastContainer = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification';
+      toast.onclick = (e) => {
+        e.stopPropagation();
+        toggleInbox();
+        openGirlChat(itemIndex);
+        toast.remove();
+      };
+      
+      toast.innerHTML = `
+        <div class="toast-avatar" style="background: ${currentMsgObj.avatar};">
+          <i class="fa-solid fa-user-dress"></i>
+          <span class="status-badge"></span>
+        </div>
+        <div class="toast-body">
+          <div class="toast-name-row">
+            <span class="toast-name">${currentMsgObj.name} (${currentMsgObj.age})</span>
+            <span class="toast-time">Just Now</span>
+          </div>
+          <div class="toast-msg">${currentMsgObj.msg}</div>
+        </div>
+      `;
+      
+      toastContainer.appendChild(toast);
+
+      // Auto remove toast after 4 seconds
+      setTimeout(() => {
+        toast.style.animation = 'slideInLeft 0.3s reverse forwards';
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 4000);
+
+      receivedCount++;
+    }
+
+    // ========================================================
+    // Simulated Calling Logic
+    // ========================================================
+    let ringtoneInterval = null;
+    let ringtoneAudioCtx = null;
+
+    function showIncomingCall() {
+      if (!ageVerified) return;
+      
+      const callBox = document.getElementById('incoming-call-box');
+      callBox.classList.add('active');
+      
+      try {
+        ringtoneAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        ringtoneInterval = setInterval(() => {
+          playRingChime(ringtoneAudioCtx, 0);
+          playRingChime(ringtoneAudioCtx, 0.15);
+          playRingChime(ringtoneAudioCtx, 0.3);
+        }, 2000);
+      } catch(e) {
+        console.log('Audio Context error:', e);
+      }
+    }
+
+    function playRingChime(ctx, delay) {
+      if (!ctx || ctx.state === 'closed') return;
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(800, ctx.currentTime + delay);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(804, ctx.currentTime + delay);
+      
+      gain.gain.setValueAtTime(0.08, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.6);
+      
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc1.start(ctx.currentTime + delay);
+      osc2.start(ctx.currentTime + delay);
+      
+      osc1.stop(ctx.currentTime + delay + 0.6);
+      osc2.stop(ctx.currentTime + delay + 0.6);
+    }
+
+    function handleCall(accept) {
+      const callBox = document.getElementById('incoming-call-box');
+      callBox.classList.remove('active');
+      
+      clearInterval(ringtoneInterval);
+      if(ringtoneAudioCtx) {
+        ringtoneAudioCtx.close();
+      }
+
+      if(accept) {
+        openChatModal('video');
+      }
+    }
+
+    // ========================================================
+    // Match Wheel Spinner Logic
+    // ========================================================
+    let isSpinning = false;
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      
+      const canvas = document.getElementById('wheel-canvas');
+      const degrees = 1440 + Math.floor(Math.random() * 360);
+      canvas.style.transform = `rotate(${degrees}deg)`;
+      
+      let spinAudCtx = null;
+      try {
+        spinAudCtx = new (window.AudioContext || window.webkitAudioContext)();
+        for (let i = 0; i < 20; i++) {
+          setTimeout(() => {
+            playSpinTick(spinAudCtx);
+          }, i * i * 10);
+        }
+      } catch(e) {}
+
+      setTimeout(() => {
+        isSpinning = false;
+        if (spinAudCtx) spinAudCtx.close();
+        
+        openChatModal('girls');
+      }, 4000);
+    }
+
+    function playSpinTick(ctx) {
+      if (!ctx || ctx.state === 'closed') return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
+    }
+  </script>
+
+  <!-- ========================================================
+       ADSTERRA SOCIAL BAR CODE FOR techndclick.site
+       ======================================================== -->
+  <script src="https://pl29788587.profitableratecpmnetwork.com/41/f4/3e/41f43ea4963e593a9744b154a5aa8cdd.js"></script>
+
+</body>
+</html>

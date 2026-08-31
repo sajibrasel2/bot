@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}গ্রুপ {{ chat_id }}{% endblock %}
+{% block page_title %}<i class="fa-solid fa-users" style="color:#5b8dee"></i> গ্রুপ ম্যানেজমেন্ট{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <span>গ্রুপ: <code style="background:#1e2535;padding:2px 6px;border-radius:4px;">{{ chat_id }}</code></span>
+</div>
+
+<!-- Tab Navigation -->
+<div class="group-tabs">
+  <a href="{{ url_for('group_overview',   chat_id=chat_id) }}" class="group-tab active">
+    <i class="fa-solid fa-gauge"></i> ওভারভিউ
+  </a>
+  <a href="{{ url_for('group_welcome',    chat_id=chat_id) }}" class="group-tab">
+    <i class="fa-solid fa-hand-wave"></i> ওয়েলকাম
+  </a>
+  <a href="{{ url_for('group_spam',       chat_id=chat_id) }}" class="group-tab">
+    <i class="fa-solid fa-shield-halved"></i> স্প্যাম
+  </a>
+  <a href="{{ url_for('group_moderation', chat_id=chat_id) }}" class="group-tab">
+    <i class="fa-solid fa-gavel"></i> মডারেশন
+  </a>
+  <a href="{{ url_for('group_notes',      chat_id=chat_id) }}" class="group-tab">
+    <i class="fa-solid fa-note-sticky"></i> নোটস
+  </a>
+  <a href="{{ url_for('group_rules',      chat_id=chat_id) }}" class="group-tab">
+    <i class="fa-solid fa-scale-balanced"></i> নিয়ম
+  </a>
+  <a href="{{ url_for('group_banlist',    chat_id=chat_id) }}" class="group-tab">
+    <i class="fa-solid fa-user-slash"></i> ব্যান লিস্ট
+  </a>
+</div>
+
+<!-- Overview cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+
+  {% set sections = [
+    (url_for('group_welcome',    chat_id=chat_id), "fa-hand-wave",     "ওয়েলকাম / গুডবাই",   "কাস্টম স্বাগত বার্তা সেট করুন",        "green",
+      [("ওয়েলকাম", s.welcome_enabled), ("গুডবাই", s.goodbye_enabled)]),
+    (url_for('group_spam',       chat_id=chat_id), "fa-shield-halved", "স্প্যাম প্রটেকশন",   "ফ্লাড, লিংক ও খারাপ শব্দ ফিল্টার",   "blue",
+      [("Anti-flood", s.antiflood_enabled), ("Anti-link", s.antilink_enabled), ("Bad words", s.badwords_enabled)]),
+    (url_for('group_moderation', chat_id=chat_id), "fa-gavel",         "মডারেশন",             "ওয়ার্ন সিস্টেম ও অ্যাকশন",             "yellow",
+      [("Max warns: " ~ s.max_warns, 1), ("Action: " ~ s.warn_action, 1)]),
+    (url_for('group_rules',      chat_id=chat_id), "fa-scale-balanced","নিয়মাবলী",            "গ্রুপের নিয়মকানুন সেট করুন",           "purple",
+      [("নিয়ম সেট", 1 if s.rules_text else 0)]),
+  ] %}
+
+  {% for url, icon, title, desc, color, badges in sections %}
+  <a href="{{ url }}" style="text-decoration:none;">
+    <div class="card" style="cursor:pointer;transition:.2s;" onmouseover="this.style.borderColor='#5b8dee'" onmouseout="this.style.borderColor='#2e3a52'">
+      <div style="display:flex;align-items:flex-start;gap:14px;">
+        <div class="stat-icon {{ color }}" style="width:42px;height:42px;font-size:18px;flex-shrink:0;">
+          <i class="fa-solid {{ icon }}"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px;">{{ title }}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">{{ desc }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            {% for label, val in badges %}
+            <span class="badge {{ 'badge-green' if val else 'badge-red' }}">
+              {{ label }}: {{ 'চালু' if val else 'বন্ধ' }}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right" style="color:#94a3b8;font-size:12px;margin-top:4px;"></i>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+
+</div>
+{% endblock %}

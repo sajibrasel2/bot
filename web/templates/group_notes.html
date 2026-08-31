@@ -1,0 +1,88 @@
+﻿{% extends "base.html" %}
+{% block title %}নোটস{% endblock %}
+{% block page_title %}<i class="fa-solid fa-note-sticky" style="color:#a78bfa"></i> নোটস ম্যানেজমেন্ট{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <a href="{{ url_for('group_overview', chat_id=chat_id) }}">গ্রুপ {{ chat_id }}</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <span>নোটস</span>
+</div>
+
+<div class="group-tabs">
+  <a href="{{ url_for('group_overview',   chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gauge"></i> ওভারভিউ</a>
+  <a href="{{ url_for('group_welcome',    chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-hand-wave"></i> ওয়েলকাম</a>
+  <a href="{{ url_for('group_spam',       chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-shield-halved"></i> স্প্যাম</a>
+  <a href="{{ url_for('group_moderation', chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gavel"></i> মডারেশন</a>
+  <a href="{{ url_for('group_notes',      chat_id=chat_id) }}" class="group-tab active"><i class="fa-solid fa-note-sticky"></i> নোটস</a>
+  <a href="{{ url_for('group_rules',      chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-scale-balanced"></i> নিয়ম</a>
+  <a href="{{ url_for('group_banlist', chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-user-slash"></i> ব্যান লিস্ট</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1.6fr;gap:20px;">
+
+  <!-- Add Note -->
+  <div class="card" style="align-self:start;">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-plus"></i> নতুন নোট যোগ করুন</div>
+    </div>
+    <form method="POST">
+      <input type="hidden" name="action" value="add">
+      <div class="form-group">
+        <label class="form-label">নোটের নাম (key)</label>
+        <input type="text" name="name" class="form-control" placeholder="যেমন: rules, info, link" required>
+        <div class="form-hint">গ্রুপে <code>#নাম</code> লিখলে এই নোট দেখাবে</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">নোটের কনটেন্ট</label>
+        <textarea class="form-control" name="content" rows="6" placeholder="নোটের বিষয়বস্তু লিখুন..." required></textarea>
+        <div class="form-hint">HTML ট্যাগ ব্যবহার করা যাবে: &lt;b&gt;, &lt;i&gt;, &lt;code&gt;</div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">
+        <i class="fa-solid fa-plus"></i> নোট সেভ করুন
+      </button>
+    </form>
+  </div>
+
+  <!-- Notes List -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-list"></i> সেভ করা নোটসমূহ</div>
+      <span class="badge badge-blue">{{ notes|length }} টি</span>
+    </div>
+
+    {% if notes %}
+      {% for note in notes %}
+      <div style="background:#1e2535;border-radius:8px;padding:16px;margin-bottom:10px;border:1px solid #2e3a52;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="background:linear-gradient(135deg,#5b8dee,#7c3aed);border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;color:#fff;">#{{ note.name }}</span>
+          </div>
+          <form method="POST" onsubmit="return confirm('নোট মুছে দেবেন?')">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="name" value="{{ note.name }}">
+            <button type="submit" class="btn btn-danger btn-sm">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </form>
+        </div>
+        <div style="font-size:13px;color:#e2e8f0;background:#252d3d;padding:10px;border-radius:6px;white-space:pre-wrap;word-break:break-word;max-height:100px;overflow-y:auto;">{{ note.content }}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:8px;">
+          <i class="fa-solid fa-hashtag"></i> গ্রুপে <code>#{{ note.name }}</code> লিখলে দেখাবে
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;padding:48px;color:#94a3b8;">
+        <i class="fa-solid fa-note-sticky" style="font-size:40px;opacity:.2;display:block;margin-bottom:12px;"></i>
+        <div style="font-size:15px;font-weight:500;">কোনো নোট নেই</div>
+        <div style="font-size:13px;margin-top:6px;">বাম দিক থেকে নতুন নোট যোগ করুন</div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+

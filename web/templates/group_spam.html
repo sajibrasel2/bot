@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}স্প্যাম প্রটেকশন{% endblock %}
+{% block page_title %}<i class="fa-solid fa-shield-halved" style="color:#5b8dee"></i> স্প্যাম প্রটেকশন{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <a href="{{ url_for('group_overview', chat_id=chat_id) }}">গ্রুপ {{ chat_id }}</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <span>স্প্যাম প্রটেকশন</span>
+</div>
+
+<div class="group-tabs">
+  <a href="{{ url_for('group_overview',   chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gauge"></i> ওভারভিউ</a>
+  <a href="{{ url_for('group_welcome',    chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-hand-wave"></i> ওয়েলকাম</a>
+  <a href="{{ url_for('group_spam',       chat_id=chat_id) }}" class="group-tab active"><i class="fa-solid fa-shield-halved"></i> স্প্যাম</a>
+  <a href="{{ url_for('group_moderation', chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gavel"></i> মডারেশন</a>
+  <a href="{{ url_for('group_notes',      chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-note-sticky"></i> নোটস</a>
+  <a href="{{ url_for('group_rules',      chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-scale-balanced"></i> নিয়ম</a>
+  <a href="{{ url_for('group_banlist',    chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-user-slash"></i> ব্যান লিস্ট</a>
+</div>
+
+<form method="POST">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- ── ফিল্টার টগলস ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-sliders"></i> ফিল্টার সেটিংস</div>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <i class="fa-solid fa-bolt"></i>
+        <div>
+          <div class="toggle-label">Anti-Flood</div>
+          <div class="toggle-desc">দ্রুত মেসেজ পাঠালে অটো মিউট</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="antiflood_enabled" {% if s.antiflood_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <i class="fa-solid fa-link-slash"></i>
+        <div>
+          <div class="toggle-label">Anti-Link</div>
+          <div class="toggle-desc">লিংক পাঠালে ডিলিট করবে</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="antilink_enabled" {% if s.antilink_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <i class="fa-solid fa-ban"></i>
+        <div>
+          <div class="toggle-label">Bad Words ফিল্টার</div>
+          <div class="toggle-desc">নিষিদ্ধ শব্দ ডিলিট + স্ট্রাইক</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="badwords_enabled" {% if s.badwords_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <i class="fa-solid fa-share-nodes"></i>
+        <div>
+          <div class="toggle-label">Anti-Forward</div>
+          <div class="toggle-desc">ফরোয়ার্ড মেসেজ ব্লক করবে</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="antiforward_enabled" {% if s.antiforward_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <i class="fa-solid fa-photo-film"></i>
+        <div>
+          <div class="toggle-label">মিডিয়া লক</div>
+          <div class="toggle-desc">ছবি/ভিডিও/ফাইল পাঠানো বন্ধ</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="lock_media_msg" {% if s.lock_media_msg %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <i class="fa-regular fa-face-laugh-squint"></i>
+        <div>
+          <div class="toggle-label">স্টিকার লক</div>
+          <div class="toggle-desc">স্টিকার/GIF পাঠানো বন্ধ</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="lock_stickers" {% if s.lock_stickers %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div style="background:#1e2535;border-radius:8px;padding:12px;margin-top:8px;border:1px solid #2e3a52;font-size:12px;color:#94a3b8;line-height:1.7;">
+      <i class="fa-solid fa-circle-info" style="color:#5b8dee"></i>
+      <b style="color:#e2e8f0;"> Anti-Flood:</b> ডিফল্ট ৫ সেকেন্ডে ৭+ মেসেজে মিউট।
+      পরিবর্তন করতে <code>config.py</code> এ <code>MAX_FLOOD_MESSAGES</code> সেট করুন।
+    </div>
+  </div>
+
+  <!-- ── Bad Words ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-file-shield"></i> নিষিদ্ধ শব্দ তালিকা</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">নিষিদ্ধ শব্দসমূহ</label>
+      <textarea class="form-control" name="badwords_list" rows="5"
+        placeholder="কমা দিয়ে আলাদা করুন&#10;যেমন: spam, গালি, abuse">{{ s.badwords_list or '' }}</textarea>
+      <div class="form-hint">কমা (,) দিয়ে আলাদা করুন।</div>
+    </div>
+
+    <!-- Strike settings -->
+    <div style="background:#252d3d;border-radius:10px;padding:16px;border:1px solid #2e3a52;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:600;color:#5b8dee;margin-bottom:12px;">
+        <i class="fa-solid fa-bolt"></i> স্ট্রাইক সিস্টেম
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">কতবারে মিউট</label>
+          <select class="form-control" name="badword_strike_limit">
+            {% for i in range(1, 6) %}
+            <option value="{{ i }}" {% if (s.badword_strike_limit or 3)|int == i %}selected{% endif %}>{{ i }}বার</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">মিউটের সময়</label>
+          <select class="form-control" name="badword_mute_duration">
+            {% for val, label in [(60,'১ মিনিট'),(120,'২ মিনিট'),(300,'৫ মিনিট'),(600,'১০ মিনিট'),(1800,'৩০ মিনিট'),(3600,'১ ঘন্টা')] %}
+            <option value="{{ val }}" {% if (s.badword_mute_duration or 60)|int == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#1e2535;border-radius:8px;padding:12px;border:1px solid #2e3a52;font-size:12px;color:#94a3b8;margin-bottom:12px;">
+      <div style="color:#5b8dee;font-weight:600;margin-bottom:6px;"><i class="fa-solid fa-circle-info"></i> স্ট্রাইক কীভাবে কাজ করে</div>
+      <div style="line-height:1.8;">
+        🔴 ১ম বার → মেসেজ ডিলিট + সতর্কতা<br>
+        🟠 ২য় বার → মেসেজ ডিলিট + সতর্কতা<br>
+        🔇 নির্ধারিত বারে → মিউট<br>
+        <span style="color:#475569;">★ ৫ মিনিট নিষ্ক্রিয় থাকলে রিসেট</span>
+      </div>
+    </div>
+
+    <!-- Current words -->
+    {% set words = (s.badwords_list or '').split(',') %}
+    {% set clean = words | map('trim') | select | list %}
+    {% if clean %}
+    <div style="background:#1e2535;border-radius:8px;padding:12px;border:1px solid #2e3a52;">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;">বর্তমান তালিকা ({{ clean|length }}টি)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        {% for w in clean %}
+        <span style="background:#2e3a52;border-radius:20px;padding:3px 10px;font-size:12px;color:#e2e8f0;">{{ w }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<button type="submit" class="btn btn-primary">
+  <i class="fa-solid fa-floppy-disk"></i> সেটিংস সেভ করুন
+</button>
+</form>
+{% endblock %}

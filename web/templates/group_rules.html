@@ -1,0 +1,83 @@
+﻿{% extends "base.html" %}
+{% block title %}নিয়মাবলী{% endblock %}
+{% block page_title %}<i class="fa-solid fa-scale-balanced" style="color:#a78bfa"></i> গ্রুপের নিয়মাবলী{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <a href="{{ url_for('group_overview', chat_id=chat_id) }}">গ্রুপ {{ chat_id }}</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <span>নিয়মাবলী</span>
+</div>
+
+<div class="group-tabs">
+  <a href="{{ url_for('group_overview',   chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gauge"></i> ওভারভিউ</a>
+  <a href="{{ url_for('group_welcome',    chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-hand-wave"></i> ওয়েলকাম</a>
+  <a href="{{ url_for('group_spam',       chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-shield-halved"></i> স্প্যাম</a>
+  <a href="{{ url_for('group_moderation', chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-gavel"></i> মডারেশন</a>
+  <a href="{{ url_for('group_notes',      chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-note-sticky"></i> নোটস</a>
+  <a href="{{ url_for('group_rules',      chat_id=chat_id) }}" class="group-tab active"><i class="fa-solid fa-scale-balanced"></i> নিয়ম</a>
+  <a href="{{ url_for('group_banlist', chat_id=chat_id) }}" class="group-tab"><i class="fa-solid fa-user-slash"></i> ব্যান লিস্ট</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:20px;">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-pencil"></i> নিয়ম সম্পাদনা</div>
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">নিয়মাবলী টেক্সট</label>
+        <textarea class="form-control" name="rules_text" rows="16"
+          placeholder="গ্রুপের নিয়মাবলী লিখুন...&#10;&#10;উদাহরণ:&#10;১. সবার সাথে সম্মানের সাথে কথা বলুন&#10;২. স্প্যাম করবেন না&#10;৩. অশ্লীল ভাষা নিষিদ্ধ&#10;৪. বিজ্ঞাপন দেওয়া নিষিদ্ধ">{{ s.rules_text or '' }}</textarea>
+        <div class="form-hint">
+          HTML সাপোর্টেড: <code>&lt;b&gt;</code> <code>&lt;i&gt;</code> <code>&lt;code&gt;</code>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-floppy-disk"></i> নিয়ম সেভ করুন
+      </button>
+    </form>
+  </div>
+
+  <div>
+    <!-- Preview -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-eye"></i> প্রিভিউ</div>
+      </div>
+      <div style="background:#1e2535;border-radius:8px;padding:14px;font-size:13px;line-height:1.8;min-height:80px;border:1px solid #2e3a52;white-space:pre-wrap;word-break:break-word;">
+        {% if s.rules_text %}
+          {{ s.rules_text }}
+        {% else %}
+          <span style="color:#94a3b8;font-style:italic;">এখনো কোনো নিয়ম সেট করা হয়নি।</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-circle-info"></i> ব্যবহার নির্দেশিকা</div>
+      </div>
+      <div style="font-size:13px;color:#94a3b8;line-height:2;">
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">
+          <span style="background:#1e2535;border-radius:6px;padding:2px 10px;font-family:monospace;color:#a78bfa;font-size:12px;flex-shrink:0;">/rules</span>
+          <span>গ্রুপে এই কমান্ড দিলে নিয়ম দেখাবে</span>
+        </div>
+        <div style="background:#1e2535;border-radius:8px;padding:12px;border:1px solid #2e3a52;font-size:12px;">
+          <div style="color:#5b8dee;font-weight:600;margin-bottom:6px;">টিপস:</div>
+          <div>✦ ইমোজি ব্যবহার করুন আকর্ষণীয় করতে</div>
+          <div>✦ নম্বর দিয়ে তালিকা করুন</div>
+          <div>✦ <b>굵은</b> টেক্সট: &lt;b&gt;টেক্সট&lt;/b&gt;</div>
+          <div>✦ <i>italic:</i> &lt;i&gt;টেক্সট&lt;/i&gt;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

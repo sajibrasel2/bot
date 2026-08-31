@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}ড্যাশবোর্ড{% endblock %}
+{% block page_title %}<i class="fa-solid fa-gauge-high" style="color:#5b8dee"></i> ড্যাশবোর্ড{% endblock %}
+
+{% block content %}
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+    <div>
+      <div class="stat-val">{{ stats.groups }}</div>
+      <div class="stat-label">মোট গ্রুপ</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-user-check"></i></div>
+    <div>
+      <div class="stat-val">{{ stats.users }}</div>
+      <div class="stat-label">মোট ব্যবহারকারী</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon yellow"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div>
+      <div class="stat-val">{{ stats.warns }}</div>
+      <div class="stat-label">মোট ওয়ার্ন</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="fa-solid fa-note-sticky"></i></div>
+    <div>
+      <div class="stat-val">{{ stats.notes }}</div>
+      <div class="stat-label">সেভ করা নোট</div>
+    </div>
+  </div>
+</div>
+
+<!-- Group List -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-layer-group"></i> পরিচালিত গ্রুপসমূহ
+    </div>
+    <span class="badge badge-blue">{{ chats|length }} টি গ্রুপ</span>
+  </div>
+
+  {% if chats %}
+    {% for chat_id in chats %}
+    <div class="group-item">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="group-avatar">👥</div>
+        <div class="group-info">
+          <div style="font-weight:600;font-size:14px;">গ্রুপ #{{ loop.index }}</div>
+          <div class="group-id">ID: {{ chat_id }}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <a href="{{ url_for('group_overview', chat_id=chat_id) }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-sliders"></i> ম্যানেজ
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="text-align:center;padding:48px;color:#94a3b8;">
+      <i class="fa-solid fa-robot" style="font-size:40px;margin-bottom:12px;display:block;opacity:.3"></i>
+      <div style="font-size:15px;font-weight:500;">এখনো কোনো গ্রুপ নেই</div>
+      <div style="font-size:13px;margin-top:6px;">বটকে কোনো গ্রুপে যোগ করুন এবং একটি মেসেজ পাঠান</div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Quick Guide -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fa-solid fa-circle-info"></i> দ্রুত গাইড</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+    {% set tips = [
+      ("fa-user-plus","ওয়েলকাম মেসেজ","গ্রুপ → Welcome সেকশনে কাস্টম টেক্সট সেট করুন","green"),
+      ("fa-shield-halved","স্প্যাম প্রটেকশন","Spam সেকশনে Anti-link ও Bad words চালু করুন","blue"),
+      ("fa-gavel","মডারেশন","Moderation সেকশনে warn limit ও action সেট করুন","yellow"),
+      ("fa-note-sticky","নোটস","Notes সেকশনে গুরুত্বপূর্ণ তথ্য সেভ করুন","purple"),
+    ] %}
+    {% for icon, title, desc, color in tips %}
+    <div style="background:#1e2535;border:1px solid #2e3a52;border-radius:10px;padding:16px;display:flex;gap:12px;">
+      <div class="stat-icon {{ color }}" style="width:38px;height:38px;font-size:16px;flex-shrink:0;">
+        <i class="fa-solid {{ icon }}"></i>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:600;">{{ title }}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">{{ desc }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
