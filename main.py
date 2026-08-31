@@ -52,6 +52,11 @@ async def post_init(app: Application) -> None:
     ])
     logger.info("✅ Bot commands registered.")
 
+    # Start the promo loop task when event loop is active
+    from modules import promo
+    asyncio.create_task(promo.promo_loop(app))
+    logger.info("✅ Repeating promotional broadcast task registered in active event loop")
+
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.error("Exception while handling update:", exc_info=context.error)
@@ -86,7 +91,6 @@ def main() -> None:
     admin.register(app)       # pin/lock/rules/promote
     notes.register(app)       # save/get/notes
     spam.register(app)        # message filter (last — catches all text)
-    promo.register(app)       # repeating promotional broadcast task
 
     app.add_error_handler(error_handler)
 
