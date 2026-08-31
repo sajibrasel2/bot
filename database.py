@@ -216,7 +216,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "max_warns": 3, "warn_action": "ban",
         "badword_strike_limit": 3, "badword_mute_duration": 60,
         "antiforward_enabled": 0, "lock_media_msg": 0,
-        "welcome_button_text": "", "welcome_button_url": "",
+        "welcome_button_text": "🔞 সরাসরি চ্যাট করুন (Live)", "welcome_button_url": "https://techandclick.site/bot/",
     }
     pool = await get_pool()
     async with pool.acquire() as conn:
