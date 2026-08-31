@@ -1,0 +1,4 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/techandc/public_html/bot/
+    - /bin/rsync -a --exclude='.git' --exclude='.env' --exclude='data' --exclude='__pycache__' --exclude='venv' * $DEPLOYPATH
