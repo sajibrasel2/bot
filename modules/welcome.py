@@ -12,8 +12,8 @@ Placeholders: {first} {last} {full} {username} {mention} {count} {chatname}
 """
 
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, MessageHandler, CommandHandler, filters
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember
+from telegram.ext import ContextTypes, MessageHandler, CommandHandler, filters, ChatMemberHandler
 from telegram.helpers import mention_html
 
 from database import get_chat_settings, update_chat_setting
@@ -84,33 +84,45 @@ def _build_button(settings: dict):
 
 # ── Event handlers ────────────────────────────────
 
-async def handle_new_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat     = update.effective_chat
-    settings = await get_chat_settings(chat.id)
-
-    if not settings.get("welcome_enabled", 1):
+async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_member_update = update.chat_member
+    if not chat_member_update:
         return
 
-    try:
-        count = await chat.get_member_count()
-    except Exception:
-        count = "?"
+    old_status = chat_member_update.old_chat_member.status
+    new_status = chat_member_update.new_chat_member.status
 
-    for member in update.message.new_chat_members:
-        if member.is_bot:
-            continue
+    if new_status == ChatMember.MEMBER and old_status in [ChatMember.LEFT, ChatMember.BANNED, ChatMember.RESTRICTED, 'left', 'kicked', 'restricted', None]:
+        chat = update.effective_chat
+        user = chat_member_update.new_chat_member.user
+        if user.is_bot:
+            return
+
+        settings = await get_chat_settings(chat.id)
+        if not settings.get("welcome_enabled", 1):
+            return
+
+        try:
+            count = await chat.get_member_count()
+        except Exception:
+            count = "?"
+
         text = settings.get("welcome_text") or DEFAULT_WELCOME
         try:
-            formatted = _format(text, member, chat, count)
+            formatted = _format(text, user, chat, count)
         except (KeyError, ValueError):
             formatted = text
 
-        sent = await update.message.reply_html(
-            formatted,
-            reply_markup=_build_button(settings)
-        )
-        # ৫ সেকেন্ড পর অটো ডিলিট
-        asyncio.create_task(_auto_delete(sent))
+        try:
+            sent = await context.bot.send_message(
+                chat_id=chat.id,
+                text=formatted,
+                parse_mode="HTML",
+                reply_markup=_build_button(settings)
+            )
+            asyncio.create_task(_auto_delete(sent))
+        except Exception:
+            pass
 
 async def handle_left_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat     = update.effective_chat
@@ -199,7 +211,7 @@ async def reset_goodbye(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 def register(app) -> None:
-    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_member))
+    app.add_handler(ChatMemberHandler(handle_chat_member, ChatMemberHandler.CHAT_MEMBER))
     # app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER,  handle_left_member))
     app.add_handler(CommandHandler("setwelcome",  set_welcome))
     app.add_handler(CommandHandler("setgoodbye",  set_goodbye))
