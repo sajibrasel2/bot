@@ -145,13 +145,28 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     # ── Bad words (স্ট্রাইক সিস্টেম) ────────────
     if settings.get("badwords_enabled", 1) and msg.text:
-        bw_raw    = settings.get("badwords_list") or ""
+        bw_raw = settings.get("badwords_list")
+        if not bw_raw or not bw_raw.strip():
+            bw_raw = "ছেলে,ও ছেলে,স্কেমার,বাটপার,প্রতারক,chele,o chele,sele,o sele,chala,scammer,skeimer,skemer,scamer,skeimar"
         bad_words = [w.strip().lower() for w in bw_raw.split(",") if w.strip()]
         text_lower = msg.text.lower()
 
         matched = False
         for bw in bad_words:
-            if bw and re.search(rf"\b{re.escape(bw)}\b", text_lower):
+            if not bw:
+                continue
+            
+            # Check if badword contains non-ASCII characters (e.g. Bengali script)
+            is_ascii = all(ord(c) < 128 for c in bw)
+            if is_ascii:
+                # Use word boundaries for English to avoid matching parts of other words (e.g. "ass" in "class")
+                pattern = rf"\b{re.escape(bw)}\b"
+            else:
+                # For non-ASCII (Bengali), standard \b word boundaries do not work in Python.
+                # Check for simple substring presence
+                pattern = re.escape(bw)
+
+            if re.search(pattern, text_lower):
                 matched = True
                 break
 

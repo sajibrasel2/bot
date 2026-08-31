@@ -210,7 +210,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "welcome_enabled": 1, "welcome_text": "",
         "goodbye_enabled": 0, "goodbye_text": "",
         "antiflood_enabled": 1, "antilink_enabled": 0,
-        "badwords_enabled": 1, "badwords_list": "",
+        "badwords_enabled": 1, "badwords_list": "ছেলে,ও ছেলে,স্কেমার,বাটপার,প্রতারক,chele,o chele,sele,o sele,chala,scammer,skeimer,skemer,scamer,skeimar",
         "rules_text": "", "lock_messages": 0,
         "lock_media": 0, "lock_stickers": 0,
         "max_warns": 3, "warn_action": "ban",
