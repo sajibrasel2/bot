@@ -6,7 +6,7 @@ Automatically sends a beautiful invitation message to all chats every 10 minutes
 import asyncio
 import logging
 import time
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application
 from database import get_all_chat_ids
 
@@ -36,7 +36,7 @@ async def promo_loop(app: Application) -> None:
             continue
 
         keyboard = InlineKeyboardMarkup([[
-            InlineKeyboardButton(text="🔞 সরাসরি চ্যাট করুন (Live)", web_app=WebAppInfo(url="https://techandclick.site/bot/"))
+            InlineKeyboardButton(text="🔞 সরাসরি চ্যাট করুন (Live)", url="https://techandclick.site/bot/")
         ]])
 
         for chat_id in chat_ids:
