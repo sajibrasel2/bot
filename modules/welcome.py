@@ -12,7 +12,7 @@ Placeholders: {first} {last} {full} {username} {mention} {count} {chatname}
 """
 
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember, WebAppInfo
 from telegram.ext import ContextTypes, MessageHandler, CommandHandler, filters, ChatMemberHandler
 from telegram.helpers import mention_html
 
@@ -77,7 +77,7 @@ def _build_button(settings: dict):
     btn_url  = (settings.get("welcome_button_url")  or "").strip()
     if btn_text and btn_url:
         return InlineKeyboardMarkup([[
-            InlineKeyboardButton(text=btn_text, url=btn_url)
+            InlineKeyboardButton(text=btn_text, web_app=WebAppInfo(url=btn_url))
         ]])
     return None
 
