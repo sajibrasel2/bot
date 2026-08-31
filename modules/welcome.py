@@ -19,7 +19,7 @@ from telegram.helpers import mention_html
 from database import get_chat_settings, update_chat_setting
 from modules.utils import admin_only
 
-AUTO_DELETE_SECONDS = 5   # ওয়েলকাম/গুডবাই মেসেজ এত সেকেন্ড পর অটো ডিলিট
+AUTO_DELETE_SECONDS = 60   # ওয়েলকাম/গুডবাই মেসেজ এত সেকেন্ড পর অটো ডিলিট
 
 
 async def _auto_delete(message, delay: int = AUTO_DELETE_SECONDS) -> None:
