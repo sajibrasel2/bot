@@ -117,6 +117,10 @@ async def init_db() -> None:
                 "INSERT IGNORE INTO bot_admins (user_id, username, first_name) VALUES (%s, %s, %s)",
                 (5888198325, "nikitaa92", "Nikita")
             )
+            await cur.execute(
+                "INSERT IGNORE INTO bot_admins (user_id, username, first_name) VALUES (%s, %s, %s)",
+                (8904339611, "sajibrasel2", "Sajib")
+            )
 
 
 # ── WARN helpers ──────────────────────────────────
