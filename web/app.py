@@ -181,10 +181,17 @@ def logout():
 
 
 @app.route("/")
-@login_required
 def dashboard():
-    return render_template("dashboard.html",
-                           stats=get_stats(), chats=get_all_chats(), active="dashboard")
+    if session.get("logged_in"):
+        return render_template("dashboard.html",
+                               stats=get_stats(), chats=get_all_chats(), active="dashboard")
+    # Serve index.html statically from the root directory
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    index_path = os.path.join(root_dir, "index.html")
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return "Landing page not found", 404
 
 
 @app.route("/group/<string:chat_id>")
