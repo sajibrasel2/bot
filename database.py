@@ -121,7 +121,7 @@ async def init_db() -> None:
             await cur.execute(
                 "INSERT INTO bot_admins (user_id, username, first_name) VALUES (%s, %s, %s) "
                 "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
-                (8904339611, "nikitaa92", "নিকিতা জাহান")
+                (8904339611, None, "নিকিতা জাহান")
             )
 
 
