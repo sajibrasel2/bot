@@ -22,6 +22,15 @@ PROMO_TEXT = (
     "👉 <i>ইনভাইট করা শেষ হলে লিংকে ক্লিক করতে ভুলবেন না! 🌸</i>"
 )
 
+async def _auto_delete(message, delay: int = 60) -> None:
+    """Auto-deletes a message after specified seconds."""
+    await asyncio.sleep(delay)
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+
 async def promo_loop(app: Application) -> None:
     """Infinite loop that broadcasts promo message every 10 minutes (600 seconds)."""
     # Wait 10 seconds after bot startup before the first broadcast
@@ -43,12 +52,14 @@ async def promo_loop(app: Application) -> None:
             try:
                 # Basic check to make sure chat_id looks valid (positive or negative large integer)
                 if chat_id:
-                    await app.bot.send_message(
+                    sent = await app.bot.send_message(
                         chat_id=chat_id,
                         text=PROMO_TEXT,
                         parse_mode="HTML",
                         reply_markup=keyboard
                     )
+                    # Automatically delete promo message after 1 minute (60 seconds)
+                    asyncio.create_task(_auto_delete(sent, 60))
             except Exception as e:
                 # Discard warning for deactivated/kicked chats to keep logs clean
                 logger.debug(f"Failed to send promo message to chat {chat_id}: {e}")

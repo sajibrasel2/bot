@@ -31,8 +31,8 @@ from modules.utils import is_admin, admin_only
 from config import MAX_FLOOD_MESSAGES, FLOOD_WINDOW_SECONDS
 
 # ── In-memory trackers ────────────────────────────
-# Flood: {chat_id: {user_id: last_message_timestamp}}
-_flood: dict = defaultdict(lambda: defaultdict(float))
+# Flood: {chat_id: {user_id: [timestamps]}}
+_flood: dict = defaultdict(lambda: defaultdict(list))
 
 # Bad word strike tracker: {chat_id: {user_id: strike_count}}
 # Resets when mute is applied or after BADWORD_STRIKE_WINDOW seconds
@@ -99,31 +99,34 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     settings = await get_chat_settings(chat.id)
 
-    # ── Anti-flood (20 seconds message cooldown) ───────────────────────────────
-    if settings.get("antiflood_enabled", 1):
-        now = time.time()
-        last_msg_time = _flood[chat.id].get(user.id, 0.0)
-        
-        # If less than 20 seconds have passed since the last message
-        if now - last_msg_time < 20:
+    # ── Anti-flood (স্বাভাবিক ফ্লাড প্রটেকশন) ──────────────────────────────────
+    if settings.get("antiflood_enabled", 0):
+        now   = time.time()
+        times = _flood[chat.id][user.id]
+        times = _clean_flood(times, now)
+        times.append(now)
+        _flood[chat.id][user.id] = times
+
+        if len(times) >= MAX_FLOOD_MESSAGES:
+            _flood[chat.id][user.id] = []
             try:
-                await msg.delete()
+                await _mute_user(context, chat.id, user, 60)
+                try:
+                    await msg.delete()
+                except Exception:
+                    pass
+                await _send_and_delete(
+                    context, chat.id,
+                    f"🚨 <b>ফ্লাড সতর্কতা!</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"👤 {mention_html(user.id, user.first_name)}\n"
+                    f"⚡ অতিরিক্ত দ্রুত মেসেজ পাঠাচ্ছেন!\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🔇 <b>১ মিনিট</b> মিউট করা হয়েছে।"
+                )
             except Exception:
                 pass
-            
-            # Send warning and delete after 5 seconds to avoid spamming the chat
-            await _send_and_delete(
-                context, chat.id,
-                f"🚨 <b>ধীর গতিতে মেসেজ পাঠান!</b>\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"👤 {mention_html(user.id, user.first_name)}\n"
-                f"⏳ আপনি ২০ সেকেন্ডে সর্বোচ্চ ১টি মেসেজ দিতে পারবেন।\n"
-                f"⏱️ দয়া করে আরও <b>{int(20 - (now - last_msg_time))} সেকেন্ড</b> অপেক্ষা করুন।"
-            )
             return
-        
-        # Update last message timestamp
-        _flood[chat.id][user.id] = now
 
     # ── Anti-link ────────────────────────────────
     if settings.get("antilink_enabled", 0) and msg.text:
