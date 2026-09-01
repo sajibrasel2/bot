@@ -49,6 +49,8 @@ async def post_init(app: Application) -> None:
         ("id",            "ID দেখুন"),
         ("info",          "ব্যবহারকারীর তথ্য"),
         ("chatinfo",      "গ্রুপের তথ্য"),
+        ("addadmin",      "গ্রুপ অ্যাডমিন বানান (/promote)"),
+        ("demote",        "গ্রুপ অ্যাডমিন সরান"),
     ])
     logger.info("✅ Bot commands registered.")
 

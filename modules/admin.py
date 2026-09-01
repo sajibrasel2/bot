@@ -204,14 +204,14 @@ async def cmd_setwarnlimit(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     await update.message.reply_html(f"✅ ম্যাক্স ওয়ার্ন: <b>{n}</b>")
 
 
-# ── PROMOTE / DEMOTE ──────────────────────────
+# ── PROMOTE / DEMOTE (অ্যাডমিন বানানো / সরানো) ──
 
 @admin_only
 async def cmd_promote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat = update.effective_chat
-    user, _ = await get_target_user(update, context)
+    user, custom_title = await get_target_user(update, context)
     if not user:
-        await update.message.reply_text("কাকে প্রমোট করবেন তা উল্লেখ করুন।")
+        await update.message.reply_text("কাকে অ্যাডমিন বানাবেন তা উল্লেখ করুন।\nব্যবহার: ইউজারের মেসেজে reply করে /addadmin লিখুন অথবা /addadmin <user_id> দিন।")
         return
     try:
         await context.bot.promote_chat_member(
@@ -220,15 +220,26 @@ async def cmd_promote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             can_restrict_members=True,
             can_pin_messages=True,
             can_invite_users=True,
+            can_manage_chat=True,
+            can_manage_video_chats=True,
         )
+        if custom_title and custom_title.strip():
+            try:
+                await context.bot.set_chat_administrator_custom_title(
+                    chat.id, user.id, custom_title.strip()[:16]
+                )
+            except Exception:
+                pass
+
         await update.message.reply_html(
-            f"⬆️ <b>প্রমোট!</b>\n"
+            f"👑 <b>নতুন গ্রুপ অ্যাডমিন!</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"👤 <a href='tg://user?id={user.id}'>{user.first_name}</a>\n"
-            f"👮 অ্যাডমিন হিসেবে প্রমোট করা হয়েছে। ✅"
+            f"🆔 ID: <code>{user.id}</code>\n"
+            f"👮 গ্রুপ অ্যাডমিন হিসেবে সফলভাবে যুক্ত করা হয়েছে। ✅"
         )
     except Exception as e:
-        await update.message.reply_text(f"❌ প্রমোট ব্যর্থ: {e}")
+        await update.message.reply_text(f"❌ অ্যাডমিন বানাতে ব্যর্থ: {e}\n(বটকে গ্রুপে 'Add New Admins' পারমিশন দেওয়া আছে কিনা চেক করুন)")
 
 
 @admin_only
@@ -236,25 +247,30 @@ async def cmd_demote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     chat = update.effective_chat
     user, _ = await get_target_user(update, context)
     if not user:
-        await update.message.reply_text("কাকে ডিমোট করবেন তা উল্লেখ করুন।")
+        await update.message.reply_text("কাকে অ্যাডমিন থেকে সরাবেন তা উল্লেখ করুন।\nব্যবহার: ইউজারের মেসেজে reply করে /demote লিখুন অথবা /demote <user_id> দিন।")
         return
     try:
         await context.bot.promote_chat_member(
             chat.id, user.id,
+            can_change_info=False,
+            can_post_messages=False,
+            can_edit_messages=False,
             can_delete_messages=False,
             can_restrict_members=False,
             can_pin_messages=False,
             can_invite_users=False,
             can_manage_chat=False,
+            can_manage_video_chats=False,
+            can_promote_members=False,
         )
         await update.message.reply_html(
-            f"⬇️ <b>ডিমোট!</b>\n"
+            f"⬇️ <b>অ্যাডমিন পদ বাতিল!</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"👤 <a href='tg://user?id={user.id}'>{user.first_name}</a>\n"
-            f"🔻 অ্যাডমিন পদ থেকে সরানো হয়েছে।"
+            f"🔻 অ্যাডমিন পদ থেকে সফলভাবে সরানো হয়েছে।"
         )
     except Exception as e:
-        await update.message.reply_text(f"❌ ডিমোট ব্যর্থ: {e}")
+        await update.message.reply_text(f"❌ অ্যাডমিন পদ সরাতে ব্যর্থ: {e}")
 
 
 # ── DELETE / PURGE ────────────────────────────
@@ -465,8 +481,8 @@ def register(app) -> None:
     app.add_handler(CommandHandler("rules",          cmd_rules))
     app.add_handler(CommandHandler("setwarnaction",  cmd_setwarnaction))
     app.add_handler(CommandHandler("setwarnlimit",   cmd_setwarnlimit))
-    app.add_handler(CommandHandler("promote",        cmd_promote))
-    app.add_handler(CommandHandler("demote",         cmd_demote))
+    app.add_handler(CommandHandler(["promote", "addadmin", "setadmin", "makeadmin"], cmd_promote))
+    app.add_handler(CommandHandler(["demote", "removeadmin", "deladmin", "unadmin"], cmd_demote))
     app.add_handler(CommandHandler(["del", "delete"], cmd_del))
     app.add_handler(CommandHandler("purge",          cmd_purge))
     app.add_handler(CommandHandler("setgrouptitle",  cmd_setgrouptitle))
