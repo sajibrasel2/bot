@@ -36,6 +36,7 @@ _SAFE_KEYS = {
     "badword_strike_limit", "badword_mute_duration",
     "antiforward_enabled", "lock_media_msg",
     "welcome_button_text", "welcome_button_url",
+    "chat_title", "member_count",
 }
 
 # ── Jinja2 filters ────────────────────────────────
@@ -109,8 +110,15 @@ def _execute(sql: str, args=()):
 
 
 def get_all_chats():
-    rows = _query("SELECT DISTINCT chat_id FROM chat_settings ORDER BY chat_id", fetchall=True)
-    return [r["chat_id"] for r in (rows or [])]
+    rows = _query("SELECT chat_id, chat_title, member_count FROM chat_settings ORDER BY chat_id", fetchall=True)
+    chats = []
+    for idx, r in enumerate(rows or [], 1):
+        chats.append({
+            "chat_id": r["chat_id"],
+            "title": r.get("chat_title") or f"গ্রুপ #{idx}",
+            "member_count": r.get("member_count") or 0
+        })
+    return chats
 
 
 def get_settings(chat_id: int):
@@ -155,9 +163,15 @@ def get_stats():
                 except Exception:
                     result[key] = 0
             try:
+                cur.execute("SELECT COALESCE(SUM(member_count), 0) as total_m FROM chat_settings")
+                row_m = cur.fetchone()
+                total_m = int(row_m["total_m"]) if row_m and row_m["total_m"] else 0
+
                 cur.execute("SELECT COUNT(DISTINCT user_id) as c FROM users")
-                row = cur.fetchone()
-                result["users"] = row["c"] if row else 0
+                row_u = cur.fetchone()
+                recorded_u = int(row_u["c"]) if row_u and row_u["c"] else 0
+
+                result["users"] = max(total_m, recorded_u)
             except Exception:
                 result["users"] = 0
     finally:

@@ -1,12 +1,15 @@
 {% extends "base.html" %}
-{% block title %}গ্রুপ {{ chat_id }}{% endblock %}
-{% block page_title %}<i class="fa-solid fa-users" style="color:#5b8dee"></i> গ্রুপ ম্যানেজমেন্ট{% endblock %}
+{% block title %}{{ s.chat_title or chat_id }}{% endblock %}
+{% block page_title %}<i class="fa-solid fa-users" style="color:#5b8dee"></i> {{ s.chat_title or 'গ্রুপ ম্যানেজমেন্ট' }}{% endblock %}
 
 {% block content %}
-<div class="breadcrumb">
+<div class="breadcrumb" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
   <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
   <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
-  <span>গ্রুপ: <code style="background:#1e2535;padding:2px 6px;border-radius:4px;">{{ chat_id }}</code></span>
+  <span><b>{{ s.chat_title or 'গ্রুপ' }}</b> <code style="background:#1e2535;padding:2px 6px;border-radius:4px;font-size:12px;color:#94a3b8;">{{ chat_id }}</code></span>
+  {% if s.member_count and s.member_count > 0 %}
+  <span class="badge badge-green" style="margin-left:4px;"><i class="fa-solid fa-users"></i> {{ s.member_count }} জন সদস্য</span>
+  {% endif %}
 </div>
 
 <!-- Tab Navigation -->

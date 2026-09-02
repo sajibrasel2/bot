@@ -59,6 +59,35 @@ async def post_init(app: Application) -> None:
     asyncio.create_task(promo.promo_loop(app))
     logger.info("✅ Repeating promotional broadcast task registered in active event loop")
 
+    # Start the group title and member count synchronization task
+    asyncio.create_task(sync_group_info(app))
+    logger.info("✅ Group info and member count synchronization task registered")
+
+
+async def sync_group_info(app: Application) -> None:
+    """Periodically fetches and saves group title and member counts for all groups."""
+    from database import get_all_chat_ids, update_chat_info
+    # Small initial delay to let bot finish starting
+    await asyncio.sleep(5)
+    while True:
+        try:
+            chat_ids = await get_all_chat_ids()
+            for chat_id in chat_ids:
+                try:
+                    chat = await app.bot.get_chat(chat_id)
+                    title = chat.title or ""
+                    try:
+                        count = await chat.get_member_count()
+                    except Exception:
+                        count = 0
+                    if title or count > 0:
+                        await update_chat_info(chat_id, title=title, member_count=count)
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.debug(f"Group sync error: {e}")
+        await asyncio.sleep(300) # Sync every 5 minutes
+
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.error("Exception while handling update:", exc_info=context.error)

@@ -46,17 +46,22 @@
   </div>
 
   {% if chats %}
-    {% for chat_id in chats %}
+    {% for chat in chats %}
     <div class="group-item">
       <div style="display:flex;align-items:center;gap:14px;">
         <div class="group-avatar">👥</div>
         <div class="group-info">
-          <div style="font-weight:600;font-size:14px;">গ্রুপ #{{ loop.index }}</div>
-          <div class="group-id">ID: {{ chat_id }}</div>
+          <div style="font-weight:600;font-size:15px;color:#f8fafc;">{{ chat.title }}</div>
+          <div class="group-id" style="display:flex;gap:10px;align-items:center;margin-top:2px;">
+            <span>ID: <code>{{ chat.chat_id }}</code></span>
+            {% if chat.member_count and chat.member_count > 0 %}
+            <span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-users"></i> {{ chat.member_count }} জন সদস্য</span>
+            {% endif %}
+          </div>
         </div>
       </div>
       <div style="display:flex;gap:8px;">
-        <a href="{{ url_for('group_overview', chat_id=chat_id) }}" class="btn btn-primary btn-sm">
+        <a href="{{ url_for('group_overview', chat_id=chat.chat_id) }}" class="btn btn-primary btn-sm">
           <i class="fa-solid fa-sliders"></i> ম্যানেজ
         </a>
       </div>

@@ -81,7 +81,9 @@ async def init_db() -> None:
                 ("antiforward_enabled", "TINYINT DEFAULT 0"),
                 ("lock_media_msg", "TINYINT DEFAULT 0"),
                 ("welcome_button_text", "VARCHAR(100)"),
-                ("welcome_button_url", "VARCHAR(500)")
+                ("welcome_button_url", "VARCHAR(500)"),
+                ("chat_title", "VARCHAR(255) DEFAULT ''"),
+                ("member_count", "INT DEFAULT 0")
             ]
             for col_name, col_type in columns_to_add:
                 await cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
@@ -336,3 +338,17 @@ async def get_all_chat_ids() -> list:
             await cur.execute("SELECT chat_id FROM chat_settings")
             rows = await cur.fetchall()
             return [row[0] for row in rows]
+
+
+async def update_chat_info(chat_id: int, title: str = "", member_count: int = 0) -> None:
+    """Updates group title and member count in chat_settings."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO chat_settings (chat_id, chat_title, member_count) VALUES (%s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE "
+                "chat_title=IF(VALUES(chat_title)!='', VALUES(chat_title), chat_title), "
+                "member_count=IF(VALUES(member_count)>0, VALUES(member_count), member_count)",
+                (chat_id, title or "", member_count or 0)
+            )

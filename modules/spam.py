@@ -26,7 +26,7 @@ from telegram import Update, ChatPermissions, Message
 from telegram.ext import ContextTypes, MessageHandler, CommandHandler, filters
 from telegram.helpers import mention_html
 
-from database import get_chat_settings, update_chat_setting, upsert_user
+from database import get_chat_settings, update_chat_setting, upsert_user, update_chat_info
 from modules.utils import is_admin, admin_only
 from config import MAX_FLOOD_MESSAGES, FLOOD_WINDOW_SECONDS
 
@@ -93,9 +93,11 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     chat = update.effective_chat
     user = msg.from_user
 
-    # Record user in database for accurate stats
+    # Record user and chat title in database for accurate stats
     if user and chat:
         asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
+        if chat.type != "private" and chat.title:
+            asyncio.create_task(update_chat_info(chat.id, title=chat.title))
 
     # অ্যাডমিনরা বাদ
     if await is_admin(update):
