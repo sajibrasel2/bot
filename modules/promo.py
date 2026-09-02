@@ -51,9 +51,8 @@ async def promo_loop(app: Application) -> None:
             continue
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣💋", url="https://techandclick.site/bot/")],
-            [InlineKeyboardButton(text="🔵 🎬😍 আনকাট প্রাইভেট ভিডিও দেখুন 🔥😈", url="https://techandclick.site/bot/")],
-            [InlineKeyboardButton(text="🟢 🔥🔞 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url="https://techandclick.site/bot/")],
+            [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣🔥", url="https://techandclick.site/bot/")],
+            [InlineKeyboardButton(text="🟢 🔞🔥 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url="https://techandclick.site/bot/")],
         ])
 
         # Collect all valid target chats (both Channels and Groups)

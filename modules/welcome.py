@@ -65,7 +65,7 @@ def _format(text: str, user, chat, count) -> str:
 
 
 def _build_button(settings: dict):
-    """ওয়েলকাম মেসেজের সাথে মাল্টি-কালার ৩-সারির ইনলাইন বাটন তৈরি করে।"""
+    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় ২-সারির কালারফুল বাটন তৈরি করে।"""
     custom_btn = (settings.get("welcome_button_text") or "").strip()
     custom_url = (settings.get("welcome_button_url") or "").strip()
     
@@ -75,12 +75,11 @@ def _build_button(settings: dict):
             InlineKeyboardButton(text=custom_btn, url=custom_url)
         ]])
 
-    # Default: 3-Row Colorful Stacked Buttons (Red, Blue, Green Themes)
+    # Default: 2-Row High-Converting Colorful Buttons
     target_url = custom_url if custom_url else DEFAULT_BUTTON_URL
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣💋", url=target_url)],
-        [InlineKeyboardButton(text="🔵 🎬😍 আনকাট প্রাইভেট ভিডিও দেখুন 🔥😈", url=target_url)],
-        [InlineKeyboardButton(text="🟢 🔥🔞 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url=target_url)],
+        [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣🔥", url=target_url)],
+        [InlineKeyboardButton(text="🟢 🔞🔥 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url=target_url)],
     ])
 
 
