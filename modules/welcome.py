@@ -55,7 +55,7 @@ DEFAULT_GOODBYE = (
     "━━━━━━━━━━━━━━━━━━━━━━━"
 )
 
-DEFAULT_BUTTON_TEXT = "🔞 সরাসরি চ্যাট করুন (Live)"
+DEFAULT_BUTTON_TEXT = "🔥 🔞 🔴 𝗟𝗜𝗩𝗘 𝗖𝗛𝗔𝗧 • সরাসরি চ্যাট করুন 🔞 🔥"
 DEFAULT_BUTTON_URL  = "https://techandclick.site/bot/"
 
 
