@@ -32,8 +32,17 @@ async def _auto_delete(message, delay: int = 60) -> None:
         pass
 
 
+_promo_running = False
+
+
 async def promo_loop(app: Application) -> None:
     """Infinite loop that broadcasts promo message every 10 minutes (600 seconds)."""
+    global _promo_running
+    if _promo_running:
+        logger.info("ℹ️ Promo loop is already running, skipping duplicate initialization.")
+        return
+    _promo_running = True
+
     # Wait 10 seconds after bot startup before the first broadcast
     await asyncio.sleep(10)
     
@@ -49,28 +58,37 @@ async def promo_loop(app: Application) -> None:
             InlineKeyboardButton(text="🔞 সরাসরি চ্যাট করুন (Live)", url="https://techandclick.site/bot/")
         ]])
 
-        for chat_id in chat_ids:
+        for chat_id in set(chat_ids):
             try:
-                # Basic check to make sure chat_id looks valid (positive or negative large integer)
-                if chat_id:
-                    # Check if promo sticker is set for this chat
-                    try:
-                        settings = await get_chat_settings(chat_id)
-                        stk_id = settings.get("promo_sticker")
-                        if stk_id and stk_id.strip():
-                            stk = await app.bot.send_sticker(chat_id=chat_id, sticker=stk_id.strip())
-                            asyncio.create_task(_auto_delete(stk, 60))
-                    except Exception:
-                        pass
+                if not chat_id:
+                    continue
 
-                    sent = await app.bot.send_message(
-                        chat_id=chat_id,
-                        text=PROMO_TEXT,
-                        parse_mode="HTML",
-                        reply_markup=keyboard
-                    )
-                    # Automatically delete promo message after 1 minute (60 seconds)
-                    asyncio.create_task(_auto_delete(sent, 60))
+                # Check chat type to prevent duplicate broadcasting to linked channels
+                try:
+                    chat = await app.bot.get_chat(chat_id)
+                    if chat.type in ("channel", "private"):
+                        continue
+                except Exception:
+                    pass
+
+                # Check if promo sticker is set for this chat
+                try:
+                    settings = await get_chat_settings(chat_id)
+                    stk_id = settings.get("promo_sticker")
+                    if stk_id and stk_id.strip():
+                        stk = await app.bot.send_sticker(chat_id=chat_id, sticker=stk_id.strip())
+                        asyncio.create_task(_auto_delete(stk, 60))
+                except Exception:
+                    pass
+
+                sent = await app.bot.send_message(
+                    chat_id=chat_id,
+                    text=PROMO_TEXT,
+                    parse_mode="HTML",
+                    reply_markup=keyboard
+                )
+                # Automatically delete promo message after 1 minute (60 seconds)
+                asyncio.create_task(_auto_delete(sent, 60))
             except Exception as e:
                 # Discard warning for deactivated/kicked chats to keep logs clean
                 logger.debug(f"Failed to send promo message to chat {chat_id}: {e}")
