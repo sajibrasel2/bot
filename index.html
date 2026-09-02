@@ -1794,19 +1794,6 @@
 </head>
 <body>
 
-  <!-- 18+ Verification Splash Screen -->
-  <div class="warning-overlay" id="warning-overlay">
-    <div class="warning-card">
-      <div class="warning-icon">🔞</div>
-      <h2>১৮+ সতর্কতা!</h2>
-      <p>এই সাইটটিতে প্রাপ্তবয়স্কদের জন্য সংবেদনশীল কন্টেন্ট এবং লাইভ চ্যাট রুম রয়েছে। আপনার বয়স কি ১৮ বছরের বেশি?</p>
-      <div class="warning-buttons">
-        <button class="warning-btn btn-yes" onclick="verifyAge(true)">হ্যাঁ, আমি ১৮+</button>
-        <button class="warning-btn btn-no" onclick="verifyAge(false)">না, বয়স কম</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Simulated Video/Voice Calling Panel -->
   <div class="incoming-call-box" id="incoming-call-box">
     <div class="call-avatar" id="call-active-avatar" style="background: linear-gradient(135deg, #db2777, #f472b6);"><i class="fa-solid fa-user-dress"></i></div>
@@ -2411,27 +2398,13 @@
     }
 
     // ========================================================
-    // Interactive Age Verification Warning
+    // Real-time notification & Inbox system initialization
     // ========================================================
-    let ageVerified = false;
-    function verifyAge(verified) {
-      const overlay = document.getElementById('warning-overlay');
-      if (verified) {
-        ageVerified = true;
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-          overlay.style.display = 'none';
-          
-          // Trigger first notification message 1.5s after warning is closed
-          setTimeout(receiveMessage, 1500);
-          
-          // Trigger incoming phone call 10s after warning is closed
-          setTimeout(showIncomingCall, 10000);
-        }, 500);
-      } else {
-        window.location.href = 'https://www.google.com';
-      }
-    }
+    let ageVerified = true;
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(receiveMessage, 1500);
+      setTimeout(showIncomingCall, 10000);
+    });
 
     // ========================================================
     // Real-time notification & Inbox system
