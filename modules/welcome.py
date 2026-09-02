@@ -123,7 +123,11 @@ async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 stk = await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
                 asyncio.create_task(_auto_delete(stk))
             except Exception:
-                pass
+                try:
+                    stk = await context.bot.send_animation(chat_id=chat.id, animation=stk_id.strip())
+                    asyncio.create_task(_auto_delete(stk))
+                except Exception:
+                    pass
 
         try:
             sent = await context.bot.send_message(
