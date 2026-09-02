@@ -1668,16 +1668,70 @@
     }
 
     @media(max-width: 768px) {
+      .container {
+        padding: 15px 12px;
+        gap: 20px;
+      }
+      .hero-panel {
+        padding: 25px 15px;
+      }
+      .hero-title {
+        font-size: 20px;
+      }
+      .hero-subtitle {
+        font-size: 13px;
+      }
+      .counter-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .buttons-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .chat-btn {
+        padding: 16px 10px;
+        font-size: 14px;
+      }
       .incoming-call-box {
-        top: 20px;
-        right: 20px;
-        width: calc(100% - 40px);
+        top: 15px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        padding: 12px 14px;
       }
       .toast-container {
-        bottom: 150px;
+        bottom: 85px;
+        left: 12px;
+        width: calc(100% - 24px);
+        max-width: 320px;
       }
       .inbox-float-btn {
-        bottom: 150px;
+        bottom: 85px;
+        right: 16px;
+        width: 52px;
+        height: 52px;
+        font-size: 20px;
+      }
+      .inbox-drawer {
+        width: 100%;
+        right: -100%;
+      }
+      .inbox-drawer.active {
+        right: 0;
+      }
+      .wheel-panel {
+        padding: 25px 15px;
+      }
+      .wheel-wrapper {
+        width: 250px;
+        height: 250px;
+      }
+      .categories-panel {
+        padding: 25px 15px;
+      }
+      .categories-grid {
+        grid-template-columns: 1fr;
       }
       .ad-banner-top {
         padding: 10px 5px;
@@ -2621,6 +2675,16 @@
       }, 4000);
 
       receivedCount++;
+
+      // Schedule NEXT incoming message continuously (every 4-7 seconds)
+      if (receivedCount < girlsMessages.length) {
+        const nextDelay = Math.floor(Math.random() * 3000) + 4000;
+        setTimeout(receiveMessage, nextDelay);
+      } else {
+        // Reset count so messages loop forever smoothly
+        receivedCount = 0;
+        setTimeout(receiveMessage, 6000);
+      }
     }
 
     // ========================================================
@@ -2684,6 +2748,9 @@
       if(accept) {
         openChatModal('video');
       }
+
+      // Schedule next incoming simulated call after 30 seconds
+      setTimeout(showIncomingCall, 30000);
     }
 
     // ========================================================
