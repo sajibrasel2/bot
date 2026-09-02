@@ -43,8 +43,7 @@ DEFAULT_WELCOME = (
     "👥 আপনি আমাদের <b>{count}</b> তম সদস্য\n\n"
     "🔞 <b>আপনার ফ্যান্টাসির দুনিয়া আনলক করতে:</b>\n"
     "👥 গ্রুপে ৫ জন বন্ধুকে অ্যাড (Invite/Add) করুন!\n\n"
-    "🎁 ৫ জন মেম্বার অ্যাড করা শেষ হলে নিচের লিংকে ক্লিক করে সরাসরি চ্যাট রুমে যুক্ত হোন:\n"
-    "🔗 https://techandclick.site/bot/\n\n"
+    "🎁 ৫ জন মেম্বার অ্যাড করা শেষ হলে নিচের বাটনে ক্লিক করে সরাসরি চ্যাট রুমে যুক্ত হোন 👇\n\n"
     "💬 <i>নিয়ম মেনে চলুন, সুন্দর থাকুন!</i> 💙"
 )
 
@@ -56,6 +55,9 @@ DEFAULT_GOODBYE = (
     "🌟 <i>যেখানেই থাকুন ভালো থাকুন!</i>\n"
     "━━━━━━━━━━━━━━━━━━━━━━━"
 )
+
+DEFAULT_BUTTON_TEXT = "🔞 সরাসরি চ্যাট করুন (Live)"
+DEFAULT_BUTTON_URL  = "https://techandclick.site/bot/"
 
 
 def _format(text: str, user, chat, count) -> str:
@@ -72,9 +74,9 @@ def _format(text: str, user, chat, count) -> str:
 
 
 def _build_button(settings: dict):
-    """ওয়েলকাম মেসেজের সাথে inline button তৈরি করে (যদি সেট থাকে)।"""
-    btn_text = (settings.get("welcome_button_text") or "").strip()
-    btn_url  = (settings.get("welcome_button_url")  or "").strip()
+    """ওয়েলকাম মেসেজের সাথে inline button তৈরি করে।"""
+    btn_text = (settings.get("welcome_button_text") or DEFAULT_BUTTON_TEXT).strip()
+    btn_url  = (settings.get("welcome_button_url")  or DEFAULT_BUTTON_URL).strip()
     if btn_text and btn_url:
         return InlineKeyboardMarkup([[
             InlineKeyboardButton(text=btn_text, url=btn_url)
