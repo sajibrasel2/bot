@@ -135,6 +135,7 @@ def main() -> None:
     admin.register(app)       # pin/lock/rules/promote
     notes.register(app)       # save/get/notes
     tagall.register(app)      # /tagall /all /cancel
+    promo.register(app)       # /setpromosticker /delpromosticker
     spam.register(app)        # message filter (last — catches all text)
 
     app.add_error_handler(error_handler)

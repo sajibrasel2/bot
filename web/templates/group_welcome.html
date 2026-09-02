@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}ওয়েলকাম সেটিংস{% endblock %}
 {% block page_title %}<i class="fa-solid fa-hand-wave" style="color:#22c55e"></i> ওয়েলকাম / গুডবাই{% endblock %}
 
@@ -156,6 +156,32 @@
     {% endif %}
   </div>
   {% endif %}
+</div>
+
+<!-- ── ওয়েলকাম অ্যানিমেটেড স্টিকার ── -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fa-solid fa-face-smile-wink" style="color:#ec4899"></i> অ্যানিমেটেড ওয়েলকাম স্টিকার</div>
+    <span class="badge badge-purple">অ্যানিমেশন</span>
+  </div>
+
+  <div style="background:#252d3d;border-radius:10px;padding:16px;border:1px solid #2e3a52;margin-bottom:16px;">
+    <div style="font-size:13px;color:#94a3b8;line-height:1.8;">
+      <i class="fa-solid fa-circle-info" style="color:#5b8dee"></i>
+      নতুন মেম্বার জয়েন করলে ওয়েলকাম মেসেজের সাথে আকর্ষণীয় অ্যানিমেটেড স্টিকার পাঠাবে।<br>
+      <b style="color:#ec4899;">💡 টেলিগ্রাম থেকে সেট করার সহজ নিয়ম:</b><br>
+      গ্রুপে যেকোনো পছন্দের অ্যানিমেটেড স্টিকারে <b>Reply</b> করে লিখুন: <code>/setwelcomesticker</code><br>
+      স্টিকার বন্ধ করতে লিখুন: <code>/delwelcomesticker</code>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">স্টিকার File ID (অপশনাল)</label>
+    <input type="text" name="welcome_sticker" class="form-control"
+      value="{{ s.welcome_sticker or '' }}"
+      placeholder="টেলিগ্রাম স্টিকার File ID (যেমন: CAACAgIAAxkBA...)">
+    <div class="form-hint">খালি রাখলে কোনো স্টিকার পাঠাবে না। টেলিগ্রাম থেকেই <code>/setwelcomesticker</code> দিয়ে সেট করা সবচেয়ে সহজ।</div>
+  </div>
 </div>
 
 <button type="submit" class="btn btn-primary">

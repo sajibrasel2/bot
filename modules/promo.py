@@ -6,9 +6,10 @@ Automatically sends a beautiful invitation message to all chats every 10 minutes
 import asyncio
 import logging
 import time
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application
-from database import get_all_chat_ids
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, ContextTypes, CommandHandler
+from database import get_all_chat_ids, get_chat_settings, update_chat_setting
+from modules.utils import admin_only
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,16 @@ async def promo_loop(app: Application) -> None:
             try:
                 # Basic check to make sure chat_id looks valid (positive or negative large integer)
                 if chat_id:
+                    # Check if promo sticker is set for this chat
+                    try:
+                        settings = await get_chat_settings(chat_id)
+                        stk_id = settings.get("promo_sticker")
+                        if stk_id and stk_id.strip():
+                            stk = await app.bot.send_sticker(chat_id=chat_id, sticker=stk_id.strip())
+                            asyncio.create_task(_auto_delete(stk, 60))
+                    except Exception:
+                        pass
+
                     sent = await app.bot.send_message(
                         chat_id=chat_id,
                         text=PROMO_TEXT,
@@ -67,7 +78,29 @@ async def promo_loop(app: Application) -> None:
         # Sleep for 10 minutes (600 seconds)
         await asyncio.sleep(600)
 
+
+@admin_only
+async def set_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Set animated sticker for promotional broadcast by replying to a sticker."""
+    msg = update.effective_message
+    if not msg.reply_to_message or not msg.reply_to_message.sticker:
+        await msg.reply_text(
+            "📌 যে অ্যানিমেটেড স্টিকারটি বিজ্ঞাপনের সাথে সেট করতে চান, তার মেসেজে Reply করে /setpromosticker লিখুন।"
+        )
+        return
+    stk_id = msg.reply_to_message.sticker.file_id
+    await update_chat_setting(update.effective_chat.id, "promo_sticker", stk_id)
+    await msg.reply_html("✅ <b>বিজ্ঞাপনের অ্যানিমেটেড স্টিকার সফলভাবে সেট করা হয়েছে!</b>")
+
+
+@admin_only
+async def del_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Remove promotional broadcast sticker."""
+    await update_chat_setting(update.effective_chat.id, "promo_sticker", "")
+    await update.effective_message.reply_html("🗑️ <b>বিজ্ঞাপনের স্টিকার মুছে ফেলা হয়েছে।</b>")
+
+
 def register(app: Application) -> None:
-    # Start the promo loop in the background of the running event loop
-    asyncio.create_task(promo_loop(app))
-    logger.info("✅ Repeating promotional broadcast task registered (every 10 minutes)")
+    app.add_handler(CommandHandler(["setpromosticker"], set_promo_sticker))
+    app.add_handler(CommandHandler(["delpromosticker"], del_promo_sticker))
+    logger.info("✅ Promo module handlers registered")

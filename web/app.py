@@ -37,6 +37,7 @@ _SAFE_KEYS = {
     "antiforward_enabled", "lock_media_msg",
     "welcome_button_text", "welcome_button_url",
     "chat_title", "member_count",
+    "welcome_sticker", "promo_sticker",
 }
 
 # ── Jinja2 filters ────────────────────────────────
@@ -243,6 +244,7 @@ def group_welcome(chat_id):
             "goodbye_text":    request.form.get("goodbye_text", "")[:4000],
             "welcome_button_text": request.form.get("welcome_button_text", "")[:100],
             "welcome_button_url":  request.form.get("welcome_button_url",  "")[:500],
+            "welcome_sticker":     request.form.get("welcome_sticker", "")[:255],
         })
         flash("✅ ওয়েলকাম সেটিংস সেভ হয়েছে!", "success")
         return redirect(url_for("group_welcome", chat_id=chat_id))

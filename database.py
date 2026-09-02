@@ -83,7 +83,9 @@ async def init_db() -> None:
                 ("welcome_button_text", "VARCHAR(100)"),
                 ("welcome_button_url", "VARCHAR(500)"),
                 ("chat_title", "VARCHAR(255) DEFAULT ''"),
-                ("member_count", "INT DEFAULT 0")
+                ("member_count", "INT DEFAULT 0"),
+                ("welcome_sticker", "VARCHAR(255) DEFAULT ''"),
+                ("promo_sticker", "VARCHAR(255) DEFAULT ''")
             ]
             for col_name, col_type in columns_to_add:
                 await cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
@@ -206,6 +208,7 @@ _VALID_SETTINGS_KEYS = {
     "badword_strike_limit", "badword_mute_duration",
     "antiforward_enabled", "lock_media_msg",
     "welcome_button_text", "welcome_button_url",
+    "welcome_sticker", "promo_sticker",
 }
 
 
@@ -242,6 +245,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "badword_strike_limit": 3, "badword_mute_duration": 60,
         "antiforward_enabled": 0, "lock_media_msg": 0,
         "welcome_button_text": "🔞 সরাসরি চ্যাট করুন (Live)", "welcome_button_url": "https://techandclick.site/bot/",
+        "welcome_sticker": "", "promo_sticker": "",
     }
     pool = await get_pool()
     async with pool.acquire() as conn:

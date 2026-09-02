@@ -116,6 +116,15 @@ async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE)
         except (KeyError, ValueError):
             formatted = text
 
+        # Send animated sticker if set
+        stk_id = settings.get("welcome_sticker")
+        if stk_id and stk_id.strip():
+            try:
+                stk = await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
+                asyncio.create_task(_auto_delete(stk))
+            except Exception:
+                pass
+
         try:
             sent = await context.bot.send_message(
                 chat_id=chat.id,
@@ -213,6 +222,27 @@ async def reset_goodbye(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     await update.message.reply_text("✅ গুডবাই মেসেজ ডিফল্টে রিসেট হয়েছে।")
 
 
+@admin_only
+async def set_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Set animated sticker for welcome messages by replying to a sticker."""
+    msg = update.effective_message
+    if not msg.reply_to_message or not msg.reply_to_message.sticker:
+        await msg.reply_text(
+            "📌 যে অ্যানিমেটেড স্টিকারটি সেট করতে চান, তার মেসেজে Reply করে /setwelcomesticker লিখুন।"
+        )
+        return
+    stk_id = msg.reply_to_message.sticker.file_id
+    await update_chat_setting(update.effective_chat.id, "welcome_sticker", stk_id)
+    await msg.reply_html("✅ <b>ওয়েলকাম অ্যানিমেটেড স্টিকার সফলভাবে সেট করা হয়েছে!</b>")
+
+
+@admin_only
+async def del_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Remove welcome sticker."""
+    await update_chat_setting(update.effective_chat.id, "welcome_sticker", "")
+    await update.effective_message.reply_html("🗑️ <b>ওয়েলকাম স্টিকার মুছে ফেলা হয়েছে।</b>")
+
+
 def register(app) -> None:
     app.add_handler(ChatMemberHandler(handle_chat_member, ChatMemberHandler.CHAT_MEMBER))
     # app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER,  handle_left_member))
@@ -222,3 +252,5 @@ def register(app) -> None:
     app.add_handler(CommandHandler("goodbye",     toggle_goodbye))
     app.add_handler(CommandHandler("resetwelcome",reset_welcome))
     app.add_handler(CommandHandler("resetgoodbye",reset_goodbye))
+    app.add_handler(CommandHandler(["setwelcomesticker", "setsticker"], set_welcome_sticker))
+    app.add_handler(CommandHandler(["delwelcomesticker", "delsticker"], del_welcome_sticker))
