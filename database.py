@@ -131,6 +131,14 @@ async def init_db() -> None:
                 "UPDATE chat_settings SET rules_text=%s WHERE rules_text IS NULL OR rules_text=''",
                 (DEFAULT_RULES,)
             )
+            await cur.execute(
+                "UPDATE chat_settings SET welcome_sticker=%s WHERE welcome_sticker IS NULL OR welcome_sticker=''",
+                (DEFAULT_WELCOME_STICKER,)
+            )
+            await cur.execute(
+                "UPDATE chat_settings SET promo_sticker=%s WHERE promo_sticker IS NULL OR promo_sticker=''",
+                (DEFAULT_PROMO_STICKER,)
+            )
 
 
 # ── WARN helpers ──────────────────────────────────
@@ -231,6 +239,10 @@ DEFAULT_RULES = (
 )
 
 
+DEFAULT_WELCOME_STICKER = "CAACAgIAAxkBAAEQxXNns2aX8aY6f6YmD6P8J_q0W7X2OwACjAIAAladvQo_57U7b8X95zYE"
+DEFAULT_PROMO_STICKER   = "CAACAgIAAxkBAAEQxXpns2bl9Gz9V5nQx1c_e0L7Q2K3NwACigIAAladvQpqV8q9n5b4NzYE"
+
+
 async def get_chat_settings(chat_id: int) -> dict:
     """Return settings dict with safe defaults; never returns {}."""
     defaults = {
@@ -245,7 +257,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "badword_strike_limit": 3, "badword_mute_duration": 60,
         "antiforward_enabled": 0, "lock_media_msg": 0,
         "welcome_button_text": "🔞 সরাসরি চ্যাট করুন (Live)", "welcome_button_url": "https://techandclick.site/bot/",
-        "welcome_sticker": "", "promo_sticker": "",
+        "welcome_sticker": DEFAULT_WELCOME_STICKER, "promo_sticker": DEFAULT_PROMO_STICKER,
     }
     pool = await get_pool()
     async with pool.acquire() as conn:
