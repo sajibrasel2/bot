@@ -58,19 +58,29 @@ async def promo_loop(app: Application) -> None:
             InlineKeyboardButton(text="🔞 সরাসরি চ্যাট করুন (Live)", url="https://techandclick.site/bot/")
         ]])
 
-        for chat_id in set(chat_ids):
+        # Collect all valid target chats (both Channels and Groups)
+        # Avoid double-posting if a group is linked to a channel already receiving the broadcast
+        all_unique_ids = set(chat_ids)
+        target_chats = set()
+
+        for cid in all_unique_ids:
             try:
-                if not chat_id:
+                if not cid:
                     continue
+                c = await app.bot.get_chat(cid)
+                if c.type == "private":
+                    continue
+                # If this is a group whose linked channel is already in our target list,
+                # Telegram will automatically mirror the channel post into this group,
+                # so we don't send a duplicate direct message to the group.
+                if c.type in ("group", "supergroup") and c.linked_chat_id and (c.linked_chat_id in all_unique_ids):
+                    continue
+                target_chats.add(cid)
+            except Exception:
+                target_chats.add(cid)
 
-                # Check chat type to prevent duplicate broadcasting to linked channels
-                try:
-                    chat = await app.bot.get_chat(chat_id)
-                    if chat.type in ("channel", "private"):
-                        continue
-                except Exception:
-                    pass
-
+        for chat_id in target_chats:
+            try:
                 # Check if promo sticker is set for this chat
                 try:
                     settings = await get_chat_settings(chat_id)
@@ -90,7 +100,6 @@ async def promo_loop(app: Application) -> None:
                 # Automatically delete promo message after 1 minute (60 seconds)
                 asyncio.create_task(_auto_delete(sent, 60))
             except Exception as e:
-                # Discard warning for deactivated/kicked chats to keep logs clean
                 logger.debug(f"Failed to send promo message to chat {chat_id}: {e}")
 
         # Sleep for 10 minutes (600 seconds)
