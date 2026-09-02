@@ -224,16 +224,32 @@ async def reset_goodbye(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 @admin_only
 async def set_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Set animated sticker for welcome messages by replying to a sticker."""
+    """Set animated sticker for welcome messages by replying to a sticker or passing ID."""
     msg = update.effective_message
-    if not msg.reply_to_message or not msg.reply_to_message.sticker:
+    stk_id = None
+    if msg.reply_to_message and msg.reply_to_message.sticker:
+        stk_id = msg.reply_to_message.sticker.file_id
+    elif msg.sticker:
+        stk_id = msg.sticker.file_id
+    elif context.args:
+        stk_id = context.args[0].strip()
+
+    if not stk_id:
         await msg.reply_text(
-            "📌 যে অ্যানিমেটেড স্টিকারটি সেট করতে চান, তার মেসেজে Reply করে /setwelcomesticker লিখুন।"
+            "📌 যে অ্যানিমেটেড স্টিকারটি সেট করতে চান, গ্রুপে সেই স্টিকারে Reply করে /setwelcomesticker লিখুন।"
         )
         return
-    stk_id = msg.reply_to_message.sticker.file_id
-    await update_chat_setting(update.effective_chat.id, "welcome_sticker", stk_id)
-    await msg.reply_html("✅ <b>ওয়েলকাম অ্যানিমেটেড স্টিকার সফলভাবে সেট করা হয়েছে!</b>")
+
+    chat_id = update.effective_chat.id
+    await update_chat_setting(chat_id, "welcome_sticker", stk_id)
+    await msg.reply_html("✅ <b>ওয়েলকাম অ্যানিমেটেড স্টিকার সফলভাবে সেট ও সক্রিয় করা হয়েছে!</b>")
+
+    # Send a quick verification preview of the sticker in the chat
+    try:
+        preview = await context.bot.send_sticker(chat_id=chat_id, sticker=stk_id)
+        asyncio.create_task(_auto_delete(preview, delay=10))
+    except Exception:
+        pass
 
 
 @admin_only
