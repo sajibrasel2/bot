@@ -125,6 +125,10 @@ async def init_db() -> None:
                 "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
                 (8904339611, "sadia4392", "Sadia Jahan")
             )
+            await cur.execute(
+                "UPDATE chat_settings SET rules_text=%s WHERE rules_text IS NULL OR rules_text=''",
+                (DEFAULT_RULES,)
+            )
 
 
 # ── WARN helpers ──────────────────────────────────
@@ -205,6 +209,25 @@ _VALID_SETTINGS_KEYS = {
 }
 
 
+DEFAULT_RULES = (
+    "📜 <b>গ্রুপের সাধারণ নিয়মাবলী (Group Rules)</b> 📜\n"
+    "━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+    "১. 👥 <b>সম্মান বজায় রাখুন:</b>\n"
+    "   ▸ গ্রুপের সকল সদস্যের সাথে মার্জিত ও সম্মানজনক আচরণ করুন।\n"
+    "   ▸ কাউকে অযথা আক্রমণ, গালিগালাজ বা হয়রানি করা সম্পূর্ণ নিষিদ্ধ।\n\n"
+    "২. 🚫 <b>স্প্যামিং ও ফ্লাডিং নিষিদ্ধ:</b>\n"
+    "   ▸ অপ্রয়োজনীয় মেসেজ বা অতিরিক্ত স্টিকার দিয়ে চ্যাট বক্স ভরিয়ে ফেলা যাবে না।\n\n"
+    "৩. 🔗 <b>অনাকাঙ্ক্ষিত লিংক ও প্রচার নিষিদ্ধ:</b>\n"
+    "   ▸ অ্যাডমিনের অনুমতি ব্যতীত কোনো বাহ্যিক লিংক বা অন্যান্য গ্রুপ/চ্যানেলের ইনভাইট লিংক শেয়ার করা যাবে না।\n\n"
+    "৪. 🔞 <b>ভিআইপি লাইভ চ্যাট রুম:</b>\n"
+    "   ▸ আমাদের ভিআইপি রুমে সরাসরি যুক্ত হতে গ্রুপে ৫ জন বন্ধুকে ইনভাইট (Add) করুন এবং ওয়েলকাম বাটনের লিংকে ক্লিক করুন।\n\n"
+    "৫. 👮 <b>অ্যাডমিনদের সিদ্ধান্ত:</b>\n"
+    "   ▸ গ্রুপের শৃঙ্খলা রক্ষার্থে অ্যাডমিনদের সিদ্ধান্তই চূড়ান্ত। নিয়ম ভঙ্গ করলে সতর্কবার্তা (Warn) অথবা সরাসরি ব্যান করা হতে পারে।\n\n"
+    "━━━━━━━━━━━━━━━━━━━━━━━\n"
+    "🌸 <i>নিয়ম মেনে চলুন, সুন্দর ও নিরাপদ আড্ডা উপভোগ করুন!</i> 🌸"
+)
+
+
 async def get_chat_settings(chat_id: int) -> dict:
     """Return settings dict with safe defaults; never returns {}."""
     defaults = {
@@ -213,7 +236,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "goodbye_enabled": 0, "goodbye_text": "",
         "antiflood_enabled": 0, "antilink_enabled": 0,
         "badwords_enabled": 1, "badwords_list": "ছেলে,ও ছেলে,স্কেমার,বাটপার,প্রতারক,chele,o chele,sele,o sele,chala,scammer,skeimer,skemer,scamer,skeimar",
-        "rules_text": "", "lock_messages": 0,
+        "rules_text": DEFAULT_RULES, "lock_messages": 0,
         "lock_media": 0, "lock_stickers": 0,
         "max_warns": 3, "warn_action": "ban",
         "badword_strike_limit": 3, "badword_mute_duration": 60,

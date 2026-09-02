@@ -168,11 +168,9 @@ async def cmd_setrules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def cmd_rules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     settings = await get_chat_settings(update.effective_chat.id)
-    rules = settings.get("rules_text") or ""
-    if not rules:
-        await update.message.reply_text("এই গ্রুপে এখনো কোনো নিয়ম সেট করা হয়নি।")
-        return
-    await update.message.reply_html(f"📋 <b>গ্রুপের নিয়মাবলী:</b>\n\n{rules}")
+    from database import DEFAULT_RULES
+    rules = settings.get("rules_text") or DEFAULT_RULES
+    await update.message.reply_html(rules)
 
 
 # ── WARN SETTINGS ─────────────────────────────
