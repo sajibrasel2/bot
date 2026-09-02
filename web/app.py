@@ -110,13 +110,19 @@ def _execute(sql: str, args=()):
 
 
 def get_all_chats():
-    rows = _query("SELECT chat_id, chat_title, member_count FROM chat_settings ORDER BY chat_id", fetchall=True)
+    try:
+        rows = _query("SELECT * FROM chat_settings ORDER BY chat_id", fetchall=True)
+    except Exception:
+        rows = []
     chats = []
     for idx, r in enumerate(rows or [], 1):
+        cid = r.get("chat_id")
+        title = r.get("chat_title")
+        m_count = r.get("member_count")
         chats.append({
-            "chat_id": r["chat_id"],
-            "title": r.get("chat_title") or f"গ্রুপ #{idx}",
-            "member_count": r.get("member_count") or 0
+            "chat_id": cid,
+            "title": title if (title and str(title).strip()) else f"গ্রুপ #{idx}",
+            "member_count": int(m_count) if (m_count and str(m_count).isdigit()) else 0
         })
     return chats
 
