@@ -82,7 +82,7 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     try:
         for i in range(0, total_users, batch_size):
             if not _active_tags.get(chat_id):
-                await update.message.reply_html("🛑 <b>মেনশন প্রক্রিয়া বাতিল করা হয়েছে।</b>")
+                await context.bot.send_message(chat_id=chat_id, text="🛑 <b>মেনশন প্রক্রিয়া বন্ধ করা হয়েছে।</b>", parse_mode="HTML")
                 return
 
             batch = users[i:i + batch_size]
@@ -103,11 +103,11 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             except Exception as e:
                 logger.debug(f"Tagall batch error in chat {chat_id}: {e}")
 
-            # Sleep 2.0 seconds between batches to avoid Telegram rate limits
-            await asyncio.sleep(2.0)
+            # Sleep 1.5 seconds between batches
+            await asyncio.sleep(1.5)
 
         if _active_tags.get(chat_id):
-            await update.message.reply_html("✅ <b>সফলভাবে সকল সদস্যকে মেনশন করা সম্পন্ন হয়েছে!</b>")
+            await context.bot.send_message(chat_id=chat_id, text="✅ <b>সফলভাবে সকল সদস্যকে মেনশন করা সম্পন্ন হয়েছে!</b>", parse_mode="HTML")
 
     finally:
         _active_tags[chat_id] = False
@@ -120,9 +120,9 @@ async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
     if _active_tags.get(chat_id):
         _active_tags[chat_id] = False
-        await update.message.reply_html("🛑 <b>মেনশন প্রক্রিয়া থামানো হয়েছে।</b>")
+        await update.message.reply_html("🛑 <b>মেনশন প্রক্রিয়া তাৎক্ষণিক থামানো হয়েছে!</b>")
     else:
-        await update.message.reply_text("ℹ️ বর্তমানে কোনো সক্রিয় মেনশন প্রক্রিয়া চলছে না।")
+        await update.message.reply_text("ℹ️ বর্তমানে কোনো সক্রিয় মেনশন প্রক্রিয়া চলছে না (বা ইতিমধ্যে শেষ হয়ে গেছে)।")
 
 
 def register(app: Application) -> None:
