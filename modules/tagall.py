@@ -90,9 +90,9 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             for u in batch:
                 uid = u["user_id"]
                 fname = html.escape(u["first_name"] or "Member")
-                mentions.append(f"• <a href=\"tg://user?id={uid}\">{fname}</a>")
+                mentions.append(f"<a href=\"tg://user?id={uid}\">{fname}</a>")
 
-            text = f"{header_text}\n━━━━━━━━━━━━━━━━━━━━━━━\n" + "\n".join(mentions)
+            text = f"{header_text}\n👉 " + " • ".join(mentions)
 
             try:
                 await context.bot.send_message(
