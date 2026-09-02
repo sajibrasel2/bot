@@ -128,14 +128,15 @@ def admin_only(func):
             return sent
 
         cmd_name = func.__name__
-        if update.message and cmd_name not in ("cmd_tagall", "cmd_rules"):
+        exempt = ("cmd_tagall", "cmd_rules", "set_welcome_sticker", "set_promo_sticker", "del_welcome_sticker", "del_promo_sticker")
+        if update.message and cmd_name not in exempt:
             update.message.reply_text = _wrapped_reply_text
             update.message.reply_html = _wrapped_reply_html
 
         try:
             return await func(update, context, *args, **kwargs)
         finally:
-            if msg and cmd_name not in ("cmd_rules",):
+            if msg and cmd_name not in exempt:
                 asyncio.create_task(auto_delete_message(msg, delay=3))
     return wrapper
 
