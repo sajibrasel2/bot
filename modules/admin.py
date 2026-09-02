@@ -415,6 +415,7 @@ def _settings_text(chat_title, settings):
 @admin_only
 async def cmd_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat = update.effective_chat
+    user = update.effective_user
     if chat.type == "private":
         await update.message.reply_text("⛔ এই সেটিংস প্যানেল শুধুমাত্র গ্রুপে ব্যবহার করা যাবে।")
         return
@@ -422,7 +423,18 @@ async def cmd_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     settings = await get_chat_settings(chat.id)
     text = _settings_text(chat.title, settings)
     markup = _settings_markup(settings)
-    await update.message.reply_html(text, reply_markup=markup)
+
+    try:
+        await context.bot.send_message(
+            chat_id=user.id,
+            text=text,
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+        await update.message.reply_html("📩 <b>গ্রুপ সেটিংস প্যানেল আপনার ইনবক্সে পাঠানো হয়েছে!</b>")
+    except Exception:
+        # Fallback if admin hasn't started bot in private chat
+        await update.message.reply_html(text, reply_markup=markup)
 
 
 async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

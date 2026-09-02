@@ -68,25 +68,87 @@ async def is_owner(update: Update) -> bool:
     return user.id in (OWNER_ID, 8904339611, 5888198325)
 
 
+import asyncio
+
+
+async def auto_delete_message(message, delay: int = 5) -> None:
+    """Auto-deletes a message after `delay` seconds."""
+    if not message:
+        return
+    await asyncio.sleep(delay)
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+
 def admin_only(func):
-    """Decorator: only allow admins/owner to run the command."""
+    """Decorator: only allow admins/owner to run the command with auto-clean in groups."""
     @functools.wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
         if update.effective_chat.type == "private":
             return await func(update, context, *args, **kwargs)
+
+        # 1. Automatically delete the admin command message in groups (Silent Command)
+        msg = update.effective_message
+        if msg:
+            try:
+                asyncio.create_task(auto_delete_message(msg, delay=1))
+            except Exception:
+                pass
+
+        # 2. Check admin authorization
         if not await is_admin(update):
-            await update.message.reply_text("⛔ এই কমান্ড শুধুমাত্র অ্যাডমিনরা ব্যবহার করতে পারবেন।")
+            try:
+                sent = await update.message.reply_text("⛔ এই কমান্ড শুধুমাত্র অ্যাডমিনরা ব্যবহার করতে পারবেন।")
+                asyncio.create_task(auto_delete_message(sent, delay=5))
+            except Exception:
+                pass
             return
+
+        # 3. Auto-delete bot reply after 6 seconds for clean group chat
+        orig_reply_text = update.message.reply_text
+        orig_reply_html = update.message.reply_html
+
+        async def _wrapped_reply_text(*r_args, **r_kwargs):
+            sent = await orig_reply_text(*r_args, **r_kwargs)
+            asyncio.create_task(auto_delete_message(sent, delay=6))
+            return sent
+
+        async def _wrapped_reply_html(*r_args, **r_kwargs):
+            sent = await orig_reply_html(*r_args, **r_kwargs)
+            asyncio.create_task(auto_delete_message(sent, delay=6))
+            return sent
+
+        cmd_name = func.__name__
+        if cmd_name not in ("cmd_tagall", "cmd_rules"):
+            update.message.reply_text = _wrapped_reply_text
+            update.message.reply_html = _wrapped_reply_html
+
         return await func(update, context, *args, **kwargs)
     return wrapper
 
 
 def owner_only(func):
-    """Decorator: only allow the bot owner."""
+    """Decorator: only allow the bot owner with auto-clean in groups."""
     @functools.wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+        if update.effective_chat.type == "private":
+            return await func(update, context, *args, **kwargs)
+
+        msg = update.effective_message
+        if msg:
+            try:
+                asyncio.create_task(auto_delete_message(msg, delay=1))
+            except Exception:
+                pass
+
         if not await is_owner(update):
-            await update.message.reply_text("⛔ এই কমান্ড শুধুমাত্র বট মালিক ব্যবহার করতে পারবেন।")
+            try:
+                sent = await update.message.reply_text("⛔ এই কমান্ড শুধুমাত্র বট মালিক ব্যবহার করতে পারবেন।")
+                asyncio.create_task(auto_delete_message(sent, delay=5))
+            except Exception:
+                pass
             return
         return await func(update, context, *args, **kwargs)
     return wrapper
