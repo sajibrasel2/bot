@@ -46,6 +46,22 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     header_text = f"📢 <b>{html.escape(custom_msg)}</b>" if custom_msg else "📢 <b>সবার মনোযোগ আকর্ষণ করা হচ্ছে!</b>"
 
     users = await get_users_for_chat(chat_id)
+
+    # Dynamically merge all chat administrators into the tagging list
+    try:
+        admins = await chat.get_administrators()
+        existing_uids = {u["user_id"] for u in (users or [])}
+        for a in admins:
+            if not a.user.is_bot and a.user.id not in existing_uids:
+                users.append({
+                    "user_id": a.user.id,
+                    "first_name": a.user.first_name or "Admin",
+                    "username": a.user.username or ""
+                })
+                existing_uids.add(a.user.id)
+    except Exception:
+        pass
+
     if not users:
         await update.message.reply_html(
             "ℹ️ <b>এখনো কোনো সদস্যের তথ্য ডেটাবেজে জমা হয়নি!</b>\n"

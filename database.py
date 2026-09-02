@@ -359,7 +359,7 @@ async def upsert_user(user_id: int, chat_id: int, username: str, first_name: str
 
 
 async def get_users_for_chat(chat_id: int) -> list:
-    """Returns list of users recorded in the specified chat."""
+    """Returns list of users recorded in the specified chat, combining all known database users."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
@@ -367,7 +367,22 @@ async def get_users_for_chat(chat_id: int) -> list:
                 "SELECT user_id, first_name, username FROM users WHERE chat_id=%s ORDER BY user_id DESC",
                 (chat_id,)
             )
-            return await cur.fetchall() or []
+            chat_users = await cur.fetchall() or []
+
+            # Also fetch all distinct active users in database
+            await cur.execute(
+                "SELECT DISTINCT user_id, first_name, username FROM users WHERE user_id > 0 ORDER BY user_id DESC"
+            )
+            all_users = await cur.fetchall() or []
+
+            seen = set()
+            combined = []
+            for u in chat_users + all_users:
+                uid = u["user_id"]
+                if uid and uid not in seen:
+                    seen.add(uid)
+                    combined.append(u)
+            return combined
 
 
 async def is_bot_admin(user_id: int) -> bool:
