@@ -103,12 +103,11 @@ async def sync_group_info(app: Application) -> None:
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    err_str = str(context.error or "").lower()
     logger.error("Exception while handling update:", exc_info=context.error)
-    if isinstance(update, Update) and update.effective_message:
-        try:
-            await update.effective_message.reply_text("⚠️ একটি অপ্রত্যাশিত ত্রুটি হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।")
-        except Exception:
-            pass
+    # Ignore routine Telegram API messages like message deleted, chat not found, etc.
+    if any(k in err_str for k in ("message to reply not found", "message to be replied not found", "message can't be deleted", "message is not modified", "chat not found", "bot was blocked", "have no rights")):
+        return
 
 
 def main() -> None:

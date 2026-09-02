@@ -89,43 +89,54 @@ def admin_only(func):
         if update.effective_chat.type == "private":
             return await func(update, context, *args, **kwargs)
 
-        # 1. Automatically delete the admin command message in groups (Silent Command)
         msg = update.effective_message
-        if msg:
-            try:
-                asyncio.create_task(auto_delete_message(msg, delay=1))
-            except Exception:
-                pass
 
-        # 2. Check admin authorization
+        # 1. Check admin authorization
         if not await is_admin(update):
             try:
-                sent = await update.message.reply_text("⛔ এই কমান্ড শুধুমাত্র অ্যাডমিনরা ব্যবহার করতে পারবেন।")
+                sent = await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="⛔ এই কমান্ড শুধুমাত্র অ্যাডমিনরা ব্যবহার করতে পারবেন।"
+                )
                 asyncio.create_task(auto_delete_message(sent, delay=5))
             except Exception:
                 pass
+            if msg:
+                asyncio.create_task(auto_delete_message(msg, delay=2))
             return
 
-        # 3. Auto-delete bot reply after 6 seconds for clean group chat
-        orig_reply_text = update.message.reply_text
-        orig_reply_html = update.message.reply_html
+        # 2. Auto-delete bot reply after 6 seconds for clean group chat
+        orig_reply_text = update.message.reply_text if update.message else None
+        orig_reply_html = update.message.reply_html if update.message else None
 
         async def _wrapped_reply_text(*r_args, **r_kwargs):
-            sent = await orig_reply_text(*r_args, **r_kwargs)
+            try:
+                sent = await orig_reply_text(*r_args, **r_kwargs)
+            except Exception:
+                text = r_args[0] if r_args else r_kwargs.get("text", "")
+                sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
             asyncio.create_task(auto_delete_message(sent, delay=6))
             return sent
 
         async def _wrapped_reply_html(*r_args, **r_kwargs):
-            sent = await orig_reply_html(*r_args, **r_kwargs)
+            try:
+                sent = await orig_reply_html(*r_args, **r_kwargs)
+            except Exception:
+                text = r_args[0] if r_args else r_kwargs.get("text", "")
+                sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
             asyncio.create_task(auto_delete_message(sent, delay=6))
             return sent
 
         cmd_name = func.__name__
-        if cmd_name not in ("cmd_tagall", "cmd_rules"):
+        if update.message and cmd_name not in ("cmd_tagall", "cmd_rules"):
             update.message.reply_text = _wrapped_reply_text
             update.message.reply_html = _wrapped_reply_html
 
-        return await func(update, context, *args, **kwargs)
+        try:
+            return await func(update, context, *args, **kwargs)
+        finally:
+            if msg and cmd_name not in ("cmd_rules",):
+                asyncio.create_task(auto_delete_message(msg, delay=3))
     return wrapper
 
 
@@ -137,20 +148,25 @@ def owner_only(func):
             return await func(update, context, *args, **kwargs)
 
         msg = update.effective_message
-        if msg:
-            try:
-                asyncio.create_task(auto_delete_message(msg, delay=1))
-            except Exception:
-                pass
 
         if not await is_owner(update):
             try:
-                sent = await update.message.reply_text("⛔ এই কমান্ড শুধুমাত্র বট মালিক ব্যবহার করতে পারবেন।")
+                sent = await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="⛔ এই কমান্ড শুধুমাত্র বট মালিক ব্যবহার করতে পারবেন।"
+                )
                 asyncio.create_task(auto_delete_message(sent, delay=5))
             except Exception:
                 pass
+            if msg:
+                asyncio.create_task(auto_delete_message(msg, delay=2))
             return
-        return await func(update, context, *args, **kwargs)
+
+        try:
+            return await func(update, context, *args, **kwargs)
+        finally:
+            if msg:
+                asyncio.create_task(auto_delete_message(msg, delay=3))
     return wrapper
 
 
