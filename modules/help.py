@@ -2,9 +2,11 @@
 Help module — /start, /help, /id, /info, /chatinfo, /adminlist
 """
 
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
 from config import WEB_APP_URL
+from database import upsert_user
 
 HELP_SECTIONS = {
     "welcome": {
@@ -118,6 +120,8 @@ def _back_keyboard():
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     chat = update.effective_chat
+    if user and chat:
+        asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
     if chat.type != "private":
         await update.message.reply_html(
             f"👋 হ্যালো {user.mention_html()}!\n"
@@ -145,6 +149,10 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    chat = update.effective_chat
+    if user and chat:
+        asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
     await update.message.reply_html(
         "📖 <b>কমান্ড তালিকা</b> — বিভাগ বেছে নিন:",
         reply_markup=_main_keyboard()

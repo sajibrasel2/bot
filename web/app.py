@@ -147,13 +147,19 @@ def get_stats():
     try:
         with conn.cursor() as cur:
             for key, table in [("groups","chat_settings"),("warns","warns"),
-                                ("notes","notes"),("users","users")]:
+                                ("notes","notes")]:
                 try:
                     cur.execute(f"SELECT COUNT(*) as c FROM `{table}`")
                     row = cur.fetchone()
                     result[key] = row["c"] if row else 0
                 except Exception:
                     result[key] = 0
+            try:
+                cur.execute("SELECT COUNT(DISTINCT user_id) as c FROM users")
+                row = cur.fetchone()
+                result["users"] = row["c"] if row else 0
+            except Exception:
+                result["users"] = 0
     finally:
         conn.close()
     return result

@@ -16,7 +16,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMem
 from telegram.ext import ContextTypes, MessageHandler, CommandHandler, filters, ChatMemberHandler
 from telegram.helpers import mention_html
 
-from database import get_chat_settings, update_chat_setting
+from database import get_chat_settings, update_chat_setting, upsert_user
 from modules.utils import admin_only
 
 AUTO_DELETE_SECONDS = 60   # ওয়েলকাম/গুডবাই মেসেজ এত সেকেন্ড পর অটো ডিলিট
@@ -97,6 +97,8 @@ async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE)
         user = chat_member_update.new_chat_member.user
         if user.is_bot:
             return
+
+        asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
 
         settings = await get_chat_settings(chat.id)
         if not settings.get("welcome_enabled", 1):
