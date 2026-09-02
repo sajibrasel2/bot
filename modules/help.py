@@ -65,7 +65,9 @@ HELP_SECTIONS = {
             "/del — মেসেজ মুছুন\n"
             "/purge &lt;N&gt; — শেষ N মেসেজ মুছুন\n"
             "/setwarnaction ban|kick|mute\n"
-            "/setwarnlimit &lt;সংখ্যা&gt;"
+            "/setwarnlimit &lt;সংখ্যা&gt;\n"
+            "/tagall &lt;বার্তা&gt; — সবাইকে মেনশন করুন (/all)\n"
+            "/cancel — চলমান মেনশন বন্ধ করুন"
         ),
     },
     "notes": {

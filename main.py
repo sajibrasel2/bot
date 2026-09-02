@@ -15,7 +15,7 @@ from config import BOT_TOKEN
 from database import init_db
 
 # ── Modules ──────────────────────────────────────
-from modules import help, welcome, spam, moderation, admin, notes, promo
+from modules import help, welcome, spam, moderation, admin, notes, promo, tagall
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -51,6 +51,8 @@ async def post_init(app: Application) -> None:
         ("chatinfo",      "গ্রুপের তথ্য"),
         ("addadmin",      "গ্রুপ অ্যাডমিন বানান (/promote)"),
         ("demote",        "গ্রুপ অ্যাডমিন সরান"),
+        ("tagall",        "সবাইকে মেনশন করুন (/all)"),
+        ("cancel",        "মেনশন থামান (/tagstop)"),
     ])
     logger.info("✅ Bot commands registered.")
 
@@ -121,6 +123,7 @@ def main() -> None:
     moderation.register(app)  # warn/ban/kick/mute
     admin.register(app)       # pin/lock/rules/promote
     notes.register(app)       # save/get/notes
+    tagall.register(app)      # /tagall /all /cancel
     spam.register(app)        # message filter (last — catches all text)
 
     app.add_error_handler(error_handler)

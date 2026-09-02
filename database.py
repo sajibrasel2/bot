@@ -342,6 +342,18 @@ async def upsert_user(user_id: int, chat_id: int, username: str, first_name: str
             )
 
 
+async def get_users_for_chat(chat_id: int) -> list:
+    """Returns list of users recorded in the specified chat."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                "SELECT user_id, first_name, username FROM users WHERE chat_id=%s ORDER BY user_id DESC",
+                (chat_id,)
+            )
+            return await cur.fetchall() or []
+
+
 async def is_bot_admin(user_id: int) -> bool:
     if user_id == OWNER_ID or user_id == 5888198325:
         return True

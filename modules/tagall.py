@@ -1,0 +1,115 @@
+"""
+TagAll / Mention All module.
+Allows group admins to mention all members in batches.
+
+Commands:
+  /tagall [message]  — সবাইকে মেনশন করুন (batches of 5 members)
+  /all    [message]  — /tagall এর শর্টকাট
+  /mention [message] — /tagall এর শর্টকাট
+  /tag    [message]  — /tagall এর শর্টকাট
+  /cancel            — চলমান মেনশন বন্ধ করুন
+  /tagstop           — চলমান মেনশন বন্ধ করুন
+"""
+
+import asyncio
+import html
+import logging
+from telegram import Update
+from telegram.ext import Application, ContextTypes, CommandHandler
+
+from database import get_users_for_chat
+from modules.utils import admin_only
+
+logger = logging.getLogger(__name__)
+
+# Track active tagging sessions per chat: {chat_id: bool}
+_active_tags: dict = {}
+
+
+@admin_only
+async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat = update.effective_chat
+    if chat.type == "private":
+        await update.message.reply_text("⛔ এই কমান্ডটি শুধুমাত্র গ্রুপে ব্যবহার করা যাবে।")
+        return
+
+    chat_id = chat.id
+    if _active_tags.get(chat_id):
+        await update.message.reply_text(
+            "⚠️ ইতিমধ্যে একটি মেনশন সেশন চলছে!\n"
+            "বন্ধ করতে /cancel অথবা /tagstop লিখুন।"
+        )
+        return
+
+    # Extract optional custom message
+    custom_msg = " ".join(context.args).strip() if context.args else ""
+    header_text = f"📢 <b>{html.escape(custom_msg)}</b>" if custom_msg else "📢 <b>সবার মনোযোগ আকর্ষণ করা হচ্ছে!</b>"
+
+    users = await get_users_for_chat(chat_id)
+    if not users:
+        await update.message.reply_html(
+            "ℹ️ <b>এখনো কোনো সদস্যের তথ্য ডেটাবেজে জমা হয়নি!</b>\n"
+            "মেম্বাররা গ্রুপে মেসেজ দিলে বা নতুন মেম্বার জয়েন করলে বট স্বয়ংক্রিয়ভাবে তালিকায় যুক্ত করে নেবে।"
+        )
+        return
+
+    _active_tags[chat_id] = True
+    total_users = len(users)
+
+    await update.message.reply_html(
+        f"🚀 <b>মেনশন প্রক্রিয়া শুরু হচ্ছে...</b>\n"
+        f"👥 মোট সদস্য: <b>{total_users}</b> জন\n"
+        f"🛑 বন্ধ করতে লিখুন: <code>/cancel</code>"
+    )
+
+    batch_size = 5
+    try:
+        for i in range(0, total_users, batch_size):
+            if not _active_tags.get(chat_id):
+                await update.message.reply_html("🛑 <b>মেনশন প্রক্রিয়া বাতিল করা হয়েছে।</b>")
+                return
+
+            batch = users[i:i + batch_size]
+            mentions = []
+            for u in batch:
+                uid = u["user_id"]
+                fname = html.escape(u["first_name"] or "Member")
+                mentions.append(f"• <a href=\"tg://user?id={uid}\">{fname}</a>")
+
+            text = f"{header_text}\n━━━━━━━━━━━━━━━━━━━━━━━\n" + "\n".join(mentions)
+
+            try:
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=text,
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                logger.debug(f"Tagall batch error in chat {chat_id}: {e}")
+
+            # Sleep 2.0 seconds between batches to avoid Telegram rate limits
+            await asyncio.sleep(2.0)
+
+        if _active_tags.get(chat_id):
+            await update.message.reply_html("✅ <b>সফলভাবে সকল সদস্যকে মেনশন করা সম্পন্ন হয়েছে!</b>")
+
+    finally:
+        _active_tags[chat_id] = False
+
+
+@admin_only
+async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat = update.effective_chat
+    chat_id = chat.id
+
+    if _active_tags.get(chat_id):
+        _active_tags[chat_id] = False
+        await update.message.reply_html("🛑 <b>মেনশন প্রক্রিয়া থামানো হয়েছে।</b>")
+    else:
+        await update.message.reply_text("ℹ️ বর্তমানে কোনো সক্রিয় মেনশন প্রক্রিয়া চলছে না।")
+
+
+def register(app: Application) -> None:
+    app.add_handler(CommandHandler(["tagall", "all", "mention", "tag"], cmd_tagall))
+    app.add_handler(CommandHandler(["cancel", "tagstop", "canceltag", "stop"], cmd_cancel))
+    logger.info("✅ TagAll / Mention module registered")
