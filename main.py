@@ -7,7 +7,7 @@ import asyncio
 import logging
 import os
 
-from telegram import Update
+from telegram import Update, BotCommand, BotCommandScopeDefault, BotCommandScopeAllChatAdministrators
 from telegram.ext import Application, ContextTypes
 from telegram.request import HTTPXRequest
 
@@ -29,32 +29,43 @@ async def post_init(app: Application) -> None:
     await init_db()
     logger.info("✅ MySQL Database initialized")
 
-    await app.bot.set_my_commands([
-        ("start",         "বট শুরু করুন"),
-        ("help",          "সাহায্য মেনু"),
-        ("settings",      "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),
-        ("rules",         "গ্রুপের নিয়ম দেখুন"),
-        ("warn",          "ব্যবহারকারীকে সতর্ক করুন"),
-        ("warns",         "ওয়ার্ন তালিকা দেখুন"),
-        ("ban",           "ব্যান করুন"),
-        ("kick",          "কিক করুন"),
-        ("mute",          "মিউট করুন"),
-        ("unmute",        "আনমিউট করুন"),
-        ("pin",           "মেসেজ পিন করুন"),
-        ("unpin",         "পিন সরান"),
-        ("lock",          "চ্যাট লক করুন"),
-        ("unlock",        "চ্যাট আনলক করুন"),
-        ("notes",         "নোট তালিকা"),
-        ("adminlist",     "অ্যাডমিন তালিকা"),
-        ("id",            "ID দেখুন"),
-        ("info",          "ব্যবহারকারীর তথ্য"),
-        ("chatinfo",      "গ্রুপের তথ্য"),
-        ("addadmin",      "গ্রুপ অ্যাডমিন বানান (/promote)"),
-        ("demote",        "গ্রুপ অ্যাডমিন সরান"),
-        ("tagall",        "সবাইকে মেনশন করুন (/all)"),
-        ("cancel",        "মেনশন থামান (/tagstop)"),
-    ])
-    logger.info("✅ Bot commands registered.")
+    # 1. Commands for general members (সাধারণ সদস্যদের জন্য মেনু)
+    user_commands = [
+        BotCommand("start",         "বট শুরু করুন"),
+        BotCommand("help",          "সাহায্য মেনু"),
+        BotCommand("rules",         "গ্রুপের নিয়ম দেখুন"),
+        BotCommand("notes",         "নোট তালিকা"),
+        BotCommand("adminlist",     "অ্যাডমিন তালিকা"),
+        BotCommand("id",            "ID দেখুন"),
+        BotCommand("info",          "ব্যবহারকারীর তথ্য"),
+        BotCommand("chatinfo",      "গ্রুপের তথ্য"),
+    ]
+    await app.bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
+
+    # 2. Commands for group administrators (শুধুমাত্র অ্যাডমিনদের জন্য মেনু)
+    admin_commands = [
+        BotCommand("settings",      "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),
+        BotCommand("panel",         "মডারেশন ও কন্ট্রোল প্যানেল"),
+        BotCommand("tagall",        "সবাইকে মেনশন করুন (/all)"),
+        BotCommand("cancel",        "মেনশন থামান (/tagstop)"),
+        BotCommand("warn",          "সতর্ক করুন"),
+        BotCommand("warns",         "ওয়ার্ন তালিকা দেখুন"),
+        BotCommand("ban",           "ব্যান করুন"),
+        BotCommand("kick",          "কিক করুন"),
+        BotCommand("mute",          "মিউট করুন"),
+        BotCommand("unmute",        "আনমিউট করুন"),
+        BotCommand("pin",           "মেসেজ পিন করুন"),
+        BotCommand("unpin",         "পিন সরান"),
+        BotCommand("lock",          "চ্যাট লক করুন"),
+        BotCommand("unlock",        "চ্যাট আনলক করুন"),
+        BotCommand("addadmin",      "গ্রুপ অ্যাডমিন বানান (/promote)"),
+        BotCommand("demote",        "গ্রুপ অ্যাডমিন সরান"),
+        BotCommand("rules",         "গ্রুপের নিয়ম দেখুন"),
+        BotCommand("notes",         "নোট তালিকা"),
+        BotCommand("adminlist",     "অ্যাডমিন তালিকা"),
+    ]
+    await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
+    logger.info("✅ Bot commands registered with dedicated member and admin scopes.")
 
     # Start the promo loop task when event loop is active
     from modules import promo
