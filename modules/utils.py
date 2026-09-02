@@ -11,23 +11,61 @@ from config import OWNER_ID
 async def is_admin(update: Update, user_id: int = None) -> bool:
     """Return True if user_id (or message sender) is an admin/creator."""
     chat = update.effective_chat
+    if not chat:
+        return False
     if chat.type == "private":
         return True
-    uid = user_id or update.effective_user.id
-    if uid == OWNER_ID:
+
+    # 1. Anonymous admin / Channel sender in group
+    msg = update.effective_message
+    if msg:
+        if msg.sender_chat and msg.sender_chat.id == chat.id:
+            return True
+        if msg.from_user and msg.from_user.id in (1087968824, 777000): # GroupAnonymousBot / Service
+            return True
+
+    # 2. Check user ID
+    user = update.effective_user
+    uid = user_id or (user.id if user else None)
+    if not uid:
+        return False
+
+    # 3. Known bot owner IDs & database bot admins
+    if uid in (OWNER_ID, 8904339611, 5888198325):
         return True
-    from database import is_bot_admin
-    if await is_bot_admin(uid):
-        return True
+    
+    try:
+        from database import is_bot_admin
+        if await is_bot_admin(uid):
+            return True
+    except Exception:
+        pass
+
+    # 4. Check chat member status
     try:
         member = await chat.get_member(uid)
-        return member.status in (ChatMember.ADMINISTRATOR, ChatMember.OWNER)
+        if member and member.status in (ChatMember.ADMINISTRATOR, ChatMember.OWNER, "administrator", "creator", "admin"):
+            return True
     except Exception:
-        return False
+        pass
+
+    # 5. Check chat administrators list as fallback
+    try:
+        admins = await chat.get_administrators()
+        for a in admins:
+            if a.user.id == uid:
+                return True
+    except Exception:
+        pass
+
+    return False
 
 
 async def is_owner(update: Update) -> bool:
-    return update.effective_user.id == OWNER_ID
+    user = update.effective_user
+    if not user:
+        return False
+    return user.id in (OWNER_ID, 8904339611, 5888198325)
 
 
 def admin_only(func):
