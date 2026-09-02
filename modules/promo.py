@@ -83,23 +83,38 @@ async def promo_loop(app: Application) -> None:
 async def set_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Set animated sticker for promotional broadcast by replying to a sticker or passing ID."""
     msg = update.effective_message
+    chat_id = update.effective_chat.id
     stk_id = None
-    if msg.reply_to_message and msg.reply_to_message.sticker:
+
+    if msg and msg.reply_to_message and msg.reply_to_message.sticker:
         stk_id = msg.reply_to_message.sticker.file_id
-    elif msg.sticker:
+    elif msg and msg.sticker:
         stk_id = msg.sticker.file_id
     elif context.args:
         stk_id = context.args[0].strip()
 
     if not stk_id:
-        await msg.reply_text(
-            "📌 যে অ্যানিমেটেড স্টিকারটি বিজ্ঞাপনের সাথে সেট করতে চান, গ্রুপে সেই স্টিকারে Reply করে /setpromosticker লিখুন।"
-        )
+        try:
+            sent = await context.bot.send_message(
+                chat_id=chat_id,
+                text="📌 <b>যে অ্যানিমেটেড স্টিকারটি বিজ্ঞাপনে সেট করতে চান:</b>\nগ্রুপে সেই স্টিকারে <b>Reply</b> করে <code>/setpromosticker</code> লিখুন।",
+                parse_mode="HTML"
+            )
+            asyncio.create_task(_auto_delete(sent, delay=10))
+        except Exception:
+            pass
         return
 
-    chat_id = update.effective_chat.id
     await update_chat_setting(chat_id, "promo_sticker", stk_id)
-    await msg.reply_html("✅ <b>বিজ্ঞাপনের অ্যানিমেটেড স্টিকার সফলভাবে সেট ও সক্রিয় করা হয়েছে!</b>")
+    try:
+        sent = await context.bot.send_message(
+            chat_id=chat_id,
+            text="✅ <b>বিজ্ঞাপনের অ্যানিমেটেড স্টিকার সফলভাবে সেট ও সক্রিয় করা হয়েছে!</b>",
+            parse_mode="HTML"
+        )
+        asyncio.create_task(_auto_delete(sent, delay=10))
+    except Exception:
+        pass
 
     # Send a quick verification preview of the sticker in the chat
     try:
@@ -112,8 +127,17 @@ async def set_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 @admin_only
 async def del_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Remove promotional broadcast sticker."""
-    await update_chat_setting(update.effective_chat.id, "promo_sticker", "")
-    await update.effective_message.reply_html("🗑️ <b>বিজ্ঞাপনের স্টিকার মুছে ফেলা হয়েছে।</b>")
+    chat_id = update.effective_chat.id
+    await update_chat_setting(chat_id, "promo_sticker", "")
+    try:
+        sent = await context.bot.send_message(
+            chat_id=chat_id,
+            text="🗑️ <b>বিজ্ঞাপনের স্টিকার মুছে ফেলা হয়েছে।</b>",
+            parse_mode="HTML"
+        )
+        asyncio.create_task(_auto_delete(sent, delay=8))
+    except Exception:
+        pass
 
 
 def register(app: Application) -> None:

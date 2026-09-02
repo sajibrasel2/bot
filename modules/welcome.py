@@ -226,23 +226,38 @@ async def reset_goodbye(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def set_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Set animated sticker for welcome messages by replying to a sticker or passing ID."""
     msg = update.effective_message
+    chat_id = update.effective_chat.id
     stk_id = None
-    if msg.reply_to_message and msg.reply_to_message.sticker:
+
+    if msg and msg.reply_to_message and msg.reply_to_message.sticker:
         stk_id = msg.reply_to_message.sticker.file_id
-    elif msg.sticker:
+    elif msg and msg.sticker:
         stk_id = msg.sticker.file_id
     elif context.args:
         stk_id = context.args[0].strip()
 
     if not stk_id:
-        await msg.reply_text(
-            "📌 যে অ্যানিমেটেড স্টিকারটি সেট করতে চান, গ্রুপে সেই স্টিকারে Reply করে /setwelcomesticker লিখুন।"
-        )
+        try:
+            sent = await context.bot.send_message(
+                chat_id=chat_id,
+                text="📌 <b>যে অ্যানিমেটেড স্টিকারটি সেট করতে চান:</b>\nগ্রুপে সেই স্টিকারে <b>Reply</b> করে <code>/setwelcomesticker</code> লিখুন।",
+                parse_mode="HTML"
+            )
+            asyncio.create_task(_auto_delete(sent, delay=10))
+        except Exception:
+            pass
         return
 
-    chat_id = update.effective_chat.id
     await update_chat_setting(chat_id, "welcome_sticker", stk_id)
-    await msg.reply_html("✅ <b>ওয়েলকাম অ্যানিমেটেড স্টিকার সফলভাবে সেট ও সক্রিয় করা হয়েছে!</b>")
+    try:
+        sent = await context.bot.send_message(
+            chat_id=chat_id,
+            text="✅ <b>ওয়েলকাম অ্যানিমেটেড স্টিকার সফলভাবে সেট ও সক্রিয় করা হয়েছে!</b>",
+            parse_mode="HTML"
+        )
+        asyncio.create_task(_auto_delete(sent, delay=10))
+    except Exception:
+        pass
 
     # Send a quick verification preview of the sticker in the chat
     try:
@@ -255,8 +270,17 @@ async def set_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE
 @admin_only
 async def del_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Remove welcome sticker."""
-    await update_chat_setting(update.effective_chat.id, "welcome_sticker", "")
-    await update.effective_message.reply_html("🗑️ <b>ওয়েলকাম স্টিকার মুছে ফেলা হয়েছে।</b>")
+    chat_id = update.effective_chat.id
+    await update_chat_setting(chat_id, "welcome_sticker", "")
+    try:
+        sent = await context.bot.send_message(
+            chat_id=chat_id,
+            text="🗑️ <b>ওয়েলকাম স্টিকার মুছে ফেলা হয়েছে।</b>",
+            parse_mode="HTML"
+        )
+        asyncio.create_task(_auto_delete(sent, delay=8))
+    except Exception:
+        pass
 
 
 def register(app) -> None:

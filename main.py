@@ -59,10 +59,13 @@ async def post_init(app: Application) -> None:
         BotCommand("lock",          "চ্যাট লক করুন"),
         BotCommand("unlock",        "চ্যাট আনলক করুন"),
         BotCommand("addadmin",      "গ্রুপ অ্যাডমিন বানান (/promote)"),
-        BotCommand("demote",        "গ্রুপ অ্যাডমিন সরান"),
-        BotCommand("rules",         "গ্রুপের নিয়ম দেখুন"),
-        BotCommand("notes",         "নোট তালিকা"),
-        BotCommand("adminlist",     "অ্যাডমিন তালিকা"),
+        BotCommand("setwelcomesticker", "ওয়েলকাম স্টিকার সেট করুন"),
+        BotCommand("delwelcomesticker", "ওয়েলকাম স্টিকার মুছুন"),
+        BotCommand("setpromosticker",   "বিজ্ঞাপন স্টিকার সেট করুন"),
+        BotCommand("delpromosticker",   "বিজ্ঞাপন স্টিকার মুছুন"),
+        BotCommand("rules",             "গ্রুপের নিয়ম দেখুন"),
+        BotCommand("notes",             "নোট তালিকা"),
+        BotCommand("adminlist",         "অ্যাডমিন তালিকা"),
     ]
     await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
     logger.info("✅ Bot commands registered with dedicated member and admin scopes.")
