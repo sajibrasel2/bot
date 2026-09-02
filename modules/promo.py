@@ -50,9 +50,11 @@ async def promo_loop(app: Application) -> None:
             await asyncio.sleep(600)
             continue
 
-        keyboard = InlineKeyboardMarkup([[
-            InlineKeyboardButton(text="🔥 🔞 🔴 𝗟𝗜𝗩𝗘 𝗖𝗛𝗔𝗧 • সরাসরি চ্যাট করুন 🔞 🔥", url="https://techandclick.site/bot/")
-        ]])
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣💋", url="https://techandclick.site/bot/")],
+            [InlineKeyboardButton(text="🔵 🎬😍 আনকাট প্রাইভেট ভিডিও দেখুন 🔥😈", url="https://techandclick.site/bot/")],
+            [InlineKeyboardButton(text="🟢 🔥🔞 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url="https://techandclick.site/bot/")],
+        ])
 
         # Collect all valid target chats (both Channels and Groups)
         # Avoid double-posting if a group is linked to a channel already receiving the broadcast

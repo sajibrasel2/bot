@@ -65,14 +65,23 @@ def _format(text: str, user, chat, count) -> str:
 
 
 def _build_button(settings: dict):
-    """ওয়েলকাম মেসেজের সাথে inline button তৈরি করে।"""
-    btn_text = (settings.get("welcome_button_text") or DEFAULT_BUTTON_TEXT).strip()
-    btn_url  = (settings.get("welcome_button_url")  or DEFAULT_BUTTON_URL).strip()
-    if btn_text and btn_url:
+    """ওয়েলকাম মেসেজের সাথে মাল্টি-কালার ৩-সারির ইনলাইন বাটন তৈরি করে।"""
+    custom_btn = (settings.get("welcome_button_text") or "").strip()
+    custom_url = (settings.get("welcome_button_url") or "").strip()
+    
+    # If admin set a single custom button text in dashboard
+    if custom_btn and custom_url:
         return InlineKeyboardMarkup([[
-            InlineKeyboardButton(text=btn_text, url=btn_url)
+            InlineKeyboardButton(text=custom_btn, url=custom_url)
         ]])
-    return None
+
+    # Default: 3-Row Colorful Stacked Buttons (Red, Blue, Green Themes)
+    target_url = custom_url if custom_url else DEFAULT_BUTTON_URL
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣💋", url=target_url)],
+        [InlineKeyboardButton(text="🔵 🎬😍 আনকাট প্রাইভেট ভিডিও দেখুন 🔥😈", url=target_url)],
+        [InlineKeyboardButton(text="🟢 🔥🔞 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url=target_url)],
+    ])
 
 
 # ── Event handlers ────────────────────────────────
