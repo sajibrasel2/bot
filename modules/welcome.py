@@ -83,6 +83,74 @@ def _build_button(settings: dict):
     ])
 
 
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Debounce cache to prevent duplicate welcome messages within 8 seconds for the same user in same chat
+_recent_welcomes: dict = {}
+
+
+async def _send_welcome(chat, user, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Core function to format and send the welcome message and sticker."""
+    if not chat or not user or user.is_bot:
+        return
+
+    key = (chat.id, user.id)
+    now = time.time()
+    if key in _recent_welcomes and (now - _recent_welcomes[key]) < 8:
+        return
+    _recent_welcomes[key] = now
+
+    # Prune old cache entries
+    for k in list(_recent_welcomes.keys()):
+        if now - _recent_welcomes[k] > 60:
+            del _recent_welcomes[k]
+
+    asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
+
+    settings = await get_chat_settings(chat.id)
+    if not settings.get("welcome_enabled", 1):
+        return
+
+    try:
+        count = await chat.get_member_count()
+        asyncio.create_task(update_chat_info(chat.id, title=chat.title or "", member_count=count))
+    except Exception:
+        count = "?"
+
+    text = settings.get("welcome_text") or DEFAULT_WELCOME
+    try:
+        formatted = _format(text, user, chat, count)
+    except (KeyError, ValueError):
+        formatted = text
+
+    # Send animated sticker if set
+    stk_id = settings.get("welcome_sticker")
+    if stk_id and stk_id.strip():
+        try:
+            stk = await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
+            asyncio.create_task(_auto_delete(stk))
+        except Exception:
+            try:
+                stk = await context.bot.send_animation(chat_id=chat.id, animation=stk_id.strip())
+                asyncio.create_task(_auto_delete(stk))
+            except Exception:
+                pass
+
+    try:
+        sent = await context.bot.send_message(
+            chat_id=chat.id,
+            text=formatted,
+            parse_mode="HTML",
+            reply_markup=_build_button(settings)
+        )
+        asyncio.create_task(_auto_delete(sent))
+    except Exception as e:
+        logger.debug(f"Error sending welcome message in chat {chat.id}: {e}")
+
+
 # ── Event handlers ────────────────────────────────
 
 async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -91,6 +159,8 @@ async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
 
     old_status = chat_member_update.old_chat_member.status
+    new_status = chat_member_update.new_chat_member.status
+
     if new_status == ChatMember.BANNED:
         user = chat_member_update.new_chat_member.user
         chat = update.effective_chat
@@ -111,50 +181,15 @@ async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if new_status == ChatMember.MEMBER and old_status in [ChatMember.LEFT, ChatMember.BANNED, ChatMember.RESTRICTED, 'left', 'kicked', 'restricted', None]:
         chat = update.effective_chat
         user = chat_member_update.new_chat_member.user
-        if user.is_bot:
-            return
+        await _send_welcome(chat, user, context)
 
-        asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
 
-        settings = await get_chat_settings(chat.id)
-        if not settings.get("welcome_enabled", 1):
-            return
-
-        try:
-            count = await chat.get_member_count()
-            asyncio.create_task(update_chat_info(chat.id, title=chat.title or "", member_count=count))
-        except Exception:
-            count = "?"
-
-        text = settings.get("welcome_text") or DEFAULT_WELCOME
-        try:
-            formatted = _format(text, user, chat, count)
-        except (KeyError, ValueError):
-            formatted = text
-
-        # Send animated sticker if set
-        stk_id = settings.get("welcome_sticker")
-        if stk_id and stk_id.strip():
-            try:
-                stk = await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
-                asyncio.create_task(_auto_delete(stk))
-            except Exception:
-                try:
-                    stk = await context.bot.send_animation(chat_id=chat.id, animation=stk_id.strip())
-                    asyncio.create_task(_auto_delete(stk))
-                except Exception:
-                    pass
-
-        try:
-            sent = await context.bot.send_message(
-                chat_id=chat.id,
-                text=formatted,
-                parse_mode="HTML",
-                reply_markup=_build_button(settings)
-            )
-            asyncio.create_task(_auto_delete(sent))
-        except Exception:
-            pass
+async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat = update.effective_chat
+    if not update.message or not update.message.new_chat_members:
+        return
+    for user in update.message.new_chat_members:
+        await _send_welcome(chat, user, context)
 
 async def handle_left_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat     = update.effective_chat
@@ -323,6 +358,7 @@ async def del_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 def register(app) -> None:
     app.add_handler(ChatMemberHandler(handle_chat_member, ChatMemberHandler.CHAT_MEMBER))
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_chat_members))
     # app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER,  handle_left_member))
     app.add_handler(CommandHandler("setwelcome",  set_welcome))
     app.add_handler(CommandHandler("setgoodbye",  set_goodbye))
