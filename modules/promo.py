@@ -67,10 +67,11 @@ FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_E
 
 
 def generate_promo_message(users: list) -> tuple:
-    """Generates a dynamic partner profile, tags 2-3 random chat members, and returns (text, keyboard)."""
+    """Generates a dynamic partner profile, tags 10 random chat members, and returns (text, keyboard)."""
     name = random.choice(GIRL_NAMES)
     district = random.choice(DISTRICTS)
-    age = random.randint(19, 25)
+    age_raw = random.choice([19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35])
+    age = str(age_raw).translate(str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯"))
     prefix = random.choice(OPERATOR_PREFIXES)
     suffix = str(random.randint(10, 99)).translate(str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯"))
     phone = f"{prefix}****{suffix}"
