@@ -128,7 +128,7 @@ def admin_only(func):
             return sent
 
         cmd_name = func.__name__
-        exempt = ("cmd_tagall", "cmd_cancel", "cmd_rules", "set_welcome_sticker", "set_promo_sticker", "del_welcome_sticker", "del_promo_sticker")
+        exempt = ("cmd_tagall", "cmd_cancel", "cmd_rules", "cmd_sendpromo", "set_welcome_sticker", "set_promo_sticker", "del_welcome_sticker", "del_promo_sticker")
         if update.message and cmd_name not in exempt:
             update.message.reply_text = _wrapped_reply_text
             update.message.reply_html = _wrapped_reply_html

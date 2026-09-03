@@ -1,23 +1,99 @@
-"""
-Promotional broadcast module.
-Automatically sends a beautiful invitation message to all chats every 10 minutes.
-"""
-
 import asyncio
 import logging
+import random
 import time
+import html
+import urllib.parse
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, ContextTypes, CommandHandler
-from database import get_all_chat_ids, get_chat_settings, update_chat_setting
+from database import get_all_chat_ids, get_chat_settings, update_chat_setting, get_users_for_chat
 from modules.utils import admin_only
 
 logger = logging.getLogger(__name__)
 
-PROMO_TEXT = (
-    "🔥 🔞 <b>সিক্রেট ভিআইপি লাইভ চ্যাট রুম</b> 🔞 🔥\n"
-    "🌟 আনলিমিটেড লাইভ আড্ডা ও এক্সক্লুসিভ সেশনে ফ্রিতে যুক্ত হতে:\n"
-    "👥 গ্রুপে ৫ জন বন্ধুকে অ্যাড করুন এবং নিচের বাটনে ক্লিক করুন 👇"
-)
+# ── Dynamic Profiles Dataset (Generates millions of unique combinations) ──────
+GIRL_NAMES = [
+    "আনিকা", "মিম", "সুমি", "রিয়া", "প্রিয়া", "সাদিয়া", "নুসরাত", "তানহা",
+    "বৃষ্টি", "জান্নাত", "তানিয়া", "ফারাহ", "ববি", "পূজা", "কেয়া", "মৌ",
+    "আশা", "স্নেহা", "নেহা", "রূপা", "মুন্নি", "সোনিয়া", "এশা", "লাবনী",
+    "লিমা", "মারিয়া", "মিতু", "নিপা", "শিলা", "তাসনিম", "জেরিন", "নদী",
+    "তিথি", "অর্পা", "রিমি", "পলি", "দোলা", "রশ্নি", "মেঘলা", "শিমু",
+    "রিতু", "পায়রা", "হিমি", "তনু", "শম্পা"
+]
+
+DISTRICTS = [
+    "ঢাকা", "চট্টগ্রাম", "খুলনা", "রাজশাহী", "সিলেট", "বরিশাল", "রংপুর", "ময়মনসিংহ",
+    "কুমিল্লা", "বগুড়া", "যশোর", "নোয়াখালী", "পাবনা", "ফরিদপুর", "টাঙ্গাইল", "দিনাজপুর",
+    "কুষ্টিয়া", "জামালপুর", "ফেনী", "কক্সবাজার", "ব্রাহ্মণবাড়িয়া", "সিরাজগঞ্জ", "গাজীপুর",
+    "নারায়ণগঞ্জ", "মানিকগঞ্জ", "নওগাঁ", "ভোলা", "পটুয়াখালী", "ঝিনাইদহ", "চাঁদপুর",
+    "নরসিংদী", "নেত্রকোণা", "কিশোরগঞ্জ", "সাতক্ষীরা", "মাগুরা", "নাটোর", "লক্ষ্মীপুর",
+    "মুন্সিগঞ্জ", "গোপালগঞ্জ", "হবিগঞ্জ", "মৌলভীবাজার", "সুনামগঞ্জ", "বাগেরহাট", "চুয়াডাঙ্গা"
+]
+
+STATUSES = [
+    "এখন অনলাইনে একা আছি, ভিডিও চ্যাট করতে নক দাও...",
+    "ইমোতে ফ্রি আছি জান, সরাসরি লাইভে আসো...",
+    "আজকে সারা রাত আড্ডা দেব, ইনবক্স করো সোনা...",
+    "শুধু ভালো মনের একজন ফ্রেন্ড খুঁজছি, চ্যাটে আসো...",
+    "ক্যামেরা অন করে কথা বলতে চাইলে জলদি নক দাও...",
+    "লাইভ ভিডিও কল করতে চাইলে এখনই অ্যাড হও...",
+    "তোমার সাথে একটু মনের কথা বলতে চাই...",
+    "অনলাইনে লাইভ রুমে অপেক্ষা করছি, দেরি করো না..."
+]
+
+OPERATOR_PREFIXES = ["০১৭", "০১৩", "০১৯", "০১৪", "০১৮", "০১৬"]
+
+# Viral Telegram share URL (Prompts user to forward/share the group link to 5 friends/groups)
+SHARE_GROUP_URL = "https://t.me/alltimefantasyzone"
+SHARE_TEXT_ENCODED = urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + SHARE_GROUP_URL)
+FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_ENCODED}"
+
+
+def generate_promo_message(users: list) -> tuple:
+    """Generates a dynamic partner profile, tags 2-3 random chat members, and returns (text, keyboard)."""
+    name = random.choice(GIRL_NAMES)
+    district = random.choice(DISTRICTS)
+    age = random.randint(19, 25)
+    prefix = random.choice(OPERATOR_PREFIXES)
+    suffix = str(random.randint(10, 99)).translate(str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯"))
+    phone = f"{prefix}****{suffix}"
+    status = random.choice(STATUSES)
+
+    # Pick 2-3 random active members from chat database to tag
+    if users and len(users) > 0:
+        sample_size = min(3, len(users))
+        selected_users = random.sample(users, sample_size)
+        tags = []
+        for u in selected_users:
+            fname = html.escape(u.get("first_name") or "Member")
+            uid = u.get("user_id")
+            tags.append(f"<a href=\"tg://user?id={uid}\">{fname}</a>")
+        mentions_text = " • ".join(tags)
+    else:
+        mentions_text = "অনলাইন মেম্বাররা"
+
+    text = (
+        f"🔥 🔞 <b>সিক্রেট ভিআইপি লাইভ পার্টনার</b> 🔞 🔥\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🌸 <b>নাম:</b> {name} ({age} বছর)\n"
+        f"📍 <b>জেলা:</b> {district}\n"
+        f"📱 <b>ইমো/হোয়াটসঅ্যাপ:</b> <code>{phone}</code>\n"
+        f"💬 <b>স্ট্যাটাস:</b> <i>\"{status}\"</i>\n\n"
+        f"👉 <b>একটিভ পার্টনার:</b> {mentions_text}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔓 <b>ফুল নাম্বার ও লাইভ ভিডিও কল আনলক করতে:</b>\n"
+        f"১. নিচের <b>\"📤 ৫ জনকে শেয়ার করুন\"</b> বাটনে ক্লিক করে ৫টি গ্রুপ বা বন্ধুদের ফরোয়ার্ড করুন।\n"
+        f"২. নিচের <b>\"🔴 সরাসরি চ্যাট করুন\"</b> বাটনে ক্লিক করে রুমে যুক্ত হোন!"
+    )
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
+        [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣🔥", url="https://techandclick.site/bot/")],
+        [InlineKeyboardButton(text="🟢 🔞🔥 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url="https://techandclick.site/bot/")],
+    ])
+
+    return text, keyboard
+
 
 async def _auto_delete(message, delay: int = 60) -> None:
     """Auto-deletes a message after specified seconds."""
@@ -32,7 +108,7 @@ _promo_running = False
 
 
 async def promo_loop(app: Application) -> None:
-    """Infinite loop that broadcasts promo message every 10 minutes (600 seconds)."""
+    """Infinite loop that broadcasts dynamic promo message every 10 minutes (600 seconds)."""
     global _promo_running
     if _promo_running:
         logger.info("ℹ️ Promo loop is already running, skipping duplicate initialization.")
@@ -50,13 +126,7 @@ async def promo_loop(app: Application) -> None:
             await asyncio.sleep(600)
             continue
 
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣🔥", url="https://techandclick.site/bot/")],
-            [InlineKeyboardButton(text="🟢 🔞🔥 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url="https://techandclick.site/bot/")],
-        ])
-
         # Collect all valid target chats (both Channels and Groups)
-        # Avoid double-posting if a group is linked to a channel already receiving the broadcast
         all_unique_ids = set(chat_ids)
         target_chats = set()
 
@@ -78,6 +148,10 @@ async def promo_loop(app: Application) -> None:
 
         for chat_id in target_chats:
             try:
+                # Fetch active users in this chat to tag 2-3 members randomly
+                users = await get_users_for_chat(chat_id)
+                promo_text, keyboard = generate_promo_message(users)
+
                 # Check if promo sticker is set for this chat
                 try:
                     settings = await get_chat_settings(chat_id)
@@ -90,7 +164,7 @@ async def promo_loop(app: Application) -> None:
 
                 sent = await app.bot.send_message(
                     chat_id=chat_id,
-                    text=PROMO_TEXT,
+                    text=promo_text,
                     parse_mode="HTML",
                     reply_markup=keyboard
                 )
@@ -182,7 +256,34 @@ async def del_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         pass
 
 
+@admin_only
+async def cmd_sendpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Trigger an instant promotional broadcast in the current chat."""
+    chat = update.effective_chat
+    users = await get_users_for_chat(chat.id)
+    promo_text, keyboard = generate_promo_message(users)
+    
+    # Check sticker
+    try:
+        settings = await get_chat_settings(chat.id)
+        stk_id = settings.get("promo_sticker")
+        if stk_id and stk_id.strip():
+            stk = await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
+            asyncio.create_task(_auto_delete(stk, 60))
+    except Exception:
+        pass
+
+    sent = await context.bot.send_message(
+        chat_id=chat.id,
+        text=promo_text,
+        parse_mode="HTML",
+        reply_markup=keyboard
+    )
+    asyncio.create_task(_auto_delete(sent, 60))
+
+
 def register(app: Application) -> None:
     app.add_handler(CommandHandler(["setpromosticker"], set_promo_sticker))
     app.add_handler(CommandHandler(["delpromosticker"], del_promo_sticker))
+    app.add_handler(CommandHandler(["promo", "sendpromo", "broadcast"], cmd_sendpromo))
     logger.info("✅ Promo module handlers registered")

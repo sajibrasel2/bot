@@ -66,8 +66,7 @@ async def post_init(app: Application) -> None:
         BotCommand("addadmin",      "গ্রুপ অ্যাডমিন বানান (/promote)"),
         BotCommand("setwelcomesticker", "ওয়েলকাম স্টিকার সেট করুন"),
         BotCommand("delwelcomesticker", "ওয়েলকাম স্টিকার মুছুন"),
-        BotCommand("setpromosticker",   "বিজ্ঞাপন স্টিকার সেট করুন"),
-        BotCommand("delpromosticker",   "বিজ্ঞাপন স্টিকার মুছুন"),
+        BotCommand("promo",             "লাইভ পার্টনার বিজ্ঞাপন পাঠান"),
         BotCommand("rules",             "গ্রুপের নিয়ম দেখুন"),
         BotCommand("notes",             "নোট তালিকা"),
     ]
