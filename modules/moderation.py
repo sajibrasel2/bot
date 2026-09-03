@@ -21,7 +21,10 @@ from datetime import datetime, timezone
 from telegram import Update, ChatMember, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
 from telegram.helpers import mention_html
-from database import add_warn, get_warns, reset_warns, remove_last_warn, get_chat_settings
+from database import (
+    add_warn, get_warns, reset_warns, remove_last_warn, get_chat_settings,
+    add_banned_user, remove_banned_user
+)
 from modules.utils import admin_only, get_target_user, parse_time_string
 from config import OWNER_ID
 
@@ -192,6 +195,11 @@ async def cmd_ban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     try:
         await context.bot.ban_chat_member(chat.id, user.id)
+        admin_id = update.effective_user.id if update.effective_user else 0
+        await add_banned_user(
+            chat.id, user.id, user.first_name or "", user.username or "",
+            reason or "কমান্ডের মাধ্যমে ব্যান (/ban)", admin_id
+        )
         await update.message.reply_html(
             f"🔨 <b>ব্যান!</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -212,6 +220,7 @@ async def cmd_unban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     try:
         await context.bot.unban_chat_member(chat.id, user.id, only_if_banned=True)
+        await remove_banned_user(chat.id, user.id)
         await update.message.reply_html(
             f"✅ {mention_html(user.id, user.first_name)} আনব্যান করা হয়েছে।"
         )
@@ -261,6 +270,11 @@ async def cmd_tban(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     until = int(time.time()) + duration
     try:
         await context.bot.ban_chat_member(chat.id, user.id, until_date=until)
+        admin_id = update.effective_user.id if update.effective_user else 0
+        await add_banned_user(
+            chat.id, user.id, user.first_name or "", user.username or "",
+            f"সাময়িক ব্যান ({time_arg})", admin_id
+        )
         await update.message.reply_html(
             f"⏳ <b>সাময়িক ব্যান!</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -417,6 +431,7 @@ async def moderation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
                 await reset_warns(chat.id, target_id)
                 if warn_action == "ban":
                     await context.bot.ban_chat_member(chat.id, target_id)
+                    await add_banned_user(chat.id, target_id, reason=f"সর্বোচ্চ {max_w}টি ওয়ার্ন পূর্ণ হওয়ায় ব্যান", banned_by=user.id)
                     success_text = f"🚨 সর্বোচ্চ ওয়ার্ন পূর্ণ হওয়ায় ব্যান করা হয়েছে।"
                 elif warn_action == "kick":
                     await context.bot.ban_chat_member(chat.id, target_id)
@@ -432,6 +447,7 @@ async def moderation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         elif action == "mod_ban":
             await context.bot.ban_chat_member(chat.id, target_id)
+            await add_banned_user(chat.id, target_id, reason="কন্ট্রোল প্যানেল থেকে ব্যান", banned_by=user.id)
             await query.answer("ইউজারকে ব্যান করা হয়েছে।")
             success_text = "🚫 ইউজারকে সফলভাবে <b>ব্যান</b> করা হয়েছে।"
 

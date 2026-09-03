@@ -2,11 +2,13 @@
 Help module — /start, /help, /id, /info, /chatinfo, /adminlist
 """
 
+import html
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
 from config import WEB_APP_URL
 from database import upsert_user
+from modules.utils import admin_only
 
 HELP_SECTIONS = {
     "welcome": {
@@ -236,6 +238,7 @@ async def cmd_chatinfo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     )
 
 
+@admin_only
 async def cmd_adminlist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         admins = await update.effective_chat.get_administrators()
@@ -243,10 +246,10 @@ async def cmd_adminlist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         for a in admins:
             if a.user.is_bot:
                 continue
-            title = f" ─ <i>{a.custom_title}</i>" if a.custom_title else ""
-            uname = f" (@{a.user.username})" if a.user.username else ""
+            title = f" ─ <i>{html.escape(a.custom_title)}</i>" if a.custom_title else ""
+            fname = html.escape(a.user.first_name or "Admin")
             crown = "👑" if a.status == "creator" else "🛡️"
-            lines.append(f"  {crown} {a.user.mention_html()}{uname}{title}")
+            lines.append(f"  {crown} <b>{fname}</b> (<code>{a.user.id}</code>){title}")
         text = (
             f"👮 <b>অ্যাডমিন তালিকা</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"

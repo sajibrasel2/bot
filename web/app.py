@@ -155,6 +155,17 @@ def get_notes_for_chat(chat_id: int):
     ) or []
 
 
+def get_banned_users_for_chat(chat_id: int):
+    try:
+        return _query(
+            "SELECT user_id, first_name, username, reason, banned_by, timestamp FROM banned_users "
+            "WHERE chat_id=%s ORDER BY timestamp DESC LIMIT 100",
+            (chat_id,), fetchall=True
+        ) or []
+    except Exception:
+        return []
+
+
 def get_stats():
     # Fix #5: handle missing tables gracefully
     result = {"groups": 0, "warns": 0, "notes": 0, "users": 0}
@@ -342,9 +353,7 @@ def group_rules(chat_id):
 @login_required
 def group_banlist(chat_id):
     chat_id = int(chat_id)
-    """ব্যান লিস্ট — Telegram API থেকে লোড করে আনব্যান করা যায়।"""
     error = None
-    banned = []
 
     if request.method == "POST":
         action  = request.form.get("action")
@@ -360,29 +369,23 @@ def group_banlist(chat_id):
                             chat_id, int(user_id), only_if_banned=True
                         )
                 asyncio.run(_unban())
-                flash("✅ সদস্যকে আনব্যান করা হয়েছে।", "success")
+            except Exception:
+                pass
+
+            try:
+                _execute("DELETE FROM banned_users WHERE chat_id=%s AND user_id=%s", (chat_id, int(user_id)))
+                flash("✅ সদস্যকে সফলভাবে আনব্যান করা হয়েছে।", "success")
             except Exception as e:
-                flash(f"❌ আনব্যান ব্যর্থ: {e}", "error")
+                flash(f"❌ ডাটাবেজ আপডেট ব্যর্থ: {e}", "error")
         return redirect(url_for("group_banlist", chat_id=chat_id))
 
-    # GET — fetch ban list from Telegram
-    try:
-        import asyncio, telegram
-        bot = telegram.Bot(token=os.environ.get("BOT_TOKEN") or
-                           __import__("config").BOT_TOKEN)
-        async def _get_banned():
-            members = []
-            async with bot:
-                async for m in bot.get_chat_members(chat_id, filter="kicked"):
-                    members.append(m)
-            return members
-        banned_raw = asyncio.run(_get_banned())
-        banned = list(enumerate(banned_raw))
-    except Exception as e:
-        error = f"ব্যান লিস্ট লোড করা সম্ভব হয়নি: {e}"
+    # GET — fetch ban list from Database
+    banned_rows = get_banned_users_for_chat(chat_id)
+    banned = list(enumerate(banned_rows))
+    s = get_settings(chat_id)
 
     return render_template("group_banlist.html",
-                           chat_id=chat_id, banned=banned,
+                           s=s, chat_id=chat_id, banned=banned,
                            error=error, active="groups")
 
 

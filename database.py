@@ -127,6 +127,19 @@ async def init_db() -> None:
                 "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
                 (8904339611, "sadia4392", "Sadia Jahan")
             )
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS banned_users (
+                    id         INT AUTO_INCREMENT PRIMARY KEY,
+                    chat_id    BIGINT NOT NULL,
+                    user_id    BIGINT NOT NULL,
+                    first_name VARCHAR(200),
+                    username   VARCHAR(100),
+                    reason     TEXT,
+                    banned_by  BIGINT,
+                    timestamp  INT NOT NULL,
+                    UNIQUE KEY uniq_ban (chat_id, user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
             await cur.execute(
                 "UPDATE chat_settings SET rules_text=%s WHERE rules_text IS NULL OR rules_text=''",
                 (DEFAULT_RULES,)
@@ -418,3 +431,37 @@ async def update_chat_info(chat_id: int, title: str = "", member_count: int = 0)
                 "member_count=IF(VALUES(member_count)>0, VALUES(member_count), member_count)",
                 (chat_id, title or "", member_count or 0)
             )
+
+
+async def add_banned_user(chat_id: int, user_id: int, first_name: str = "", username: str = "", reason: str = "", banned_by: int = 0) -> None:
+    """Records a banned user in the database."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO banned_users (chat_id, user_id, first_name, username, reason, banned_by, timestamp) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE "
+                "first_name=VALUES(first_name), username=VALUES(username), reason=VALUES(reason), banned_by=VALUES(banned_by), timestamp=VALUES(timestamp)",
+                (chat_id, user_id, first_name or "", username or "", reason or "", banned_by or 0, int(time.time()))
+            )
+
+
+async def remove_banned_user(chat_id: int, user_id: int) -> None:
+    """Removes a user from the banned list in the database."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("DELETE FROM banned_users WHERE chat_id=%s AND user_id=%s", (chat_id, user_id))
+
+
+async def get_banned_users(chat_id: int) -> list:
+    """Returns all banned users for a specific group."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT user_id, first_name, username, reason, banned_by, timestamp FROM banned_users WHERE chat_id=%s ORDER BY timestamp DESC",
+                (chat_id,)
+            )
+            return await cur.fetchall() or []

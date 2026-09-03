@@ -91,7 +91,22 @@ async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
 
     old_status = chat_member_update.old_chat_member.status
-    new_status = chat_member_update.new_chat_member.status
+    if new_status == ChatMember.BANNED:
+        user = chat_member_update.new_chat_member.user
+        chat = update.effective_chat
+        admin_user = update.effective_user
+        from database import add_banned_user
+        asyncio.create_task(add_banned_user(
+            chat.id, user.id, user.first_name or "", user.username or "",
+            "Telegram Admin Ban", admin_user.id if admin_user else 0
+        ))
+        return
+
+    if new_status in [ChatMember.MEMBER, ChatMember.LEFT] and old_status in [ChatMember.BANNED, 'kicked']:
+        user = chat_member_update.new_chat_member.user
+        chat = update.effective_chat
+        from database import remove_banned_user
+        asyncio.create_task(remove_banned_user(chat.id, user.id))
 
     if new_status == ChatMember.MEMBER and old_status in [ChatMember.LEFT, ChatMember.BANNED, ChatMember.RESTRICTED, 'left', 'kicked', 'restricted', None]:
         chat = update.effective_chat

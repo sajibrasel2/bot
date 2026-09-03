@@ -38,6 +38,8 @@
           <th>User ID</th>
           <th>নাম</th>
           <th>Username</th>
+          <th>কারণ</th>
+          <th>ব্যান করার সময়</th>
           <th>অ্যাকশন</th>
         </tr>
       </thead>
@@ -45,17 +47,19 @@
         {% for i, b in banned %}
         <tr>
           <td><span class="badge badge-red">{{ i+1 }}</span></td>
-          <td><code style="font-size:12px;color:#a78bfa;">{{ b.user.id }}</code></td>
-          <td style="font-weight:500;">{{ b.user.full_name or b.user.first_name or '—' }}</td>
+          <td><code style="font-size:12px;color:#a78bfa;">{{ b.user_id }}</code></td>
+          <td style="font-weight:500;">{{ b.first_name or '—' }}</td>
           <td style="color:#94a3b8;">
-            {% if b.user.username %}@{{ b.user.username }}{% else %}—{% endif %}
+            {% if b.username %}@{{ b.username }}{% else %}—{% endif %}
           </td>
+          <td><span style="font-size:12px;color:#cbd5e1;">{{ b.reason or '—' }}</span></td>
+          <td style="font-size:12px;color:#94a3b8;">{{ b.timestamp | datetime }}</td>
           <td>
             <form method="POST" style="display:inline;">
               <input type="hidden" name="action" value="unban">
-              <input type="hidden" name="user_id" value="{{ b.user.id }}">
+              <input type="hidden" name="user_id" value="{{ b.user_id }}">
               <button type="submit" class="btn btn-danger btn-sm"
-                onclick="return confirm('{{ b.user.full_name or b.user.id }} কে আনব্যান করবেন?')">
+                onclick="return confirm('{{ b.first_name or b.user_id }} কে আনব্যান করবেন?')">
                 <i class="fa-solid fa-rotate-left"></i> আনব্যান
               </button>
             </form>
