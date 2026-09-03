@@ -174,19 +174,16 @@ async def promo_loop(app: Application) -> None:
                     settings = await get_chat_settings(chat_id)
                     stk_id = settings.get("promo_sticker")
                     if stk_id and stk_id.strip():
-                        stk = await app.bot.send_sticker(chat_id=chat_id, sticker=stk_id.strip())
-                        asyncio.create_task(_auto_delete(stk, 60))
+                        await app.bot.send_sticker(chat_id=chat_id, sticker=stk_id.strip())
                 except Exception:
                     pass
 
-                sent = await app.bot.send_message(
+                await app.bot.send_message(
                     chat_id=chat_id,
                     text=promo_text,
                     parse_mode="HTML",
                     reply_markup=keyboard
                 )
-                # Automatically delete promo message after 1 minute (60 seconds)
-                asyncio.create_task(_auto_delete(sent, 60))
             except Exception as e:
                 logger.debug(f"Failed to send promo message to chat {chat_id}: {e}")
 
@@ -285,18 +282,16 @@ async def cmd_sendpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         settings = await get_chat_settings(chat.id)
         stk_id = settings.get("promo_sticker")
         if stk_id and stk_id.strip():
-            stk = await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
-            asyncio.create_task(_auto_delete(stk, 60))
+            await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
     except Exception:
         pass
 
-    sent = await context.bot.send_message(
+    await context.bot.send_message(
         chat_id=chat.id,
         text=promo_text,
         parse_mode="HTML",
         reply_markup=keyboard
     )
-    asyncio.create_task(_auto_delete(sent, 60))
 
 
 def register(app: Application) -> None:
