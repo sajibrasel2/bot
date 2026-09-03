@@ -166,6 +166,21 @@ def get_banned_users_for_chat(chat_id: int):
         return []
 
 
+def get_top_inviters_for_chat(chat_id: int, limit: int = 10):
+    try:
+        return _query(
+            "SELECT ui.inviter_id, COUNT(*) as invite_count, u.first_name, u.username "
+            "FROM user_invites ui "
+            "LEFT JOIN users u ON (ui.chat_id=u.chat_id AND ui.inviter_id=u.user_id) "
+            "WHERE ui.chat_id=%s "
+            "GROUP BY ui.inviter_id, u.first_name, u.username "
+            "ORDER BY invite_count DESC LIMIT %s",
+            (chat_id, limit), fetchall=True
+        ) or []
+    except Exception:
+        return []
+
+
 def get_stats():
     # Fix #5: handle missing tables gracefully
     result = {"groups": 0, "warns": 0, "notes": 0, "users": 0}
@@ -290,22 +305,30 @@ def group_spam(chat_id):
 def group_moderation(chat_id):
     chat_id = int(chat_id)
     if request.method == "POST":
-        # Fix #19: validate max_warns safely
         try:
             max_w = max(1, min(10, int(request.form.get("max_warns", 3))))
         except (ValueError, TypeError):
             max_w = 3
+        try:
+            f_count = max(1, min(50, int(request.form.get("force_add_count", 5))))
+        except (ValueError, TypeError):
+            f_count = 5
         save_settings(chat_id, {
-            "max_warns":   max_w,
-            "warn_action": request.form.get("warn_action", "ban"),
+            "max_warns":          max_w,
+            "warn_action":        request.form.get("warn_action", "ban"),
+            "force_add_enabled":  1 if request.form.get("force_add_enabled") else 0,
+            "force_add_count":    f_count,
         })
-        flash("✅ মডারেশন সেটিংস সেভ হয়েছে!", "success")
+        flash("✅ মডারেশন ও ফোর্স অ্যাড সেটিংস সেভ হয়েছে!", "success")
         return redirect(url_for("group_moderation", chat_id=chat_id))
     s     = get_settings(chat_id)
     warns = get_warns_for_chat(chat_id)
+    top_inviters = get_top_inviters_for_chat(chat_id, limit=10)
     return render_template("group_moderation.html",
                            s=s, chat_id=chat_id,
-                           warns=list(enumerate(warns)), active="groups")
+                           warns=list(enumerate(warns)),
+                           top_inviters=list(enumerate(top_inviters)),
+                           active="groups")
 
 
 @app.route("/group/<string:chat_id>/notes", methods=["GET", "POST"])

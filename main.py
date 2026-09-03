@@ -19,7 +19,7 @@ from config import BOT_TOKEN
 from database import init_db
 
 # ── Modules ──────────────────────────────────────
-from modules import help, welcome, spam, moderation, admin, notes, promo, tagall
+from modules import help, welcome, spam, moderation, admin, notes, promo, tagall, forceadd
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -41,9 +41,11 @@ async def post_init(app: Application) -> None:
     ]
     await app.bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
 
-    # 2. Commands for general members in groups (গ্রুপের সাধারণ সদস্যদের জন্য শুধুমাত্র /rules)
+    # 2. Commands for general members in groups (গ্রুপের সাধারণ সদস্যদের জন্য মেনু)
     group_member_commands = [
         BotCommand("rules", "গ্রুপের নিয়ম দেখুন"),
+        BotCommand("myinvites", "আপনার ইনভাইট অগ্রগতি"),
+        BotCommand("top", "সেরা ইনভাইটার লিডারবোর্ড"),
     ]
     await app.bot.set_my_commands(group_member_commands, scope=BotCommandScopeAllGroupChats())
 
@@ -51,6 +53,7 @@ async def post_init(app: Application) -> None:
     admin_commands = [
         BotCommand("settings",      "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),
         BotCommand("panel",         "মডারেশন ও কন্ট্রোল প্যানেল"),
+        BotCommand("forceadd",      "ফোর্স অ্যাড সেটিংস"),
         BotCommand("tagall",        "সবাইকে মেনশন করুন (/all)"),
         BotCommand("cancel",        "মেনশন থামান (/tagstop)"),
         BotCommand("warn",          "সতর্ক করুন"),
@@ -69,6 +72,7 @@ async def post_init(app: Application) -> None:
         BotCommand("promo",             "লাইভ পার্টনার বিজ্ঞাপন পাঠান"),
         BotCommand("rules",             "গ্রুপের নিয়ম দেখুন"),
         BotCommand("notes",             "নোট তালিকা"),
+        BotCommand("top",               "সেরা ইনভাইটার লিডারবোর্ড"),
     ]
     await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
     logger.info("✅ Bot commands registered with dedicated private, group member, and admin scopes.")
@@ -141,6 +145,7 @@ def main() -> None:
     notes.register(app)       # save/get/notes
     tagall.register(app)      # /tagall /all /cancel
     promo.register(app)       # /setpromosticker /delpromosticker
+    forceadd.register(app)    # /forceadd /myinvites /top + chat unlock enforcement
     spam.register(app)        # message filter (last — catches all text)
 
     app.add_error_handler(error_handler)

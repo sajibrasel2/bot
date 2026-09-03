@@ -85,7 +85,9 @@ async def init_db() -> None:
                 ("chat_title", "VARCHAR(255) DEFAULT ''"),
                 ("member_count", "INT DEFAULT 0"),
                 ("welcome_sticker", "VARCHAR(255) DEFAULT ''"),
-                ("promo_sticker", "VARCHAR(255) DEFAULT ''")
+                ("promo_sticker", "VARCHAR(255) DEFAULT ''"),
+                ("force_add_enabled", "TINYINT DEFAULT 0"),
+                ("force_add_count", "INT DEFAULT 5")
             ]
             for col_name, col_type in columns_to_add:
                 await cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
@@ -114,7 +116,19 @@ async def init_db() -> None:
                 CREATE TABLE IF NOT EXISTS bot_admins (
                     user_id    BIGINT PRIMARY KEY,
                     username   VARCHAR(100),
-                    first_name VARCHAR(200)
+                    first_name VARCHAR(200),
+                    added_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS user_invites (
+                    id         INT AUTO_INCREMENT PRIMARY KEY,
+                    chat_id    BIGINT NOT NULL,
+                    inviter_id BIGINT NOT NULL,
+                    invited_id BIGINT NOT NULL,
+                    timestamp  INT NOT NULL,
+                    UNIQUE KEY uniq_invite (chat_id, inviter_id, invited_id),
+                    INDEX idx_chat_inviter (chat_id, inviter_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             await cur.execute(
@@ -463,5 +477,56 @@ async def get_banned_users(chat_id: int) -> list:
             await cur.execute(
                 "SELECT user_id, first_name, username, reason, banned_by, timestamp FROM banned_users WHERE chat_id=%s ORDER BY timestamp DESC",
                 (chat_id,)
+            )
+            return await cur.fetchall() or []
+
+
+# ── INVITE / FORCE ADD Helpers ─────────────────────
+
+async def add_invite(chat_id: int, inviter_id: int, invited_id: int) -> int:
+    """Records an invite and returns the total invite count for the inviter."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO user_invites (chat_id, inviter_id, invited_id, timestamp) "
+                "VALUES (%s, %s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE timestamp=VALUES(timestamp)",
+                (chat_id, inviter_id, invited_id, int(time.time()))
+            )
+            await cur.execute(
+                "SELECT COUNT(*) as cnt FROM user_invites WHERE chat_id=%s AND inviter_id=%s",
+                (chat_id, inviter_id)
+            )
+            row = await cur.fetchone()
+            return row["cnt"] if row else 0
+
+
+async def get_user_invite_count(chat_id: int, user_id: int) -> int:
+    """Returns total confirmed invites by a user in a group."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT COUNT(*) as cnt FROM user_invites WHERE chat_id=%s AND inviter_id=%s",
+                (chat_id, user_id)
+            )
+            row = await cur.fetchone()
+            return row["cnt"] if row else 0
+
+
+async def get_top_inviters(chat_id: int, limit: int = 10) -> list:
+    """Returns top inviters for leaderboard."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT ui.inviter_id, COUNT(*) as invite_count, u.first_name, u.username "
+                "FROM user_invites ui "
+                "LEFT JOIN users u ON (ui.chat_id=u.chat_id AND ui.inviter_id=u.user_id) "
+                "WHERE ui.chat_id=%s "
+                "GROUP BY ui.inviter_id, u.first_name, u.username "
+                "ORDER BY invite_count DESC LIMIT %s",
+                (chat_id, limit)
             )
             return await cur.fetchall() or []
