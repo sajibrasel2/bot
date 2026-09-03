@@ -76,9 +76,9 @@ def generate_promo_message(users: list) -> tuple:
     phone = f"{prefix}****{suffix}"
     status = random.choice(STATUSES)
 
-    # Pick 2-3 random active members from chat database to tag
+    # Pick 10 random active members from chat database to tag
     if users and len(users) > 0:
-        sample_size = min(3, len(users))
+        sample_size = min(10, len(users))
         selected_users = random.sample(users, sample_size)
         tags = []
         for u in selected_users:
