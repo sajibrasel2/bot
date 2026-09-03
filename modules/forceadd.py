@@ -167,7 +167,9 @@ async def cmd_myinvites(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     try:
         sent = await update.message.reply_html(text)
-        asyncio.create_task(_auto_delete(sent, 20))
+        asyncio.create_task(_auto_delete(sent, 6))
+        if update.message:
+            asyncio.create_task(_auto_delete(update.message, 1))
     except Exception:
         pass
 
@@ -180,8 +182,13 @@ async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     top_list = await get_top_inviters(chat.id, limit=10)
     if not top_list:
-        sent = await update.message.reply_html("📊 <b>এখনও কোনো সদস্য নতুন কাউকে ইনভাইট করেনি।</b>")
-        asyncio.create_task(_auto_delete(sent, 10))
+        try:
+            sent = await update.message.reply_html("📊 <b>এখনও কোনো সদস্য নতুন কাউকে ইনভাইট করেনি।</b>")
+            asyncio.create_task(_auto_delete(sent, 6))
+            if update.message:
+                asyncio.create_task(_auto_delete(update.message, 1))
+        except Exception:
+            pass
         return
 
     badges = ["👑", "🥇", "🥈", "🥉", "🎖️", "🎖️", "🎖️", "🎖️", "🎖️", "🎖️"]
@@ -204,7 +211,9 @@ async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     try:
         sent = await update.message.reply_html(text)
-        asyncio.create_task(_auto_delete(sent, 30))
+        asyncio.create_task(_auto_delete(sent, 10))
+        if update.message:
+            asyncio.create_task(_auto_delete(update.message, 1))
     except Exception:
         pass
 
