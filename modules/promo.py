@@ -200,9 +200,18 @@ async def promo_loop(app: Application) -> None:
 async def set_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Set animated sticker for promotional broadcast by replying to a sticker or passing ID."""
     msg = update.effective_message
-    chat_id = update.effective_chat.id
+    chat = update.effective_chat
+    chat_id = chat.id
     stk_id = None
     media_type = "sticker"
+
+    # If called in private chat with a target chat_id argument: /setpromosticker <chat_id>
+    if chat.type == "private" and context.args:
+        try:
+            target_id = int(context.args[0])
+            chat_id = target_id
+        except ValueError:
+            pass
 
     reply = msg.reply_to_message if msg else None
     if reply:
@@ -221,15 +230,14 @@ async def set_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     elif msg and msg.animation:
         stk_id = msg.animation.file_id
         media_type = "animation"
-    elif context.args:
+    elif context.args and not str(context.args[0]).startswith("-"):
         stk_id = context.args[0].strip()
 
     if not stk_id:
         try:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text="📌 <b>যে অ্যানিমেটেড স্টিকারটি বিজ্ঞাপনে সেট করতে চান:</b>\nগ্রুপে সেই স্টিকারে <b>Reply</b> করে <code>/setpromosticker</code> লিখুন।",
-                parse_mode="HTML"
+            await update.message.reply_html(
+                "📌 <b>যে অ্যানিমেটেড স্টিকারটি বিজ্ঞাপনে সেট করতে চান:</b>\n"
+                "গ্রুপে সেই স্টিকারে <b>Reply</b> করে <code>/setpromosticker</code> লিখুন।"
             )
         except Exception:
             pass
@@ -237,39 +245,40 @@ async def set_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     await update_chat_setting(chat_id, "promo_sticker", stk_id)
     try:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="✅ <b>বিজ্ঞাপনের অ্যানিমেটেড স্টিকার সফলভাবে সেট ও সক্রিয় করা হয়েছে!</b>\n\n👇 নিচে বিজ্ঞাপনের স্টিকারের টেস্ট প্রিভিউ দেখানো হলো:",
-            parse_mode="HTML"
+        await update.message.reply_html(
+            f"✅ <b>বিজ্ঞাপনের অ্যানিমেটেড স্টিকার সফলভাবে সেট করা হয়েছে!</b>\n"
+            f"গ্রুপ: <code>{chat_id}</code>"
         )
     except Exception:
         pass
 
-    # Send a quick verification preview of the sticker in the chat
-    try:
-        if media_type == "animation":
-            await context.bot.send_animation(chat_id=chat_id, animation=stk_id)
-        elif media_type == "document":
-            await context.bot.send_document(chat_id=chat_id, document=stk_id)
-        else:
-            await context.bot.send_sticker(chat_id=chat_id, sticker=stk_id)
-    except Exception:
-        try:
-            await context.bot.send_sticker(chat_id=chat_id, sticker=stk_id)
-        except Exception:
-            pass
-
 
 @admin_only
 async def del_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Remove promotional broadcast sticker."""
-    chat_id = update.effective_chat.id
+    """Remove promotional broadcast sticker for current group or all groups."""
+    chat = update.effective_chat
+    chat_id = chat.id
+
+    if chat.type == "private" and context.args:
+        arg = context.args[0].strip().lower()
+        if arg == "all":
+            from database import get_all_chat_ids
+            all_ids = await get_all_chat_ids()
+            for cid in all_ids:
+                await update_chat_setting(cid, "promo_sticker", "")
+            await update.message.reply_html("🗑️ <b>সকল গ্রুপের বিজ্ঞাপনের স্টিকার মুছে ফেলা হয়েছে।</b>")
+            return
+        else:
+            try:
+                chat_id = int(arg)
+            except ValueError:
+                pass
+
     await update_chat_setting(chat_id, "promo_sticker", "")
     try:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="🗑️ <b>বিজ্ঞাপনের স্টিকার মুছে ফেলা হয়েছে।</b>",
-            parse_mode="HTML"
+        await update.message.reply_html(
+            f"🗑️ <b>বিজ্ঞাপনের স্টিকার সফলভাবে মুছে ফেলা হয়েছে!</b>\n"
+            f"গ্রুপ: <code>{chat_id}</code>"
         )
     except Exception:
         pass
