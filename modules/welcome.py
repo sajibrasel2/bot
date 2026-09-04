@@ -318,6 +318,7 @@ async def set_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
     await update_chat_setting(chat_id, "welcome_sticker", stk_id)
+    logger.info(f"🎨 Welcome sticker set for chat {chat_id}: {stk_id}")
     try:
         await context.bot.send_message(
             chat_id=chat_id,
@@ -347,6 +348,7 @@ async def del_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE
     """Remove welcome sticker."""
     chat_id = update.effective_chat.id
     await update_chat_setting(chat_id, "welcome_sticker", "")
+    logger.info(f"🗑️ Welcome sticker deleted and cleared for chat {chat_id}")
     try:
         await context.bot.send_message(
             chat_id=chat_id,
