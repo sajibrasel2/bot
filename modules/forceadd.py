@@ -97,7 +97,8 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
 
     # Check settings for this group
     settings = await get_chat_settings(chat.id)
-    if not settings.get("force_add_enabled", 0):
+    enabled = int(settings.get("force_add_enabled", 0) or 0)
+    if enabled != 1:
         return
 
     req_count = int(settings.get("force_add_count") or 5)
@@ -107,8 +108,8 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
         # Delete the unauthorized message
         try:
             await msg.delete()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Could not delete message in chat {chat.id} from user {user.id}: {e}")
 
         remaining = req_count - user_invites
         alert_text = (
@@ -127,8 +128,8 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode="HTML"
             )
             asyncio.create_task(_auto_delete(sent, 7))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Could not send force add lock notice in chat {chat.id}: {e}")
 
 
 # ── 3. Member Commands ─────────────────────────────
@@ -264,14 +265,13 @@ def register(app: Application) -> None:
     # Handler for members adding friends
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_member_invites), group=1)
 
-    # Handler for checking message lock (Runs at priority group 2)
+    # Handler for checking message lock (Runs at top priority group -1 before any other group)
     app.add_handler(
         MessageHandler(
-            (filters.TEXT | filters.PHOTO | filters.VIDEO | filters.Sticker.ALL | filters.VOICE | filters.Document.ALL)
-            & ~filters.COMMAND & filters.ChatType.GROUPS,
+            filters.ALL & ~filters.COMMAND & filters.ChatType.GROUPS,
             check_force_add_lock
         ),
-        group=2
+        group=-1
     )
 
     # Commands
