@@ -29,10 +29,9 @@ def main():
     print(f"📁 Log File: {log_file} (Total lines: {total_lines:,})")
 
     # Metrics counters
-    errors = []
-    warnings = []
     conflicts = 0
     http_200 = 0
+    bad_requests = []
     delete_messages = 0
     send_messages = 0
     send_stickers = 0
@@ -43,14 +42,12 @@ def main():
     new_invites_tracked = []
     callback_queries = 0
     promo_tags = 0
-    admin_actions = []
+    all_errors = []
+    unique_users_active = set()
+    chats_active = set()
 
-    time_pattern = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})")
-    cutoff_time = datetime.now() - timedelta(hours=3)
-
-    recent_lines = []
-    # If timestamps are in the future (e.g. year 2026 in logs) or standard, grab the last 3000 lines
-    analyzed_lines = lines[-4000:] if len(lines) > 4000 else lines
+    # Grab the recent lines (last 3000)
+    analyzed_lines = lines[-3500:] if len(lines) > 3500 else lines
 
     for idx, line in enumerate(analyzed_lines):
         line_str = line.strip()
@@ -59,6 +56,8 @@ def main():
             conflicts += 1
         if "HTTP/1.1 200 OK" in line_str:
             http_200 += 1
+        if "HTTP/1.1 400 Bad Request" in line_str:
+            bad_requests.append(line_str)
         if "/deleteMessage" in line_str:
             delete_messages += 1
         if "/sendMessage" in line_str:
@@ -69,31 +68,24 @@ def main():
             callback_queries += 1
 
         if " | ERROR | " in line_str:
-            # Capture context
-            ctx = line_str
-            if idx + 1 < len(analyzed_lines):
-                ctx += " -> " + analyzed_lines[idx+1].strip()
-            errors.append(ctx)
+            all_errors.append(line_str)
 
-        if " | WARNING | " in line_str:
-            warnings.append(line_str)
-
+        # Extract ForceAdd details
         if "ForceAdd check:" in line_str:
             forceadd_checks += 1
             if "enabled=1" in line_str:
                 forceadd_enabled_checks += 1
             else:
                 forceadd_disabled_checks += 1
+            
+            # Extract user & chat
+            m = re.search(r"user=(\d+).*?chat=(-?\d+)", line_str)
+            if m:
+                unique_users_active.add(m.group(1))
+                chats_active.add(m.group(2))
 
         if "⛔ ForceAdd Locking" in line_str:
             forceadd_locks.append(line_str)
-
-        if "add_invite" in line_str or "অভিনন্দন" in line_str or "added" in line_str.lower():
-            new_invites_tracked.append(line_str)
-
-        if "promo" in line_str.lower() or "sendSticker" in line_str:
-            if "sendSticker" in line_str:
-                promo_tags += 1
 
     print("\n" + "─" * 65)
     print(" 📊 [1] LOG & TELEGRAM API ACTIVITY SUMMARY")
@@ -103,20 +95,24 @@ def main():
     print(f" • Messages Sent (Bot alerts)  : {send_messages:,} times")
     print(f" • Stickers Sent (Promo)       : {send_stickers:,} times")
     print(f" • Inline Buttons Clicked      : {callback_queries:,} interactions")
-    print(f" • 409 Conflict Instances      : {conflicts} (Auto-resolved upon single process restart)")
-    print(f" • Active Errors in Period     : {len(errors)}")
-    print(f" • Active Warnings in Period   : {len(warnings)}")
+    print(f" • Active Group Chats Recorded : {len(chats_active)}")
+    print(f" • Active Unique Members Seen  : {len(unique_users_active)}")
+    print(f" • 409 Conflicts in Log Period : {conflicts} (Duplicate background process)")
+    if bad_requests:
+        print(f" • 400 Bad Requests Encountered: {len(bad_requests)}")
+        for br in bad_requests[-3:]:
+            print(f"    └─ {br}")
 
     print("\n" + "─" * 65)
     print(" 🔒 [2] FORCE ADD & CHAT UNLOCK ACTIVITY")
     print("─" * 65)
-    print(f" • Total ForceAdd Message Checks : {forceadd_checks}")
-    print(f"   ├─ Checked when Enabled (1)   : {forceadd_enabled_checks}")
-    print(f"   └─ Checked when Disabled (0)  : {forceadd_disabled_checks}")
-    print(f" • Total Users Locked (0/target) : {len(forceadd_locks)}")
+    print(f" • Total Message Checks        : {forceadd_checks}")
+    print(f"   ├─ Checked when Enabled (1) : {forceadd_enabled_checks}")
+    print(f"   └─ Checked when Disabled (0): {forceadd_disabled_checks}")
+    print(f" • Total Users Locked (0/target): {len(forceadd_locks)}")
     if forceadd_locks:
         print("   Recent Lock Events:")
-        for lk in forceadd_locks[-5:]:
+        for lk in forceadd_locks[-3:]:
             print(f"    - {lk}")
 
     # 3. Database Check
@@ -138,15 +134,20 @@ def main():
         cur = conn.cursor()
 
         # Chat Settings
-        cur.execute("SELECT chat_id, chat_title, force_add_enabled, force_add_count, promo_sticker, antispam_enabled, antilink_enabled FROM chat_settings")
+        cur.execute("SELECT chat_id, chat_title, force_add_enabled, force_add_count, promo_sticker, antiflood_enabled, antilink_enabled, welcome_enabled FROM chat_settings")
         groups = cur.fetchall()
-        print(f" • Total Connected Groups: {len(groups)}")
+        print(f" • Total Connected Groups in DB: {len(groups)}")
         for g in groups:
             fa_st = "✅ ON" if g.get("force_add_enabled") == 1 else "❌ OFF"
             fa_cnt = g.get("force_add_count", 0)
-            stk = "Set ✅" if g.get("promo_sticker") else "None (Default)"
-            print(f"   Group: {g.get('chat_title') or 'Unknown'} (ID: {g['chat_id']})")
-            print(f"     └─ ForceAdd: {fa_st} (Req: {fa_cnt}) | Promo Sticker: {stk} | AntiSpam: {g.get('antispam_enabled')}")
+            stk = "Custom ✅" if g.get("promo_sticker") else "None (Default)"
+            w_st = "ON" if g.get("welcome_enabled") else "OFF"
+            fl_st = "ON" if g.get("antiflood_enabled") else "OFF"
+            ln_st = "ON" if g.get("antilink_enabled") else "OFF"
+            print(f"   📌 Group: '{g.get('chat_title') or 'Untitled'}' (ID: {g['chat_id']})")
+            print(f"      ├─ ForceAdd    : {fa_st} (Req: {fa_cnt} friends)")
+            print(f"      ├─ PromoSticker: {stk}")
+            print(f"      └─ Welcome: {w_st} | AntiFlood: {fl_st} | AntiLink: {ln_st}")
 
         # Top Inviters
         cur.execute("""
@@ -158,11 +159,12 @@ def main():
             LIMIT 5
         """)
         top_invs = cur.fetchall()
-        print("\n • 🏆 Top 5 Inviters in DB:")
+        print("\n • 🏆 Top Inviters in Database:")
         if top_invs:
             for i, row in enumerate(top_invs, 1):
                 name = row.get("first_name") or f"User {row['inviter_id']}"
-                print(f"   {i}. {name} (ID: {row['inviter_id']}) ─ {row['invite_count']} invites in Chat {row['chat_id']}")
+                uname = f" (@{row['username']})" if row.get("username") else ""
+                print(f"   {i}. {name}{uname} ─ {row['invite_count']} invites (Chat: {row['chat_id']})")
         else:
             print("   (No invites recorded yet)")
 
@@ -181,14 +183,14 @@ def main():
         print(f"⚠️ Could not query database: {db_err}")
 
     print("\n" + "─" * 65)
-    print(" 📋 [4] RECENT 15 SIGNIFICANT LOG EVENTS")
+    print(" 📋 [4] RECENT 10 SIGNIFICANT LOG ACTIONS")
     print("─" * 65)
-    sig_lines = [l.strip() for l in analyzed_lines if any(k in l for k in ["ForceAdd", "ERROR", "sendSticker", "409 Conflict", "Locked"])]
-    for sl in sig_lines[-15:]:
+    sig_lines = [l.strip() for l in analyzed_lines if any(k in l for k in ["ForceAdd", "sendSticker", "Locked", "Bad Request"])]
+    for sl in sig_lines[-10:]:
         print(f" • {sl}")
 
     print("\n" + "=" * 65)
-    print(" ✅ AUDIT COMPLETE ─ ALL SYSTEMS EVALUATED SUCCESSFULLY")
+    print(" ✅ AUDIT REPORT COMPLETE")
     print("=" * 65 + "\n")
 
 if __name__ == "__main__":
