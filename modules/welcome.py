@@ -147,8 +147,9 @@ async def _send_welcome(chat, user, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_markup=_build_button(settings)
         )
         asyncio.create_task(_auto_delete(sent))
+        logger.info(f"👋 Welcome message sent to user {user.id} ({user.first_name}) in chat {chat.id} ({chat.title})")
     except Exception as e:
-        logger.debug(f"Error sending welcome message in chat {chat.id}: {e}")
+        logger.warning(f"Error sending welcome message in chat {chat.id}: {e}")
 
 
 # ── Event handlers ────────────────────────────────
