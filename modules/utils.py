@@ -83,7 +83,7 @@ async def auto_delete_message(message, delay: int = 5) -> None:
 
 
 def admin_only(func):
-    """Decorator: only allow admins/owner to run the command with 100% stealth privacy."""
+    """Decorator: only allow admins/owner to run the command with clean privacy."""
     @functools.wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
         if update.effective_chat.type == "private":
@@ -108,68 +108,17 @@ def admin_only(func):
                 asyncio.create_task(auto_delete_message(msg, delay=0))
             return
 
-        # 2. Immediately delete the admin command from group chat
-        if msg and cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
-            try:
-                await msg.delete()
-            except Exception:
-                pass
-
-        # 3. Intercept replies to send clear feedback
-        if cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
-            chat_title = update.effective_chat.title or "Group"
-
-            async def _stealth_reply_text(*r_args, **r_kwargs):
-                text = r_args[0] if r_args else r_kwargs.get("text", "")
-                sent = None
-                # Always send a visible group confirmation with 8s auto-delete
-                try:
-                    sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-                    asyncio.create_task(auto_delete_message(sent, delay=8))
-                except Exception:
-                    pass
-                # Also mirror to admin DM if opened
-                try:
-                    await context.bot.send_message(
-                        chat_id=user.id,
-                        text=f"🛡️ <b>[{chat_title}]</b>\n{text}",
-                        parse_mode="HTML"
-                    )
-                except Exception:
-                    pass
-                return sent
-
-            async def _stealth_reply_html(*r_args, **r_kwargs):
-                text = r_args[0] if r_args else r_kwargs.get("text", "")
-                sent = None
-                # Always send a visible group confirmation with 8s auto-delete
-                try:
-                    sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
-                    asyncio.create_task(auto_delete_message(sent, delay=8))
-                except Exception:
-                    pass
-                # Also mirror to admin DM if opened
-                try:
-                    await context.bot.send_message(
-                        chat_id=user.id,
-                        text=f"🛡️ <b>[{chat_title}]</b>\n{text}",
-                        parse_mode="HTML"
-                    )
-                except Exception:
-                    pass
-                return sent
-
-            if update.message:
-                update.message.reply_text = _stealth_reply_text
-                update.message.reply_html = _stealth_reply_html
-
-        return await func(update, context, *args, **kwargs)
+        try:
+            return await func(update, context, *args, **kwargs)
+        finally:
+            if msg and cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
+                asyncio.create_task(auto_delete_message(msg, delay=2))
 
     return wrapper
 
 
 def owner_only(func):
-    """Decorator: only allow the bot owner with 100% stealth privacy."""
+    """Decorator: only allow the bot owner with clean privacy."""
     @functools.wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
         if update.effective_chat.type == "private":
@@ -177,53 +126,18 @@ def owner_only(func):
 
         msg = update.effective_message
         user = update.effective_user
+        cmd_name = func.__name__
 
         if not await is_owner(update):
             if msg:
                 asyncio.create_task(auto_delete_message(msg, delay=0))
             return
 
-        if msg:
-            try:
-                await msg.delete()
-            except Exception:
-                pass
-
-        chat_title = update.effective_chat.title or "Group"
-
-        async def _stealth_reply_text(*r_args, **r_kwargs):
-            text = r_args[0] if r_args else r_kwargs.get("text", "")
-            sent = None
-            try:
-                sent = await context.bot.send_message(
-                    chat_id=user.id,
-                    text=f"👑 <b>[{chat_title}]</b>\n{text}",
-                    parse_mode="HTML"
-                )
-            except Exception:
-                sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-                asyncio.create_task(auto_delete_message(sent, delay=5))
-            return sent
-
-        async def _stealth_reply_html(*r_args, **r_kwargs):
-            text = r_args[0] if r_args else r_kwargs.get("text", "")
-            sent = None
-            try:
-                sent = await context.bot.send_message(
-                    chat_id=user.id,
-                    text=f"👑 <b>[{chat_title}]</b>\n{text}",
-                    parse_mode="HTML"
-                )
-            except Exception:
-                sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
-                asyncio.create_task(auto_delete_message(sent, delay=5))
-            return sent
-
-        if update.message:
-            update.message.reply_text = _stealth_reply_text
-            update.message.reply_html = _stealth_reply_html
-
-        return await func(update, context, *args, **kwargs)
+        try:
+            return await func(update, context, *args, **kwargs)
+        finally:
+            if msg and cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
+                asyncio.create_task(auto_delete_message(msg, delay=2))
 
     return wrapper
 

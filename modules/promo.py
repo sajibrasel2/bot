@@ -7,7 +7,7 @@ import urllib.parse
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, ContextTypes, CommandHandler
 from database import get_all_chat_ids, get_chat_settings, update_chat_setting, get_users_for_chat
-from modules.utils import admin_only
+from modules.utils import admin_only, auto_delete_message
 
 logger = logging.getLogger(__name__)
 
@@ -235,20 +235,26 @@ async def set_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     if not stk_id:
         try:
-            await update.message.reply_html(
-                "📌 <b>যে অ্যানিমেটেড স্টিকারটি বিজ্ঞাপনে সেট করতে চান:</b>\n"
-                "গ্রুপে সেই স্টিকারে <b>Reply</b> করে <code>/setpromosticker</code> লিখুন।"
+            sent = await context.bot.send_message(
+                chat_id=chat.id,
+                text="📌 <b>যে অ্যানিমেটেড স্টিকারটি বিজ্ঞাপনে সেট করতে চান:</b>\n"
+                     "গ্রুপে সেই স্টিকারে <b>Reply</b> করে <code>/setpromosticker</code> লিখুন।",
+                parse_mode="HTML"
             )
+            asyncio.create_task(auto_delete_message(sent, delay=10))
         except Exception:
             pass
         return
 
     await update_chat_setting(chat_id, "promo_sticker", stk_id)
     try:
-        await update.message.reply_html(
-            f"✅ <b>বিজ্ঞাপনের অ্যানিমেটেড স্টিকার সফলভাবে সেট করা হয়েছে!</b>\n"
-            f"গ্রুপ: <code>{chat_id}</code>"
+        sent = await context.bot.send_message(
+            chat_id=chat.id,
+            text=f"✅ <b>বিজ্ঞাপনের অ্যানিমেটেড স্টিকার সফলভাবে সেট করা হয়েছে!</b>\n"
+                 f"গ্রুপ: <code>{chat_id}</code>",
+            parse_mode="HTML"
         )
+        asyncio.create_task(auto_delete_message(sent, delay=10))
     except Exception:
         pass
 
@@ -266,7 +272,14 @@ async def del_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             all_ids = await get_all_chat_ids()
             for cid in all_ids:
                 await update_chat_setting(cid, "promo_sticker", "")
-            await update.message.reply_html("🗑️ <b>সকল গ্রুপের বিজ্ঞাপনের স্টিকার মুছে ফেলা হয়েছে।</b>")
+            try:
+                await context.bot.send_message(
+                    chat_id=chat.id,
+                    text="🗑️ <b>সকল গ্রুপের বিজ্ঞাপনের স্টিকার মুছে ফেলা হয়েছে।</b>",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
             return
         else:
             try:
@@ -276,10 +289,13 @@ async def del_promo_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     await update_chat_setting(chat_id, "promo_sticker", "")
     try:
-        await update.message.reply_html(
-            f"🗑️ <b>বিজ্ঞাপনের স্টিকার সফলভাবে মুছে ফেলা হয়েছে!</b>\n"
-            f"গ্রুপ: <code>{chat_id}</code>"
+        sent = await context.bot.send_message(
+            chat_id=chat.id,
+            text=f"🗑️ <b>বিজ্ঞাপনের স্টিকার সফলভাবে মুছে ফেলা হয়েছে!</b>\n"
+                 f"গ্রুপ: <code>{chat_id}</code>",
+            parse_mode="HTML"
         )
+        asyncio.create_task(auto_delete_message(sent, delay=10))
     except Exception:
         pass
 

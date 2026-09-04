@@ -317,23 +317,29 @@ async def set_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     if not stk_id:
         try:
-            await update.message.reply_html(
-                "📌 <b>যে অ্যানিমেটেড স্টিকারটি সেট করতে চান:</b>\n"
-                "গ্রুপে সেই স্টিকারে <b>Reply</b> করে <code>/setwelcomesticker</code> লিখুন।"
+            sent = await context.bot.send_message(
+                chat_id=chat.id,
+                text="📌 <b>যে অ্যানিমেটেড স্টিকারটি সেট করতে চান:</b>\n"
+                     "গ্রুপে সেই স্টিকারে <b>Reply</b> করে <code>/setwelcomesticker</code> লিখুন।",
+                parse_mode="HTML"
             )
-        except Exception:
-            pass
+            asyncio.create_task(_auto_delete(sent, delay=10))
+        except Exception as e:
+            logger.warning(f"Error sending set_welcome_sticker hint: {e}")
         return
 
     await update_chat_setting(chat_id, "welcome_sticker", stk_id)
     logger.info(f"🎨 Welcome sticker set for chat {chat_id}: {stk_id}")
     try:
-        await update.message.reply_html(
-            f"✅ <b>ওয়েলকাম অ্যানিমেটেড স্টিকার সফলভাবে সেট করা হয়েছে!</b>\n"
-            f"গ্রুপ: <code>{chat_id}</code>"
+        sent = await context.bot.send_message(
+            chat_id=chat.id,
+            text=f"✅ <b>ওয়েলকাম অ্যানিমেটেড স্টিকার সফলভাবে সেট করা হয়েছে!</b>\n"
+                 f"গ্রুপ: <code>{chat_id}</code>",
+            parse_mode="HTML"
         )
-    except Exception:
-        pass
+        asyncio.create_task(_auto_delete(sent, delay=10))
+    except Exception as e:
+        logger.warning(f"Error sending set_welcome_sticker confirmation: {e}")
 
 
 @admin_only
@@ -351,7 +357,14 @@ async def del_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE
             for cid in all_ids:
                 await update_chat_setting(cid, "welcome_sticker", "")
             logger.info("🗑️ Welcome sticker deleted for ALL groups")
-            await update.message.reply_html("🗑️ <b>সকল গ্রুপের ওয়েলকাম স্টিকার মুছে ফেলা হয়েছে।</b>")
+            try:
+                await context.bot.send_message(
+                    chat_id=chat.id,
+                    text="🗑️ <b>সকল গ্রুপের ওয়েলকাম স্টিকার মুছে ফেলা হয়েছে।</b>",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
             return
         else:
             try:
@@ -362,13 +375,16 @@ async def del_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE
     await update_chat_setting(chat_id, "welcome_sticker", "")
     logger.info(f"🗑️ Welcome sticker deleted and cleared for chat {chat_id}")
     try:
-        await update.message.reply_html(
-            f"🗑️ <b>ওয়েলকাম স্টিকার সফলভাবে মুছে ফেলা হয়েছে!</b>\n"
-            f"গ্রুপ: <code>{chat_id}</code>\n"
-            f"<i>এখন থেকে নতুন সদস্য জয়েন করলে কোনো স্টিকার পাঠানো হবে না।</i>"
+        sent = await context.bot.send_message(
+            chat_id=chat.id,
+            text=f"🗑️ <b>ওয়েলকাম স্টিকার সফলভাবে মুছে ফেলা হয়েছে!</b>\n"
+                 f"গ্রুপ: <code>{chat_id}</code>\n"
+                 f"<i>এখন থেকে নতুন সদস্য জয়েন করলে কোনো স্টিকার পাঠানো হবে না।</i>",
+            parse_mode="HTML"
         )
-    except Exception:
-        pass
+        asyncio.create_task(_auto_delete(sent, delay=10))
+    except Exception as e:
+        logger.warning(f"Error sending del_welcome_sticker confirmation: {e}")
 
 
 def register(app) -> None:
