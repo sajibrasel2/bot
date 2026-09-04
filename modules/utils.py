@@ -89,11 +89,20 @@ def admin_only(func):
         if update.effective_chat.type == "private":
             return await func(update, context, *args, **kwargs)
 
-        msg = update.effective_message
         user = update.effective_user
+        cmd_name = func.__name__
+        chat = update.effective_chat
+        chat_id = chat.id if chat else 0
+        user_id = user.id if user else 0
 
         # 1. Check admin authorization
-        if not await is_admin(update):
+        is_adm = await is_admin(update)
+        import logging
+        _log = logging.getLogger("modules.utils")
+        _log.info(f"⚙️ Admin command '{cmd_name}' received from user={user_id} in chat={chat_id} (is_admin={is_adm})")
+
+        if not is_adm:
+            _log.warning(f"⛔ Authorization failed: User {user_id} is not admin in chat {chat_id}")
             if msg:
                 asyncio.create_task(auto_delete_message(msg, delay=0))
             return
