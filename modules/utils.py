@@ -99,44 +99,57 @@ def admin_only(func):
             return
 
         cmd_name = func.__name__
-        public_exempt = ("cmd_tagall", "cmd_sendpromo")
+        public_exempt = ("cmd_tagall", "cmd_sendpromo", "set_welcome_sticker", "del_welcome_sticker", "set_promo_sticker", "del_promo_sticker", "cmd_forceadd", "toggle_welcome", "toggle_goodbye", "set_welcome", "set_goodbye", "reset_welcome", "reset_goodbye", "cmd_antilink", "cmd_antiflood", "cmd_badwords_toggle", "cmd_antiforward")
 
         # 2. Immediately delete the admin command from group chat
-        if msg and cmd_name not in public_exempt:
+        if msg and cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
             try:
                 await msg.delete()
             except Exception:
                 pass
 
-        # 3. Intercept replies to send directly to Admin's Private DM!
-        if cmd_name not in public_exempt:
+        # 3. Intercept replies to send clear feedback
+        if cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
             chat_title = update.effective_chat.title or "Group"
 
             async def _stealth_reply_text(*r_args, **r_kwargs):
                 text = r_args[0] if r_args else r_kwargs.get("text", "")
+                # Always send a visible group confirmation with 8s auto-delete
                 try:
-                    return await context.bot.send_message(
+                    sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+                    asyncio.create_task(auto_delete_message(sent, delay=8))
+                except Exception:
+                    pass
+                # Also mirror to admin DM if opened
+                try:
+                    await context.bot.send_message(
                         chat_id=user.id,
                         text=f"🛡️ <b>[{chat_title}]</b>\n{text}",
                         parse_mode="HTML"
                     )
                 except Exception:
-                    sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-                    asyncio.create_task(auto_delete_message(sent, delay=2))
-                    return sent
+                    pass
+                return sent
 
             async def _stealth_reply_html(*r_args, **r_kwargs):
                 text = r_args[0] if r_args else r_kwargs.get("text", "")
+                sent = None
+                # Always send a visible group confirmation with 8s auto-delete
                 try:
-                    return await context.bot.send_message(
+                    sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
+                    asyncio.create_task(auto_delete_message(sent, delay=8))
+                except Exception:
+                    pass
+                # Also mirror to admin DM if opened
+                try:
+                    await context.bot.send_message(
                         chat_id=user.id,
                         text=f"🛡️ <b>[{chat_title}]</b>\n{text}",
                         parse_mode="HTML"
                     )
                 except Exception:
-                    sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
-                    asyncio.create_task(auto_delete_message(sent, delay=2))
-                    return sent
+                    pass
+                return sent
 
             if update.message:
                 update.message.reply_text = _stealth_reply_text
