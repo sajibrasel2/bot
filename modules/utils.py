@@ -83,92 +83,122 @@ async def auto_delete_message(message, delay: int = 5) -> None:
 
 
 def admin_only(func):
-    """Decorator: only allow admins/owner to run the command with auto-clean in groups."""
+    """Decorator: only allow admins/owner to run the command with 100% stealth privacy."""
     @functools.wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
         if update.effective_chat.type == "private":
             return await func(update, context, *args, **kwargs)
 
         msg = update.effective_message
+        user = update.effective_user
 
         # 1. Check admin authorization
         if not await is_admin(update):
-            try:
-                sent = await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text="⛔ এই কমান্ড শুধুমাত্র অ্যাডমিনরা ব্যবহার করতে পারবেন।"
-                )
-                asyncio.create_task(auto_delete_message(sent, delay=5))
-            except Exception:
-                pass
             if msg:
-                asyncio.create_task(auto_delete_message(msg, delay=2))
+                asyncio.create_task(auto_delete_message(msg, delay=0))
             return
 
-        # 2. Auto-delete bot reply after 8 seconds for clean & private group chat
-        orig_reply_text = update.message.reply_text if update.message else None
-        orig_reply_html = update.message.reply_html if update.message else None
-
-        async def _wrapped_reply_text(*r_args, **r_kwargs):
-            try:
-                sent = await orig_reply_text(*r_args, **r_kwargs)
-            except Exception:
-                text = r_args[0] if r_args else r_kwargs.get("text", "")
-                sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-            asyncio.create_task(auto_delete_message(sent, delay=8))
-            return sent
-
-        async def _wrapped_reply_html(*r_args, **r_kwargs):
-            try:
-                sent = await orig_reply_html(*r_args, **r_kwargs)
-            except Exception:
-                text = r_args[0] if r_args else r_kwargs.get("text", "")
-                sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
-            asyncio.create_task(auto_delete_message(sent, delay=8))
-            return sent
-
         cmd_name = func.__name__
-        exempt = ("cmd_tagall", "cmd_sendpromo")
-        if update.message and cmd_name not in exempt:
-            update.message.reply_text = _wrapped_reply_text
-            update.message.reply_html = _wrapped_reply_html
+        public_exempt = ("cmd_tagall", "cmd_sendpromo")
 
-        try:
-            return await func(update, context, *args, **kwargs)
-        finally:
-            if msg and cmd_name not in exempt:
-                asyncio.create_task(auto_delete_message(msg, delay=2))
-    return wrapper
+        # 2. Immediately delete the admin command from group chat
+        if msg and cmd_name not in public_exempt:
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+
+        # 3. Intercept replies to send directly to Admin's Private DM!
+        if cmd_name not in public_exempt:
+            chat_title = update.effective_chat.title or "Group"
+
+            async def _stealth_reply_text(*r_args, **r_kwargs):
+                text = r_args[0] if r_args else r_kwargs.get("text", "")
+                try:
+                    return await context.bot.send_message(
+                        chat_id=user.id,
+                        text=f"🛡️ <b>[{chat_title}]</b>\n{text}",
+                        parse_mode="HTML"
+                    )
+                except Exception:
+                    sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+                    asyncio.create_task(auto_delete_message(sent, delay=2))
+                    return sent
+
+            async def _stealth_reply_html(*r_args, **r_kwargs):
+                text = r_args[0] if r_args else r_kwargs.get("text", "")
+                try:
+                    return await context.bot.send_message(
+                        chat_id=user.id,
+                        text=f"🛡️ <b>[{chat_title}]</b>\n{text}",
+                        parse_mode="HTML"
+                    )
+                except Exception:
+                    sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
+                    asyncio.create_task(auto_delete_message(sent, delay=2))
+                    return sent
+
+            if update.message:
+                update.message.reply_text = _stealth_reply_text
+                update.message.reply_html = _stealth_reply_html
+
+        return await func(update, context, *args, **kwargs)
 
 
 def owner_only(func):
-    """Decorator: only allow the bot owner with auto-clean in groups."""
+    """Decorator: only allow the bot owner with 100% stealth privacy."""
     @functools.wraps(func)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
         if update.effective_chat.type == "private":
             return await func(update, context, *args, **kwargs)
 
         msg = update.effective_message
+        user = update.effective_user
 
         if not await is_owner(update):
-            try:
-                sent = await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text="⛔ এই কমান্ড শুধুমাত্র বট মালিক ব্যবহার করতে পারবেন।"
-                )
-                asyncio.create_task(auto_delete_message(sent, delay=5))
-            except Exception:
-                pass
             if msg:
-                asyncio.create_task(auto_delete_message(msg, delay=2))
+                asyncio.create_task(auto_delete_message(msg, delay=0))
             return
 
-        try:
-            return await func(update, context, *args, **kwargs)
-        finally:
-            if msg:
-                asyncio.create_task(auto_delete_message(msg, delay=3))
-    return wrapper
+        if msg:
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+
+        chat_title = update.effective_chat.title or "Group"
+
+        async def _stealth_reply_text(*r_args, **r_kwargs):
+            text = r_args[0] if r_args else r_kwargs.get("text", "")
+            try:
+                return await context.bot.send_message(
+                    chat_id=user.id,
+                    text=f"👑 <b>[{chat_title}]</b>\n{text}",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+                asyncio.create_task(auto_delete_message(sent, delay=2))
+                return sent
+
+        async def _stealth_reply_html(*r_args, **r_kwargs):
+            text = r_args[0] if r_args else r_kwargs.get("text", "")
+            try:
+                return await context.bot.send_message(
+                    chat_id=user.id,
+                    text=f"👑 <b>[{chat_title}]</b>\n{text}",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
+                asyncio.create_task(auto_delete_message(sent, delay=2))
+                return sent
+
+        if update.message:
+            update.message.reply_text = _stealth_reply_text
+            update.message.reply_html = _stealth_reply_html
+
+        return await func(update, context, *args, **kwargs)
 
 
 def parse_time_string(t: str) -> int:
