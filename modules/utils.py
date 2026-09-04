@@ -89,6 +89,7 @@ def admin_only(func):
         if update.effective_chat.type == "private":
             return await func(update, context, *args, **kwargs)
 
+        msg = update.effective_message
         user = update.effective_user
         cmd_name = func.__name__
         chat = update.effective_chat
@@ -107,9 +108,6 @@ def admin_only(func):
                 asyncio.create_task(auto_delete_message(msg, delay=0))
             return
 
-        cmd_name = func.__name__
-        public_exempt = ("cmd_tagall", "cmd_sendpromo", "set_welcome_sticker", "del_welcome_sticker", "set_promo_sticker", "del_promo_sticker", "cmd_forceadd", "toggle_welcome", "toggle_goodbye", "set_welcome", "set_goodbye", "reset_welcome", "reset_goodbye", "cmd_antilink", "cmd_antiflood", "cmd_badwords_toggle", "cmd_antiforward")
-
         # 2. Immediately delete the admin command from group chat
         if msg and cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
             try:
@@ -123,6 +121,7 @@ def admin_only(func):
 
             async def _stealth_reply_text(*r_args, **r_kwargs):
                 text = r_args[0] if r_args else r_kwargs.get("text", "")
+                sent = None
                 # Always send a visible group confirmation with 8s auto-delete
                 try:
                     sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
@@ -166,6 +165,8 @@ def admin_only(func):
 
         return await func(update, context, *args, **kwargs)
 
+    return wrapper
+
 
 def owner_only(func):
     """Decorator: only allow the bot owner with 100% stealth privacy."""
@@ -192,35 +193,39 @@ def owner_only(func):
 
         async def _stealth_reply_text(*r_args, **r_kwargs):
             text = r_args[0] if r_args else r_kwargs.get("text", "")
+            sent = None
             try:
-                return await context.bot.send_message(
+                sent = await context.bot.send_message(
                     chat_id=user.id,
                     text=f"👑 <b>[{chat_title}]</b>\n{text}",
                     parse_mode="HTML"
                 )
             except Exception:
                 sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-                asyncio.create_task(auto_delete_message(sent, delay=2))
-                return sent
+                asyncio.create_task(auto_delete_message(sent, delay=5))
+            return sent
 
         async def _stealth_reply_html(*r_args, **r_kwargs):
             text = r_args[0] if r_args else r_kwargs.get("text", "")
+            sent = None
             try:
-                return await context.bot.send_message(
+                sent = await context.bot.send_message(
                     chat_id=user.id,
                     text=f"👑 <b>[{chat_title}]</b>\n{text}",
                     parse_mode="HTML"
                 )
             except Exception:
                 sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
-                asyncio.create_task(auto_delete_message(sent, delay=2))
-                return sent
+                asyncio.create_task(auto_delete_message(sent, delay=5))
+            return sent
 
         if update.message:
             update.message.reply_text = _stealth_reply_text
             update.message.reply_html = _stealth_reply_html
 
         return await func(update, context, *args, **kwargs)
+
+    return wrapper
 
 
 def parse_time_string(t: str) -> int:
