@@ -105,7 +105,7 @@ def admin_only(func):
                 asyncio.create_task(auto_delete_message(msg, delay=2))
             return
 
-        # 2. Auto-delete bot reply after 4 seconds for clean & private group chat
+        # 2. Auto-delete bot reply after 8 seconds for clean & private group chat
         orig_reply_text = update.message.reply_text if update.message else None
         orig_reply_html = update.message.reply_html if update.message else None
 
@@ -115,7 +115,7 @@ def admin_only(func):
             except Exception:
                 text = r_args[0] if r_args else r_kwargs.get("text", "")
                 sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
-            asyncio.create_task(auto_delete_message(sent, delay=4))
+            asyncio.create_task(auto_delete_message(sent, delay=8))
             return sent
 
         async def _wrapped_reply_html(*r_args, **r_kwargs):
@@ -124,7 +124,7 @@ def admin_only(func):
             except Exception:
                 text = r_args[0] if r_args else r_kwargs.get("text", "")
                 sent = await context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode="HTML")
-            asyncio.create_task(auto_delete_message(sent, delay=4))
+            asyncio.create_task(auto_delete_message(sent, delay=8))
             return sent
 
         cmd_name = func.__name__
@@ -137,7 +137,7 @@ def admin_only(func):
             return await func(update, context, *args, **kwargs)
         finally:
             if msg and cmd_name not in exempt:
-                asyncio.create_task(auto_delete_message(msg, delay=1))
+                asyncio.create_task(auto_delete_message(msg, delay=2))
     return wrapper
 
 
