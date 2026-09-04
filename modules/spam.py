@@ -43,7 +43,9 @@ BADWORD_STRIKE_WINDOW = 300    # ৫ মিনিটের মধ্যে strik
 BOT_MSG_AUTO_DELETE   = 5      # বটের মেসেজ কত সেকেন্ড পর ডিলিট হবে
 
 URL_PATTERN = re.compile(
-    r"(https?://|www\.|t\.me/|telegram\.me/)",
+    r"(https?://|ftp://|www\.|t\.me/|telegram\.me/|telegram\.dog/|tg://|"
+    r"wa\.me/|discord\.gg/|bit\.ly/|tinyurl\.com/|cutt\.ly/|rb\.gy/|is\.gd/|"
+    r"\b[a-zA-Z0-9.-]+\.(com|net|org|io|me|info|xyz|site|top|online|club|live|vip|link|app|co|bd|in|gg|ly|be|cc|ru|biz|tech|store|shop|pro|win|fun|icu|page)\b(/[^\s]*)?)",
     re.IGNORECASE
 )
 
@@ -135,8 +137,22 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             return
 
     # ── Anti-link ────────────────────────────────
-    if settings.get("antilink_enabled", 0) and msg.text:
-        if URL_PATTERN.search(msg.text):
+    if settings.get("antilink_enabled", 0):
+        content_text = (msg.text or msg.caption or "").strip()
+        has_link = False
+
+        # 1. Regex check on text or caption
+        if content_text and URL_PATTERN.search(content_text):
+            has_link = True
+
+        # 2. Check Telegram entities (for text or media captions)
+        entities = list(msg.entities or []) + list(msg.caption_entities or [])
+        for ent in entities:
+            if ent.type in ("url", "text_link"):
+                has_link = True
+                break
+
+        if has_link:
             try:
                 await msg.delete()
             except Exception:
@@ -146,19 +162,20 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 f"🔗 <b>লিংক শেয়ার নিষিদ্ধ!</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"👤 {mention_html(user.id, user.first_name)}\n"
-                f"🚫 এই গ্রুপে লিংক শেয়ার করা যাবে না।\n"
+                f"🚫 এই গ্রুপে যেকোনো প্রকার লিংক বা ইনভাইট শেয়ার করা সম্পূর্ণ নিষিদ্ধ।\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"<i>পুনরায় করলে ব্যবস্থা নেওয়া হবে।</i>"
+                f"<i>পুনরায় করলে গ্রুপ থেকে ব্যান/মিউট করা হবে।</i>"
             )
             return
 
     # ── Bad words (স্ট্রাইক সিস্টেম) ────────────
-    if settings.get("badwords_enabled", 1) and msg.text:
+    check_text = (msg.text or msg.caption or "").strip()
+    if settings.get("badwords_enabled", 1) and check_text:
         bw_raw = settings.get("badwords_list")
         if not bw_raw or not bw_raw.strip():
             bw_raw = "ছেলে,ও ছেলে,স্কেমার,বাটপার,প্রতারক,chele,o chele,sele,o sele,chala,scammer,skeimer,skemer,scamer,skeimar"
         bad_words = [w.strip().lower() for w in bw_raw.split(",") if w.strip()]
-        text_lower = msg.text.lower()
+        text_lower = check_text.lower()
 
         matched = False
         for bw in bad_words:
