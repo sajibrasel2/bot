@@ -26,6 +26,15 @@ logger = logging.getLogger(__name__)
 _active_tags: dict = {}
 
 
+async def _auto_delete(message, delay: int = 90) -> None:
+    """Auto-deletes a message after specified seconds (default 90s / 1.5 mins)."""
+    await asyncio.sleep(delay)
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+
 @admin_only
 async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat = update.effective_chat
@@ -72,17 +81,21 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     _active_tags[chat_id] = True
     total_users = len(users)
 
-    await update.message.reply_html(
+    init_msg = await update.message.reply_html(
         f"🚀 <b>মেনশন প্রক্রিয়া শুরু হচ্ছে...</b>\n"
-        f"👥 মোট সদস্য: <b>{total_users}</b> জন\n"
+        f"👥 মোট সদস্য: <b>{total_users}</b> জন (প্রতি মেসেজে ২০ জন)\n"
         f"🛑 বন্ধ করতে লিখুন: <code>/cancel</code>"
     )
+    if init_msg:
+        asyncio.create_task(_auto_delete(init_msg, delay=90))
 
-    batch_size = 5
+    batch_size = 20
     try:
         for i in range(0, total_users, batch_size):
             if not _active_tags.get(chat_id):
-                await context.bot.send_message(chat_id=chat_id, text="🛑 <b>মেনশন প্রক্রিয়া বন্ধ করা হয়েছে।</b>", parse_mode="HTML")
+                stop_msg = await context.bot.send_message(chat_id=chat_id, text="🛑 <b>মেনশন প্রক্রিয়া বন্ধ করা হয়েছে।</b>", parse_mode="HTML")
+                if stop_msg:
+                    asyncio.create_task(_auto_delete(stop_msg, delay=90))
                 return
 
             batch = users[i:i + batch_size]
@@ -95,19 +108,23 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             text = f"{header_text}\n👉 " + " • ".join(mentions)
 
             try:
-                await context.bot.send_message(
+                sent_msg = await context.bot.send_message(
                     chat_id=chat_id,
                     text=text,
                     parse_mode="HTML"
                 )
+                if sent_msg:
+                    asyncio.create_task(_auto_delete(sent_msg, delay=90))
             except Exception as e:
                 logger.debug(f"Tagall batch error in chat {chat_id}: {e}")
 
-            # Sleep 1.5 seconds between batches
-            await asyncio.sleep(1.5)
+            # Sleep 2 seconds between batches
+            await asyncio.sleep(2)
 
         if _active_tags.get(chat_id):
-            await context.bot.send_message(chat_id=chat_id, text="✅ <b>সফলভাবে সকল সদস্যকে মেনশন করা সম্পন্ন হয়েছে!</b>", parse_mode="HTML")
+            done_msg = await context.bot.send_message(chat_id=chat_id, text="✅ <b>সফলভাবে সকল সদস্যকে মেনশন করা সম্পন্ন হয়েছে!</b>", parse_mode="HTML")
+            if done_msg:
+                asyncio.create_task(_auto_delete(done_msg, delay=90))
 
     finally:
         _active_tags[chat_id] = False

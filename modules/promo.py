@@ -77,9 +77,9 @@ def generate_promo_message(users: list) -> tuple:
     phone = f"{prefix}****{suffix}"
     status = random.choice(STATUSES)
 
-    # Pick 10 random active members from chat database to tag
+    # Pick 20 random active members from chat database to tag
     if users and len(users) > 0:
-        sample_size = min(10, len(users))
+        sample_size = min(20, len(users))
         selected_users = random.sample(users, sample_size)
         tags = []
         for u in selected_users:
@@ -113,8 +113,8 @@ def generate_promo_message(users: list) -> tuple:
     return text, keyboard
 
 
-async def _auto_delete(message, delay: int = 60) -> None:
-    """Auto-deletes a message after specified seconds."""
+async def _auto_delete(message, delay: int = 90) -> None:
+    """Auto-deletes a message after specified seconds (default 90s / 1.5 mins)."""
     await asyncio.sleep(delay)
     try:
         await message.delete()
@@ -175,16 +175,20 @@ async def promo_loop(app: Application) -> None:
                     settings = await get_chat_settings(chat_id)
                     stk_id = settings.get("promo_sticker")
                     if stk_id and stk_id.strip():
-                        await app.bot.send_sticker(chat_id=chat_id, sticker=stk_id.strip())
+                        sent_stk = await app.bot.send_sticker(chat_id=chat_id, sticker=stk_id.strip())
+                        if sent_stk:
+                            asyncio.create_task(_auto_delete(sent_stk, delay=90))
                 except Exception:
                     pass
 
-                await app.bot.send_message(
+                sent_promo = await app.bot.send_message(
                     chat_id=chat_id,
                     text=promo_text,
                     parse_mode="HTML",
                     reply_markup=keyboard
                 )
+                if sent_promo:
+                    asyncio.create_task(_auto_delete(sent_promo, delay=90))
             except Exception as e:
                 logger.debug(f"Failed to send promo message to chat {chat_id}: {e}")
 
@@ -283,16 +287,20 @@ async def cmd_sendpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         settings = await get_chat_settings(chat.id)
         stk_id = settings.get("promo_sticker")
         if stk_id and stk_id.strip():
-            await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
+            sent_stk = await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
+            if sent_stk:
+                asyncio.create_task(_auto_delete(sent_stk, delay=90))
     except Exception:
         pass
 
-    await context.bot.send_message(
+    sent_promo = await context.bot.send_message(
         chat_id=chat.id,
         text=promo_text,
         parse_mode="HTML",
         reply_markup=keyboard
     )
+    if sent_promo:
+        asyncio.create_task(_auto_delete(sent_promo, delay=90))
 
 
 def register(app: Application) -> None:
