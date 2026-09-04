@@ -87,7 +87,8 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
         return
 
     # Check if user is an admin or owner
-    if user.id == OWNER_ID or await is_admin(update, user_id=user.id):
+    is_adm = (user.id == OWNER_ID) or await is_admin(update, user_id=user.id)
+    if is_adm:
         return
 
     # Exempt public allowed commands
@@ -98,13 +99,16 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
     # Check settings for this group
     settings = await get_chat_settings(chat.id)
     enabled = int(settings.get("force_add_enabled", 0) or 0)
-    if enabled != 1:
-        return
-
     req_count = int(settings.get("force_add_count") or 5)
     user_invites = await get_user_invite_count(chat.id, user.id)
 
+    logger.info(f"🔍 ForceAdd check: user={user.id} ({user.first_name}) in chat={chat.id} ({chat.title}): enabled={enabled}, invites={user_invites}/{req_count}")
+
+    if enabled != 1:
+        return
+
     if user_invites < req_count:
+        logger.info(f"⛔ ForceAdd Locking user {user.id} in chat {chat.id} ({user_invites}/{req_count})")
         # Delete the unauthorized message
         try:
             await msg.delete()
