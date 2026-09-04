@@ -489,7 +489,7 @@ async def add_invite(chat_id: int, inviter_id: int, invited_id: int) -> int:
     """Records an invite and returns the total invite count for the inviter."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute(
                 "INSERT INTO user_invites (chat_id, inviter_id, invited_id, timestamp) "
                 "VALUES (%s, %s, %s, %s) "
@@ -501,27 +501,35 @@ async def add_invite(chat_id: int, inviter_id: int, invited_id: int) -> int:
                 (chat_id, inviter_id)
             )
             row = await cur.fetchone()
-            return row["cnt"] if row else 0
+            if not row:
+                return 0
+            if isinstance(row, dict):
+                return row.get("cnt", 0)
+            return row[0] if len(row) > 0 else 0
 
 
 async def get_user_invite_count(chat_id: int, user_id: int) -> int:
     """Returns total confirmed invites by a user in a group."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute(
                 "SELECT COUNT(*) as cnt FROM user_invites WHERE chat_id=%s AND inviter_id=%s",
                 (chat_id, user_id)
             )
             row = await cur.fetchone()
-            return row["cnt"] if row else 0
+            if not row:
+                return 0
+            if isinstance(row, dict):
+                return row.get("cnt", 0)
+            return row[0] if len(row) > 0 else 0
 
 
 async def get_top_inviters(chat_id: int, limit: int = 10) -> list:
     """Returns top inviters for leaderboard."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute(
                 "SELECT ui.inviter_id, COUNT(*) as invite_count, u.first_name, u.username "
                 "FROM user_invites ui "
