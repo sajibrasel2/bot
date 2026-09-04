@@ -7,8 +7,9 @@ Can be toggled ON/OFF and configured from the Web Dashboard or Telegram admin co
 import asyncio
 import logging
 import html
+import urllib.parse
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, ContextTypes, MessageHandler, CommandHandler, filters
+from telegram.ext import Application, ContextTypes, MessageHandler, CommandHandler, CallbackQueryHandler, filters
 from telegram.helpers import mention_html
 
 from database import (
@@ -125,13 +126,40 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
             f"👉 <i>দয়া করে আরও <b>{remaining} জন</b> বন্ধুকে গ্রুপে অ্যাড করে চ্যাট আনলক করুন!</i>"
         )
 
+        invite_link = ""
+        try:
+            if chat.username:
+                invite_link = f"https://t.me/{chat.username}"
+            elif chat.invite_link:
+                invite_link = chat.invite_link
+            else:
+                invite_link = await chat.export_invite_link()
+        except Exception:
+            invite_link = f"https://t.me/{chat.username}" if chat.username else "https://techandclick.site/bot/"
+
+        share_text = urllib.parse.quote(f"🔥 {chat.title or 'আমাদের গ্রুপে'} জয়েন করুন এবং সরাসরি আড্ডা দিন! 💬")
+        share_url = f"https://t.me/share/url?url={invite_link}&text={share_text}"
+
+        buttons = [
+            [
+                InlineKeyboardButton(text="👥 বন্ধুদের ইনভাইট পাঠান (Invite/Share)", url=share_url),
+            ],
+            [
+                InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
+                InlineKeyboardButton(text="🏆 সেরা ইনভাইটার", callback_data=f"topinv_{chat.id}"),
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(buttons)
+
         try:
             sent = await context.bot.send_message(
                 chat_id=chat.id,
                 text=alert_text,
+                reply_markup=reply_markup,
                 parse_mode="HTML"
             )
-            asyncio.create_task(_auto_delete(sent, 7))
+            # Message stays visible for 60 seconds (1 minute) so user has plenty of time to read & act
+            asyncio.create_task(_auto_delete(sent, 60))
         except Exception as e:
             logger.warning(f"Could not send force add lock notice in chat {chat.id}: {e}")
 
@@ -263,7 +291,56 @@ async def cmd_forceadd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text("ভুল ইনপুট! ব্যবহার: /forceadd on | off | <সংখ্যা>")
 
 
-# ── 5. Register Handlers ─────────────────────────────
+# ── 5. Inline Button Callback Queries ─────────────────
+
+async def callback_forceadd_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    if not query or not query.data:
+        return
+
+    data = query.data
+    if data.startswith("myinv_"):
+        try:
+            target_user_id = int(data.split("_")[1])
+        except (ValueError, IndexError):
+            return
+
+        if query.from_user.id != target_user_id:
+            await query.answer("⚠️ এটি অন্য মেম্বারের নোটিশ! নিজের অগ্রগতি দেখতে গ্রুপে /myinvites লিখুন।", show_alert=True)
+            return
+
+        chat_id = query.message.chat_id if query.message else None
+        if not chat_id:
+            await query.answer("তথ্য পাওয়া যায়নি।", show_alert=True)
+            return
+
+        settings = await get_chat_settings(chat_id)
+        req_count = int(settings.get("force_add_count") or 5)
+        invites = await get_user_invite_count(chat_id, target_user_id)
+        remaining = max(0, req_count - invites)
+
+        if invites >= req_count:
+            await query.answer(f"🎉 অভিনন্দন! আপনার চ্যাট সম্পূর্ণ আনলকড ({invites}/{req_count} জন অ্যাড করা হয়েছে)।", show_alert=True)
+        else:
+            await query.answer(f"📊 আপনার অগ্রগতি: {invites}/{req_count} জন\n👉 চ্যাট আনলক করতে আরও {remaining} জন বন্ধুকে গ্রুপে অ্যাড করুন!", show_alert=True)
+
+    elif data.startswith("topinv_"):
+        chat_id = query.message.chat_id if query.message else None
+        if not chat_id:
+            return
+        top_list = await get_top_inviters(chat_id, limit=5)
+        if not top_list:
+            await query.answer("এখনও কোনো সদস্য ইনভাইট করেনি।", show_alert=True)
+            return
+        lines = []
+        for i, row in enumerate(top_list):
+            fname = row.get("first_name") or f"User {row['inviter_id']}"
+            cnt = row.get("invite_count", 0)
+            lines.append(f"{i+1}. {fname}: {cnt} জন")
+        await query.answer("🏆 শীর্ষ ইনভাইটার:\n" + "\n".join(lines), show_alert=True)
+
+
+# ── 6. Register Handlers ─────────────────────────────
 
 def register(app: Application) -> None:
     # Handler for members adding friends
@@ -282,4 +359,7 @@ def register(app: Application) -> None:
     app.add_handler(CommandHandler(["myinvites", "invites", "myadd"], cmd_myinvites))
     app.add_handler(CommandHandler(["top", "topinvites", "leaderboard"], cmd_top))
     app.add_handler(CommandHandler(["forceadd", "force_add"], cmd_forceadd))
+
+    # Button Callbacks
+    app.add_handler(CallbackQueryHandler(callback_forceadd_query, pattern=r"^(myinv_|topinv_)"))
     logger.info("✅ Force Add module handlers registered successfully")
