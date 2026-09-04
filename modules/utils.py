@@ -171,11 +171,11 @@ async def get_target_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     not User, causing AttributeError at callsites that expect a User object.
     Use reply or numeric ID instead.
     """
-    msg = update.message
+    msg = update.effective_message
     reason = " ".join(context.args[1:]) if context.args else ""
 
     # Priority 1: reply
-    if msg.reply_to_message:
+    if msg and msg.reply_to_message:
         user = msg.reply_to_message.from_user
         reason = " ".join(context.args) if context.args else ""
         return user, reason

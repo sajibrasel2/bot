@@ -155,15 +155,15 @@ async def init_db() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             await cur.execute(
-                "UPDATE chat_settings SET rules_text=%s WHERE rules_text IS NULL OR rules_text=''",
+                "UPDATE chat_settings SET rules_text=%s WHERE rules_text IS NULL",
                 (DEFAULT_RULES,)
             )
             await cur.execute(
-                "UPDATE chat_settings SET welcome_sticker=%s WHERE welcome_sticker IS NULL OR welcome_sticker=''",
+                "UPDATE chat_settings SET welcome_sticker=%s WHERE welcome_sticker IS NULL",
                 (DEFAULT_WELCOME_STICKER,)
             )
             await cur.execute(
-                "UPDATE chat_settings SET promo_sticker=%s WHERE promo_sticker IS NULL OR promo_sticker=''",
+                "UPDATE chat_settings SET promo_sticker=%s WHERE promo_sticker IS NULL",
                 (DEFAULT_PROMO_STICKER,)
             )
 

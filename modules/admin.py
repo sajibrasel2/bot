@@ -342,49 +342,49 @@ async def cmd_setdesc(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.message.reply_text(f"❌ ব্যর্থ: {e}")
 
 
-def _settings_markup(settings):
+def _settings_markup(chat_id: int, settings: dict):
     """Generate the settings inline keyboard markup based on current DB values."""
     buttons = [
         [
             InlineKeyboardButton(
                 f"👋 ওয়েলকাম: {'✅' if settings.get('welcome_enabled') else '❌'}",
-                callback_data="set_toggle:welcome_enabled"
+                callback_data=f"set_toggle:{chat_id}:welcome_enabled"
             ),
             InlineKeyboardButton(
                 f"👋 গুডবাই: {'✅' if settings.get('goodbye_enabled') else '❌'}",
-                callback_data="set_toggle:goodbye_enabled"
+                callback_data=f"set_toggle:{chat_id}:goodbye_enabled"
             )
         ],
         [
             InlineKeyboardButton(
                 f"🔗 Antilink: {'✅' if settings.get('antilink_enabled') else '❌'}",
-                callback_data="set_toggle:antilink_enabled"
+                callback_data=f"set_toggle:{chat_id}:antilink_enabled"
             ),
             InlineKeyboardButton(
                 f"🌊 Antiflood: {'✅' if settings.get('antiflood_enabled') else '❌'}",
-                callback_data="set_toggle:antiflood_enabled"
+                callback_data=f"set_toggle:{chat_id}:antiflood_enabled"
             ),
             InlineKeyboardButton(
                 f"🚫 Badwords: {'✅' if settings.get('badwords_enabled') else '❌'}",
-                callback_data="set_toggle:badwords_enabled"
+                callback_data=f"set_toggle:{chat_id}:badwords_enabled"
             )
         ],
         [
             InlineKeyboardButton(
                 f"💬 Msg Lock: {'🔒' if settings.get('lock_messages') else '🔓'}",
-                callback_data="set_toggle:lock_messages"
+                callback_data=f"set_toggle:{chat_id}:lock_messages"
             ),
             InlineKeyboardButton(
                 f"🖼️ Media Lock: {'🔒' if settings.get('lock_media') else '🔓'}",
-                callback_data="set_toggle:lock_media"
+                callback_data=f"set_toggle:{chat_id}:lock_media"
             ),
             InlineKeyboardButton(
                 f"👾 Sticker Lock: {'🔒' if settings.get('lock_stickers') else '🔓'}",
-                callback_data="set_toggle:lock_stickers"
+                callback_data=f"set_toggle:{chat_id}:lock_stickers"
             )
         ],
         [
-            InlineKeyboardButton("❌ প্যানেল বন্ধ করুন", callback_data="set_close")
+            InlineKeyboardButton("❌ প্যানেল বন্ধ করুন", callback_data=f"set_close:{chat_id}")
         ]
     ]
     return InlineKeyboardMarkup(buttons)
@@ -422,7 +422,7 @@ async def cmd_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     settings = await get_chat_settings(chat.id)
     text = _settings_text(chat.title, settings)
-    markup = _settings_markup(settings)
+    markup = _settings_markup(chat.id, settings)
 
     try:
         await context.bot.send_message(
@@ -439,41 +439,65 @@ async def cmd_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
-    chat = update.effective_chat
     user = update.effective_user
+    data = query.data or ""
 
-    # Only admins can click buttons
-    if not await is_admin(update, user_id=user.id):
-        await query.answer("⛔ আপনি এই গ্রুপের অ্যাডমিন নন!", show_alert=True)
-        return
+    parts = data.split(":")
+    action = parts[0]
 
-    data = query.data
-    if data == "set_close":
+    # Parse target chat ID and setting key
+    if len(parts) >= 3 and action == "set_toggle":
+        target_chat_id = int(parts[1])
+        key = parts[2]
+    elif len(parts) >= 2 and action == "set_close":
+        target_chat_id = int(parts[1]) if parts[1].lstrip("-").isdigit() else update.effective_chat.id
         await query.message.delete()
         await query.answer("প্যানেল বন্ধ করা হয়েছে।")
         return
+    elif action == "set_close":
+        await query.message.delete()
+        await query.answer("প্যানেল বন্ধ করা হয়েছে।")
+        return
+    else:
+        target_chat_id = update.effective_chat.id
+        key = parts[1] if len(parts) > 1 else ""
 
-    if data.startswith("set_toggle:"):
-        key = data.split(":")[1]
-        settings = await get_chat_settings(chat.id)
+    # Check if clicker is admin in the target group
+    from config import OWNER_ID
+    from telegram import ChatMember
+    if user.id not in (OWNER_ID, 8904339611, 5888198325):
+        try:
+            target_chat = await context.bot.get_chat(target_chat_id)
+            member = await target_chat.get_member(user.id)
+            if member.status not in ("administrator", "creator", ChatMember.ADMINISTRATOR, ChatMember.OWNER):
+                await query.answer("⛔ আপনি এই গ্রুপের অ্যাডমিন নন!", show_alert=True)
+                return
+        except Exception:
+            if not await is_admin(update, user_id=user.id):
+                await query.answer("⛔ আপনি এই গ্রুপের অ্যাডমিন নন!", show_alert=True)
+                return
+
+    if action == "set_toggle" and key:
+        settings = await get_chat_settings(target_chat_id)
         current_val = int(settings.get(key) or 0)
         new_val = 0 if current_val == 1 else 1
 
         # Save to DB
-        await update_chat_setting(chat.id, key, new_val)
+        await update_chat_setting(target_chat_id, key, new_val)
         await query.answer("সেটিংস আপডেট করা হয়েছে।")
 
         # If it was a lock status, apply changes to Telegram chat permissions
         if key in ("lock_messages", "lock_media", "lock_stickers"):
             try:
-                await _apply_permissions(chat.id, context.bot)
+                await _apply_permissions(target_chat_id, context.bot)
             except Exception as e:
                 print(f"Failed to apply permissions: {e}")
 
         # Fetch updated settings and edit the message
-        updated_settings = await get_chat_settings(chat.id)
-        text = _settings_text(chat.title, updated_settings)
-        markup = _settings_markup(updated_settings)
+        updated_settings = await get_chat_settings(target_chat_id)
+        title = updated_settings.get("chat_title") or (update.effective_chat.title if update.effective_chat else "Group")
+        text = _settings_text(title, updated_settings)
+        markup = _settings_markup(target_chat_id, updated_settings)
         try:
             await query.edit_message_text(text, parse_mode="HTML", reply_markup=markup)
         except Exception:
