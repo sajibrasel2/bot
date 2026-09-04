@@ -45,8 +45,8 @@
       [("ওয়েলকাম", s.welcome_enabled), ("গুডবাই", s.goodbye_enabled)]),
     (url_for('group_spam',       chat_id=chat_id), "fa-shield-halved", "স্প্যাম প্রটেকশন",   "ফ্লাড, লিংক ও খারাপ শব্দ ফিল্টার",   "blue",
       [("Anti-flood", s.antiflood_enabled), ("Anti-link", s.antilink_enabled), ("Bad words", s.badwords_enabled)]),
-    (url_for('group_moderation', chat_id=chat_id), "fa-gavel",         "মডারেশন",             "ওয়ার্ন সিস্টেম ও অ্যাকশন",             "yellow",
-      [("Max warns: " ~ s.max_warns, 1), ("Action: " ~ s.warn_action, 1)]),
+    (url_for('group_moderation', chat_id=chat_id), "fa-gavel",         "মডারেশন ও ফোর্স অ্যাড", "ওয়ার্ন সিস্টেম ও ফোর্স অ্যাড",     "yellow",
+      [("ফোর্স অ্যাড", s.force_add_enabled), ("Max warns: " ~ (s.max_warns or 3), 1)]),
     (url_for('group_rules',      chat_id=chat_id), "fa-scale-balanced","নিয়মাবলী",            "গ্রুপের নিয়মকানুন সেট করুন",           "purple",
       [("নিয়ম সেট", 1 if s.rules_text else 0)]),
   ] %}

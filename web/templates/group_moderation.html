@@ -34,6 +34,7 @@
       {% endif %}
     </div>
     <form method="POST">
+      <input type="hidden" name="form_type" value="force_add">
       <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#1e2535;border-radius:8px;margin-bottom:16px;">
         <div>
           <div style="font-weight:600;font-size:14px;color:#f1f5f9;">ফোর্স অ্যাড সক্রিয় রাখুন</div>
@@ -54,10 +55,6 @@
         <div class="form-hint">ডিফল্ট ৫ জন। ইউজার এই সংখ্যক ফ্রেন্ড অ্যাড না করা পর্যন্ত মেসেজ লক থাকবে।</div>
       </div>
 
-      <!-- Hidden fields to preserve moderation settings if not touched -->
-      <input type="hidden" name="max_warns" value="{{ s.max_warns or 3 }}">
-      <input type="hidden" name="warn_action" value="{{ s.warn_action or 'ban' }}">
-
       <button type="submit" class="btn btn-primary" style="width:100%;background:linear-gradient(135deg, #9333ea, #6366f1);border:none;">
         <i class="fa-solid fa-floppy-disk"></i> ফোর্স অ্যাড সেভ করুন
       </button>
@@ -70,8 +67,7 @@
       <div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> ওয়ার্ন সেটিংস</div>
     </div>
     <form method="POST">
-      <input type="hidden" name="force_add_enabled" value="{% if s.force_add_enabled %}1{% endif %}">
-      <input type="hidden" name="force_add_count" value="{{ s.force_add_count or 5 }}">
+      <input type="hidden" name="form_type" value="warn">
 
       <div class="form-group">
         <label class="form-label">সর্বোচ্চ ওয়ার্ন সংখ্যা</label>

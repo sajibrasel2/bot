@@ -244,6 +244,7 @@ _VALID_SETTINGS_KEYS = {
     "antiforward_enabled", "lock_media_msg",
     "welcome_button_text", "welcome_button_url",
     "welcome_sticker", "promo_sticker",
+    "force_add_enabled", "force_add_count",
 }
 
 
@@ -285,6 +286,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "antiforward_enabled": 0, "lock_media_msg": 0,
         "welcome_button_text": "🔞 সরাসরি চ্যাট করুন (Live)", "welcome_button_url": "https://techandclick.site/bot/",
         "welcome_sticker": DEFAULT_WELCOME_STICKER, "promo_sticker": DEFAULT_PROMO_STICKER,
+        "force_add_enabled": 0, "force_add_count": 5,
     }
     pool = await get_pool()
     async with pool.acquire() as conn:

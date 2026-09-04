@@ -38,6 +38,7 @@ _SAFE_KEYS = {
     "welcome_button_text", "welcome_button_url",
     "chat_title", "member_count",
     "welcome_sticker", "promo_sticker",
+    "force_add_enabled", "force_add_count",
 }
 
 # ── Jinja2 filters ────────────────────────────────
@@ -108,6 +109,53 @@ def _execute(sql: str, args=()):
             cur.execute(sql, args)
     finally:
         conn.close()
+
+
+def ensure_db_schema():
+    """Ensure all required columns and tables exist in MySQL."""
+    try:
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                columns_to_add = [
+                    ("badword_strike_limit", "INT DEFAULT 3"),
+                    ("badword_mute_duration", "INT DEFAULT 60"),
+                    ("antiforward_enabled", "TINYINT DEFAULT 0"),
+                    ("lock_media_msg", "TINYINT DEFAULT 0"),
+                    ("welcome_button_text", "VARCHAR(100)"),
+                    ("welcome_button_url", "VARCHAR(500)"),
+                    ("chat_title", "VARCHAR(255) DEFAULT ''"),
+                    ("member_count", "INT DEFAULT 0"),
+                    ("welcome_sticker", "VARCHAR(255) DEFAULT ''"),
+                    ("promo_sticker", "VARCHAR(255) DEFAULT ''"),
+                    ("force_add_enabled", "TINYINT DEFAULT 0"),
+                    ("force_add_count", "INT DEFAULT 5")
+                ]
+                for col_name, col_type in columns_to_add:
+                    cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
+                    if not cur.fetchone():
+                        cur.execute(f"ALTER TABLE chat_settings ADD COLUMN `{col_name}` {col_type}")
+                
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS user_invites (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        chat_id BIGINT NOT NULL,
+                        inviter_id BIGINT NOT NULL,
+                        joined_user_id BIGINT NOT NULL,
+                        timestamp BIGINT NOT NULL,
+                        UNIQUE KEY uniq_invite (chat_id, joined_user_id),
+                        INDEX idx_inviter (chat_id, inviter_id)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """)
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"Warning: DB schema migration check: {e}")
+
+try:
+    ensure_db_schema()
+except Exception:
+    pass
 
 
 def get_all_chats():
@@ -305,22 +353,50 @@ def group_spam(chat_id):
 def group_moderation(chat_id):
     chat_id = int(chat_id)
     if request.method == "POST":
-        try:
-            max_w = max(1, min(10, int(request.form.get("max_warns", 3))))
-        except (ValueError, TypeError):
-            max_w = 3
-        try:
-            f_count = max(1, min(50, int(request.form.get("force_add_count", 5))))
-        except (ValueError, TypeError):
-            f_count = 5
-        save_settings(chat_id, {
-            "max_warns":          max_w,
-            "warn_action":        request.form.get("warn_action", "ban"),
-            "force_add_enabled":  1 if request.form.get("force_add_enabled") else 0,
-            "force_add_count":    f_count,
-        })
-        flash("✅ মডারেশন ও ফোর্স অ্যাড সেটিংস সেভ হয়েছে!", "success")
-        return redirect(url_for("group_moderation", chat_id=chat_id))
+        form_type = request.form.get("form_type")
+        if form_type == "force_add":
+            try:
+                f_count = max(1, min(50, int(request.form.get("force_add_count", 5))))
+            except (ValueError, TypeError):
+                f_count = 5
+            enabled = 1 if request.form.get("force_add_enabled") else 0
+            save_settings(chat_id, {
+                "force_add_enabled": enabled,
+                "force_add_count":   f_count,
+            })
+            if enabled:
+                flash(f"✅ ফোর্স অ্যাড সক্রিয় করা হয়েছে! (টার্গেট: {f_count} জন বন্ধু)", "success")
+            else:
+                flash("❌ ফোর্স অ্যাড বন্ধ করা হয়েছে।", "warning")
+            return redirect(url_for("group_moderation", chat_id=chat_id))
+        elif form_type == "warn":
+            try:
+                max_w = max(1, min(10, int(request.form.get("max_warns", 3))))
+            except (ValueError, TypeError):
+                max_w = 3
+            save_settings(chat_id, {
+                "max_warns":   max_w,
+                "warn_action": request.form.get("warn_action", "ban"),
+            })
+            flash("✅ ওয়ার্ন সেটিংস সেভ হয়েছে!", "success")
+            return redirect(url_for("group_moderation", chat_id=chat_id))
+        else:
+            try:
+                max_w = max(1, min(10, int(request.form.get("max_warns", 3))))
+            except (ValueError, TypeError):
+                max_w = 3
+            try:
+                f_count = max(1, min(50, int(request.form.get("force_add_count", 5))))
+            except (ValueError, TypeError):
+                f_count = 5
+            save_settings(chat_id, {
+                "max_warns":          max_w,
+                "warn_action":        request.form.get("warn_action", "ban"),
+                "force_add_enabled":  1 if request.form.get("force_add_enabled") else 0,
+                "force_add_count":    f_count,
+            })
+            flash("✅ মডারেশন ও ফোর্স অ্যাড সেটিংস সেভ হয়েছে!", "success")
+            return redirect(url_for("group_moderation", chat_id=chat_id))
     s     = get_settings(chat_id)
     warns = get_warns_for_chat(chat_id)
     top_inviters = get_top_inviters_for_chat(chat_id, limit=10)
