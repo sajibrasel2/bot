@@ -2,287 +2,20 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>এডাল্ট জোন লাইভ — সরাসরি চ্যাট ও ভিডিও পার্টনার</title>
   
-  <!-- Strict No-Cache Headers -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome & Google Fonts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  
-  <!-- Shared Design System CSS with Cache Buster -->
-  <link rel="stylesheet" href="assets/css/style.css?v=5.0" />
+  <link rel="stylesheet" href="assets/css/style.css?v=6.0" />
 
-  <!-- Critical Mobile Modal & Viewport Responsive Styles (Guarantees Instant Full-Screen on Mobile) -->
-  <style>
-    .tg-forceadd-overlay {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      min-height: 100vh !important;
-      min-height: -webkit-fill-available !important;
-      background: rgba(9, 11, 17, 0.98) !important;
-      z-index: 100000 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 16px !important;
-      box-sizing: border-box !important;
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch !important;
-    }
-    .age-gate-overlay {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      min-height: 100vh !important;
-      min-height: -webkit-fill-available !important;
-      background: rgba(9, 11, 17, 0.98) !important;
-      z-index: 99999 !important;
-      display: none !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 16px !important;
-      box-sizing: border-box !important;
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch !important;
-    }
-    .tg-forceadd-modal, .age-gate-modal {
-      width: 100% !important;
-      max-width: 500px !important;
-      padding: 28px 20px !important;
-      border-radius: 22px !important;
-      margin: auto !important;
-      box-sizing: border-box !important;
-      background: linear-gradient(145deg, #101828, #0b0f1a) !important;
-      border: 1px solid rgba(0, 136, 204, 0.45) !important;
-      box-shadow: 0 10px 40px rgba(0, 136, 204, 0.35), 0 0 50px rgba(0, 0, 0, 0.9) !important;
-      text-align: center !important;
-    }
-    .tg-badge-icon, .age-gate-badge {
-      width: 68px !important;
-      height: 68px !important;
-      font-size: 32px !important;
-      margin: 0 auto 14px auto !important;
-      border-radius: 20px !important;
-    }
-    .tg-title, .age-gate-title {
-      font-size: 21px !important;
-      font-weight: 800 !important;
-      line-height: 1.35 !important;
-      color: #fff !important;
-      margin-bottom: 12px !important;
-    }
-    .tg-lock-warning {
-      font-size: 14.5px !important;
-      line-height: 1.55 !important;
-      padding: 13px 15px !important;
-      border-radius: 14px !important;
-      margin-bottom: 14px !important;
-    }
-    .tg-progress-box {
-      padding: 14px 16px !important;
-      border-radius: 14px !important;
-      margin-bottom: 14px !important;
-    }
-    .tg-progress-text {
-      font-size: 15px !important;
-      font-weight: 700 !important;
-    }
-    .tg-progress-bar-bg {
-      height: 10px !important;
-      border-radius: 50px !important;
-    }
-    .tg-input-wrapper {
-      padding: 15px 14px !important;
-      border-radius: 14px !important;
-      margin-bottom: 14px !important;
-    }
-    .tg-input-label {
-      font-size: 14.5px !important;
-      font-weight: 700 !important;
-      margin-bottom: 8px !important;
-    }
-    .tg-user-id-input {
-      height: 50px !important;
-      font-size: 15px !important;
-      padding: 0 14px !important;
-      border-radius: 12px !important;
-    }
-    .tg-check-btn {
-      height: 50px !important;
-      font-size: 15px !important;
-      padding: 0 18px !important;
-      font-weight: 800 !important;
-      border-radius: 12px !important;
-    }
-    .tg-id-hint {
-      font-size: 13px !important;
-      line-height: 1.5 !important;
-      margin-top: 8px !important;
-    }
-    .tg-task-list {
-      gap: 10px !important;
-      margin-bottom: 15px !important;
-    }
-    .tg-task-btn {
-      padding: 14px 16px !important;
-      font-size: 15px !important;
-      font-weight: 700 !important;
-      min-height: 50px !important;
-      border-radius: 13px !important;
-    }
-    .tg-verify-btn, .age-gate-btn-yes {
-      padding: 16px 18px !important;
-      font-size: 17px !important;
-      font-weight: 800 !important;
-      min-height: 54px !important;
-      border-radius: 14px !important;
-      width: 100% !important;
-    }
-    /* Native Fullscreen Mobile App Viewport (max-width: 600px) */
-    @media (max-width: 600px) {
-      .tg-forceadd-overlay, .age-gate-overlay {
-        position: fixed !important;
-        inset: 0 !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        min-height: 100vh !important;
-        min-height: -webkit-fill-available !important;
-        background: #090b11 !important;
-        z-index: 100000 !important;
-        display: block !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        box-sizing: border-box !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-      }
-      .age-gate-overlay {
-        display: none !important;
-        z-index: 99999 !important;
-      }
-      .tg-forceadd-modal, .age-gate-modal {
-        width: 100% !important;
-        max-width: 100% !important;
-        min-height: 100vh !important;
-        min-height: -webkit-fill-available !important;
-        padding: 24px 16px 42px 16px !important;
-        border-radius: 0 !important;
-        border: none !important;
-        margin: 0 !important;
-        box-shadow: none !important;
-        background: #090b11 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: flex-start !important;
-        align-items: stretch !important;
-        gap: 12px !important;
-        box-sizing: border-box !important;
-      }
-      .tg-badge-icon, .age-gate-badge {
-        width: 64px !important;
-        height: 64px !important;
-        font-size: 30px !important;
-        margin: 6px auto 10px auto !important;
-        border-radius: 18px !important;
-        flex-shrink: 0 !important;
-      }
-      .tg-title, .age-gate-title {
-        font-size: 20px !important;
-        font-weight: 800 !important;
-        line-height: 1.35 !important;
-        margin-bottom: 6px !important;
-      }
-      .tg-lock-warning {
-        font-size: 14px !important;
-        line-height: 1.5 !important;
-        padding: 12px 14px !important;
-        border-radius: 13px !important;
-        margin-bottom: 6px !important;
-      }
-      .tg-progress-box {
-        padding: 14px 15px !important;
-        border-radius: 13px !important;
-        margin-bottom: 6px !important;
-      }
-      .tg-progress-text {
-        font-size: 14.5px !important;
-      }
-      .tg-input-wrapper {
-        padding: 14px 14px !important;
-        border-radius: 13px !important;
-        margin-bottom: 6px !important;
-      }
-      .tg-user-id-input {
-        height: 50px !important;
-        font-size: 15px !important;
-        padding: 0 14px !important;
-        border-radius: 12px !important;
-      }
-      .tg-check-btn {
-        height: 50px !important;
-        font-size: 15px !important;
-        padding: 0 18px !important;
-        border-radius: 12px !important;
-      }
-      .tg-task-list {
-        gap: 10px !important;
-        margin-bottom: 6px !important;
-      }
-      .tg-task-btn {
-        padding: 14px 15px !important;
-        font-size: 14.5px !important;
-        min-height: 50px !important;
-        border-radius: 13px !important;
-      }
-      .tg-verify-btn, .age-gate-btn-yes {
-        padding: 16px 18px !important;
-        font-size: 16.5px !important;
-        font-weight: 800 !important;
-        min-height: 54px !important;
-        border-radius: 14px !important;
-        width: 100% !important;
-        margin-top: 4px !important;
-      }
-      .age-gate-desc {
-        font-size: 15px !important;
-        line-height: 1.6 !important;
-        margin-bottom: 16px !important;
-      }
-      .age-gate-actions {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 12px !important;
-        width: 100% !important;
-      }
-      .age-gate-btn-no {
-        padding: 14px 16px !important;
-        font-size: 14.5px !important;
-        border-radius: 12px !important;
-        width: 100% !important;
-      }
-    }
-  </style>
-
-
-
-  <!-- Mobile Web App & PWA Settings -->
   <meta name="theme-color" content="#090b11" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="format-detection" content="telephone=no" />
   
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -290,7 +23,7 @@
 <body>
 
   <!-- ========================================================
-       STEP 1: Telegram 10-Member Real Database Force-Add Modal (Clean / No Ads)
+       STEP 1: Telegram 10-Member Force-Add Real Database Verification
        ======================================================== -->
   <div class="tg-forceadd-overlay" id="tg-forceadd-overlay">
     <div class="tg-forceadd-modal">
@@ -299,7 +32,6 @@
       </div>
       <h2 class="tg-title">📢 অফিশিয়াল টেলিগ্রাম গ্রুপ ভেরিফিকেশন</h2>
       
-      <!-- Lock Warning Notice -->
       <div class="tg-lock-warning">
         <i class="fa-solid fa-lock"></i>
         <div>
@@ -307,7 +39,6 @@
         </div>
       </div>
 
-      <!-- Live Database Progress Box -->
       <div class="tg-progress-box">
         <div class="tg-progress-text">
           <span>ডাটাবেজ মেম্বার এড অগ্রগতি:</span>
@@ -318,7 +49,6 @@
         </div>
       </div>
 
-      <!-- Telegram ID / Username Verification Input Box -->
       <div class="tg-input-wrapper">
         <label for="tg-user-id-input" class="tg-input-label">
           <i class="fa-solid fa-id-badge"></i> আপনার টেলিগ্রাম User ID বা @Username:
@@ -335,10 +65,8 @@
         </div>
       </div>
 
-      <!-- Real-time Result Alert Box -->
       <div class="tg-db-alert" id="tg-db-alert" style="display: none;"></div>
 
-      <!-- Telegram Action Buttons -->
       <div class="tg-task-list">
         <a href="https://t.me/alltimefantasyzone" target="_blank" class="tg-task-btn">
           <span><i class="fa-solid fa-user-plus" style="color: var(--tg-cyan);"></i> ১. টেলিগ্রাম গ্রুপে মেম্বার এড করুন</span>
@@ -358,9 +86,9 @@
   </div>
 
   <!-- ========================================================
-       STEP 2: 18+ Age Gate Entrance Modal (Clean / No Ads)
+       STEP 2: 18+ Age Gate Entrance Modal
        ======================================================== -->
-  <div class="age-gate-overlay" id="age-gate-overlay" style="display: none;">
+  <div class="age-gate-overlay" id="age-gate-overlay">
     <div class="age-gate-modal">
       <div class="age-gate-badge">
         <i class="fa-solid fa-triangle-exclamation"></i>
@@ -381,9 +109,9 @@
     </div>
   </div>
 
-  <!-- Simulated Video/Voice Calling Box -->
+  <!-- Heads-up Incoming Call Simulator -->
   <div class="incoming-call-box" id="incoming-call-box">
-    <div class="call-avatar" id="call-active-avatar" style="background: linear-gradient(135deg, #db2777, #f472b6);">
+    <div class="call-avatar" style="background: linear-gradient(135deg, #db2777, #f472b6);">
       <i class="fa-solid fa-user-dress"></i>
     </div>
     <div class="call-info">
@@ -400,457 +128,154 @@
     </div>
   </div>
 
-  <!-- Floating Background Neon Blobs -->
+  <!-- Background Ambient Glow -->
   <div class="bg-blobs">
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
   </div>
 
-  <!-- Header / App Top Bar -->
-  <header>
-    <a href="index.html" class="logo">
-      <div class="logo-icon">
-        <i class="fa-solid fa-fire"></i>
-      </div>
-      <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
-    </a>
+  <!-- App Wrapper Container -->
+  <div class="app-container">
 
-    <div class="header-right">
-      <div class="live-status">
-        <span class="live-dot"></span>
-        <span id="live-online-pill">১,৮৪০+ লাইভ</span>
-      </div>
-      <a href="https://t.me/alltimefantasyzone" target="_blank" style="text-decoration:none; color: var(--tg-cyan); font-size: 20px; display:flex; align-items:center;">
-        <i class="fa-brands fa-telegram"></i>
+    <!-- Top App Header -->
+    <header class="app-header">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><i class="fa-solid fa-fire"></i></div>
+        <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
       </a>
-    </div>
-  </header>
-
-  <!-- Web App Stories / Quick Categories Reel -->
-  <div class="app-stories-bar">
-    <a href="videos.html" class="story-item">
-      <div class="story-ring live">
-        <div class="story-avatar" style="background: linear-gradient(135deg, #ff2a85, #ff7300);">
-          <i class="fa-solid fa-play"></i>
+      <div class="header-right">
+        <div class="live-status-pill">
+          <span class="live-dot"></span>
+          <span id="live-online-pill">৪০৩+ লাইভ</span>
         </div>
-      </div>
-      <span class="story-title">হট ভিডিও</span>
-    </a>
-    <a href="girls.html" class="story-item">
-      <div class="story-ring live">
-        <div class="story-avatar" style="background: linear-gradient(135deg, #00d2ff, #0066ff);">
-          <i class="fa-solid fa-venus"></i>
-        </div>
-      </div>
-      <span class="story-title">মেয়েরা</span>
-    </a>
-    <a href="videos.html" class="story-item">
-      <div class="story-ring">
-        <div class="story-avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
-          <i class="fa-solid fa-fire-flame-curved"></i>
-        </div>
-      </div>
-      <span class="story-title">বউ-শ্বশুর</span>
-    </a>
-    <a href="categories.html" class="story-item">
-      <div class="story-ring">
-        <div class="story-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">
-          <i class="fa-solid fa-heart-pulse"></i>
-        </div>
-      </div>
-      <span class="story-title">দেবর-ভাবি</span>
-    </a>
-    <a href="voice.html" class="story-item">
-      <div class="story-ring live">
-        <div class="story-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">
-          <i class="fa-solid fa-microphone-lines"></i>
-        </div>
-      </div>
-      <span class="story-title">ভয়েস নোট</span>
-    </a>
-    <a href="wheel.html" class="story-item">
-      <div class="story-ring">
-        <div class="story-avatar" style="background: linear-gradient(135deg, #fbbf24, #d97706);">
-          <i class="fa-solid fa-dharmachakra"></i>
-        </div>
-      </div>
-      <span class="story-title">লাকি হুইল</span>
-    </a>
-  </div>
-
-  <!-- Container -->
-  <div class="container">
-
-    <!-- TOP SPONSORED BANNER -->
-    <div class="ad-banner-top" onclick="triggerAdRedirect(event)">
-      <div class="ad-label">Sponsored Live</div>
-      
-      <!-- Fallback interactive card -->
-      <div class="ad-fallback-card">
-        <div class="ad-fallback-badge"><span class="status-dot-mini" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></span> লাইভ স্পেশাল শো</div>
-        <h3 class="ad-fallback-title">🔞 ১-ক্লিকে প্রাইভেট চ্যাট ও ভিডিও রুম আনলক করুন</h3>
-        <p class="ad-fallback-desc">সরাসরি অনলাইন মেয়েদের সাথে ১-অন-১ ক্যামেরা আড্ডা শুরু করতে ট্যাপ করুন</p>
-        <button class="ad-fallback-btn"><i class="fa-solid fa-play"></i> সরাসরি যুক্ত হোন</button>
-      </div>
-
-      <!-- Real Adsterra 300x250 Banner Slot (Dynamically loaded after verification) -->
-      <div class="adsterra-300x250-container"></div>
-    </div>
-
-    <!-- HERO PANEL WITH DYNAMIC STATS -->
-    <section class="hero-panel">
-      <h1 class="hero-title">এডাল্ট জোন চ্যাট — সরাসরি চ্যাট পার্টনার খুঁজুন</h1>
-      <p class="hero-subtitle">আমাদের চ্যাট রুমে এই মুহূর্তে দেশ ও দেশের বাইরে থেকে শত শত ছেলে ও মেয়ে লাইভ যুক্ত রয়েছে। নিচে যে কোনো অপশন বেছে নিন।</p>
-      
-      <div class="counter-grid">
-        <!-- Boys Card -->
-        <a href="girls.html" class="counter-card boys-card" onclick="triggerAdRedirect(event)">
-          <div class="counter-icon">
-            <i class="fa-solid fa-mars"></i>
-          </div>
-          <div class="counter-number" id="boys-counter">211</div>
-          <div class="counter-label">ছেলে একটিভ</div>
-          <div class="counter-sub">
-            <span class="status-dot-mini"></span>
-            <span>লাইভ ও অনলাইন</span>
-          </div>
-          <div class="avatar-stack">
-            <span style="background: linear-gradient(135deg, #0088cc, #00d2ff);"><i class="fa-solid fa-user"></i></span>
-            <span style="background: linear-gradient(135deg, #1d4ed8, #3b82f6);"><i class="fa-solid fa-user"></i></span>
-            <span style="background: linear-gradient(135deg, #4f46e5, #6366f1);"><i class="fa-solid fa-user"></i></span>
-            <span style="background: rgba(255,255,255,0.05); font-family: var(--font-outfit);">+208</span>
-          </div>
-        </a>
-
-        <!-- Girls Card -->
-        <a href="girls.html" class="counter-card girls-card" onclick="triggerAdRedirect(event)">
-          <div class="counter-icon">
-            <i class="fa-solid fa-venus"></i>
-          </div>
-          <div class="counter-number" id="girls-counter">185</div>
-          <div class="counter-label">মেয়ে একটিভ</div>
-          <div class="counter-sub">
-            <span class="status-dot-mini"></span>
-            <span>লাইভ ও অনলাইন</span>
-          </div>
-          <div class="avatar-stack">
-            <span style="background: linear-gradient(135deg, #db2777, #f472b6);"><i class="fa-solid fa-user-dress"></i></span>
-            <span style="background: linear-gradient(135deg, #be185d, #ec4899);"><i class="fa-solid fa-user-dress"></i></span>
-            <span style="background: linear-gradient(135deg, #9d174d, #f43f5e);"><i class="fa-solid fa-user-dress"></i></span>
-            <span style="background: rgba(255,255,255,0.05); font-family: var(--font-outfit);">+182</span>
-          </div>
-        </a>
-      </div>
-    </section>
-
-    <!-- QUICK HUB NAVIGATION CARDS -->
-    <div class="hub-grid">
-      <a href="videos.html" class="hub-card" onclick="triggerAdRedirect(event)">
-        <div class="hub-icon" style="background: rgba(255, 42, 133, 0.15); color: var(--pink);">
-          <i class="fa-solid fa-clapperboard"></i>
-        </div>
-        <h3>ভিআইপি ভিডিও জোন</h3>
-        <p>৪K গোপন ক্যামেরা ক্লিপস</p>
-      </a>
-
-      <a href="girls.html" class="hub-card" onclick="triggerAdRedirect(event)">
-        <div class="hub-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--purple);">
-          <i class="fa-solid fa-venus"></i>
-        </div>
-        <h3>অনলাইন মেয়েরা</h3>
-        <p>১৮৫+ প্রোফাইল লাইভ</p>
-      </a>
-
-      <a href="voice.html" class="hub-card" onclick="triggerAdRedirect(event)">
-        <div class="hub-icon" style="background: rgba(0, 210, 255, 0.15); color: var(--blue);">
-          <i class="fa-solid fa-microphone-lines"></i>
-        </div>
-        <h3>ভয়েস নোট ও অডিও</h3>
-        <p>মেয়েদের পার্সোনাল ভয়েস</p>
-      </a>
-
-      <a href="wheel.html" class="hub-card" onclick="triggerAdRedirect(event)">
-        <div class="hub-icon" style="background: rgba(251, 191, 36, 0.15); color: var(--yellow);">
-          <i class="fa-solid fa-dharmachakra"></i>
-        </div>
-        <h3>লাকি ম্যাচ হুইল</h3>
-        <p>২ সেকেন্ডে পার্টনার স্পিন</p>
-      </a>
-    </div>
-
-    <!-- FEATURED VIP VIDEO PLAYER -->
-    <section class="vip-video-section">
-      <div class="vip-video-header">
-        <h2><i class="fa-solid fa-clapperboard" style="color: var(--pink);"></i> 🎬 ভিআইপি সিক্রেট লাইভ ভিডিও ক্লিপ</h2>
-        <p>সরাসরি আমাদের প্রাইভেট লাইভ ক্যামেরা ও ভিডিও রুমের হাইলাইটস প্লে করুন</p>
-      </div>
-
-      <div class="main-video-player" onclick="playSecretVideo(event)">
-        <div class="video-blur-bg">
-          <i class="fa-solid fa-video" style="font-size: 80px; color: rgba(255,255,255,0.06);"></i>
-        </div>
-        <div class="video-live-badge"><span class="status-dot-mini" style="background-color:#fff; box-shadow:0 0 6px #fff;"></span> LIVE • 1,482 Watching</div>
-        <div class="video-quality-badge"><i class="fa-solid fa-shield-halved"></i> 4K Ultra HD</div>
-        
-        <div class="video-play-pulse">
-          <i class="fa-solid fa-play" style="margin-left: 4px;"></i>
-        </div>
-
-        <div class="video-bottom-bar">
-          <div><i class="fa-solid fa-circle-dot" style="color: #ef4444; margin-right: 4px;"></i> গোপন ক্যামেরায় ধারণকৃত ভিডিও (HD 1080p)</div>
-          <div>03:42 / 14:20</div>
-        </div>
-      </div>
-
-      <div class="video-sub-clips-grid">
-        <a href="videos.html" class="video-sub-card" onclick="triggerAdRedirect(event)">
-          <div class="video-sub-thumb"><i class="fa-solid fa-play"></i></div>
-          <div class="video-sub-info">
-            <h4>📹 রিয়ার সাথে সরাসরি ভিডিও কল</h4>
-            <span><i class="fa-solid fa-eye"></i> ১,৯৪০ ভিউ • ০৩:১৫ মি.</span>
-          </div>
-        </a>
-
-        <a href="videos.html" class="video-sub-card" onclick="triggerAdRedirect(event)">
-          <div class="video-sub-thumb" style="background: linear-gradient(135deg, #00d2ff, #0066ff);"><i class="fa-solid fa-play"></i></div>
-          <div class="video-sub-info">
-            <h4>🔥 গোপন রুমের লাইভ আড্ডা</h4>
-            <span><i class="fa-solid fa-eye"></i> ২,৮২০ ভিউ • ০৫:৪৮ মি.</span>
-          </div>
-        </a>
-
-        <a href="videos.html" class="video-sub-card" onclick="triggerAdRedirect(event)">
-          <div class="video-sub-thumb" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"><i class="fa-solid fa-play"></i></div>
-          <div class="video-sub-info">
-            <h4>🍒 প্রাইভেট ওয়েবক্যাম শো ক্লিপ</h4>
-            <span><i class="fa-solid fa-eye"></i> ৩,৪১০ ভিউ • ০৪:২২ মি.</span>
-          </div>
-        </a>
-      </div>
-    </section>
-
-    <!-- FEATURED LIVE VOICE NOTES -->
-    <section class="voice-notes-section">
-      <div class="voice-header">
-        <h2><i class="fa-solid fa-microphone-lines" style="color: var(--blue);"></i> 🎙️ মেয়েদের সরাসরি অডিও বার্তা ও ভয়েস</h2>
-        <p>প্লে বাটনে চাপ দিয়ে মেয়েদের পার্সোনাল ভয়েস নোট শুনুন</p>
-      </div>
-
-      <div class="voice-grid">
-        <div class="voice-card" onclick="playVoiceTrigger(event, 'রিয়া')">
-          <div class="voice-avatar" style="background: linear-gradient(135deg, #ff2a85, #ff7300);">
-            <i class="fa-solid fa-user-dress"></i>
-          </div>
-          <div class="voice-wave-container">
-            <div class="voice-name-row">
-              <span class="voice-name">রিয়া (২১)</span>
-              <span class="voice-duration">0:14s</span>
-            </div>
-            <div class="voice-wave-bars">
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-            </div>
-          </div>
-          <div class="voice-play-icon"><i class="fa-solid fa-play"></i></div>
-        </div>
-
-        <div class="voice-card" onclick="playVoiceTrigger(event, 'প্রিয়া')">
-          <div class="voice-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">
-            <i class="fa-solid fa-user-dress"></i>
-          </div>
-          <div class="voice-wave-container">
-            <div class="voice-name-row">
-              <span class="voice-name">প্রিয়া (১৯)</span>
-              <span class="voice-duration">0:22s</span>
-            </div>
-            <div class="voice-wave-bars">
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-            </div>
-          </div>
-          <div class="voice-play-icon"><i class="fa-solid fa-play"></i></div>
-        </div>
-
-        <div class="voice-card" onclick="playVoiceTrigger(event, 'মিতু')">
-          <div class="voice-avatar" style="background: linear-gradient(135deg, #10b981, #00d2ff);">
-            <i class="fa-solid fa-user-dress"></i>
-          </div>
-          <div class="voice-wave-container">
-            <div class="voice-name-row">
-              <span class="voice-name">মিতু (২০)</span>
-              <span class="voice-duration">0:18s</span>
-            </div>
-            <div class="voice-wave-bars">
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
-            </div>
-          </div>
-          <div class="voice-play-icon"><i class="fa-solid fa-play"></i></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- MAIN ACTION BUTTONS -->
-    <section class="actions-panel">
-      <div class="actions-header">
-        <h2 class="actions-title">নিচের বাটনগুলোতে ক্লিক করে ম্যাচিং শুরু করুন</h2>
-        <p class="actions-subtitle">যে কোনো একটি অপশন বেছে নিন এবং সরাসরি কানেক্ট করুন</p>
-      </div>
-
-      <div class="buttons-grid">
-        <a href="girls.html" class="chat-btn btn-girls" onclick="triggerAdRedirect(event)">
-          <i class="fa-solid fa-comments"></i>
-          <span>মেয়েদের সাথে চ্যাট</span>
-          <span class="chat-btn-subtext">১৮৫ জন মেয়ে অনলাইন আছে</span>
-        </a>
-
-        <a href="girls.html" class="chat-btn btn-boys" onclick="triggerAdRedirect(event)">
-          <i class="fa-solid fa-message"></i>
-          <span>ছেলেদের সাথে চ্যাট</span>
-          <span class="chat-btn-subtext">২১১ জন ছেলে অনলাইন আছে</span>
-        </a>
-
-        <a href="videos.html" class="chat-btn btn-match" onclick="triggerAdRedirect(event)">
-          <i class="fa-solid fa-video"></i>
-          <span>ভিডিও ম্যাচ চালু করুন</span>
-          <span class="chat-btn-subtext">সরাসরি ১-অন-১ ক্যামেরা চ্যাট</span>
-        </a>
-
-        <button class="chat-btn btn-telegram" onclick="openChatModal('telegram')">
+        <a href="https://t.me/alltimefantasyzone" target="_blank" class="tg-header-btn">
           <i class="fa-brands fa-telegram"></i>
-          <span>টেলিগ্রাম গ্রুপ জয়েন</span>
-          <span class="chat-btn-subtext">ফ্রি গ্রুপ চ্যাট ও ফাইল শেয়ার</span>
-        </button>
+        </a>
       </div>
-    </section>
+    </header>
 
-    <!-- NATIVE SPONSORED ADS (Dynamically loaded after verification) -->
-    <div style="width:100%; display:flex; justify-content:center; align-items:center; background: rgba(22, 27, 43, 0.6); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px;">
-      <div id="container-96def6f0cc4dba72ad781c93e21f61fd" style="width:100%;"></div>
-    </div>
-
-  </div>
-
-  <!-- STICKY BOTTOM AD BANNER (Dynamically loaded after verification) -->
-  <div class="ad-banner-sticky" id="sticky-ad">
-    <div class="ad-sticky-close-bar">
-      <button class="ad-sticky-close" onclick="closeStickyAd(event)">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <div class="adsterra-320x50-container" style="width:100%; display:flex; justify-content:center; align-items:center;"></div>
-  </div>
-
-  <!-- Toast Notification Area -->
-  <div class="toast-container" id="toast-container"></div>
-
-  <!-- Floating Inbox Button -->
-  <button class="inbox-float-btn" id="inbox-trigger" onclick="toggleInbox()">
-    <i class="fa-solid fa-comments"></i>
-    <span class="inbox-badge" id="inbox-badge-count">0</span>
-  </button>
-
-  <!-- Inbox Drawer System -->
-  <div class="inbox-drawer" id="inbox-drawer">
-    <div class="inbox-drawer-header">
-      <h3><i class="fa-solid fa-inbox"></i> ইনবক্স (<span id="inbox-header-count">0</span>)</h3>
-      <button class="inbox-close-btn" onclick="toggleInbox()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <div class="inbox-drawer-content" id="inbox-items-container">
-      <div class="inbox-empty-state" id="inbox-empty-state">
-        <i class="fa-solid fa-comment-slash"></i>
-        <p>কোনো নতুন মেসেজ নেই। চ্যাট রুম একটিভ হতে অপেক্ষা করুন।</p>
-      </div>
-    </div>
-
-    <div class="chat-detail-view" id="chat-detail-view">
-      <div class="chat-detail-header">
-        <button class="chat-back-btn" onclick="showInboxList()">
-          <i class="fa-solid fa-arrow-left"></i>
-        </button>
-        <div class="chat-header-avatar" id="chat-active-avatar"></div>
-        <div class="chat-header-info">
-          <h4 id="chat-active-name">রিয়া</h4>
-          <span class="chat-header-status"><span class="status-dot-mini" style="background-color: var(--green);"></span> অনলাইন</span>
+    <!-- Horizontal Stories Reel -->
+    <div class="stories-reel">
+      <a href="videos.html" class="story-item">
+        <div class="story-ring live">
+          <div class="story-avatar" style="background: linear-gradient(135deg, #ff2a85, #ff7300);"><i class="fa-solid fa-play"></i></div>
         </div>
-      </div>
-      
-      <div class="chat-messages-body" id="chat-messages-body"></div>
-      
-      <div class="chat-input-area" onclick="triggerChatClick()">
-        <input type="text" placeholder="মেসেজ লিখুন..." readonly />
-        <button class="chat-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
-      </div>
+        <span class="story-title">হট ভিডিও</span>
+      </a>
+      <a href="girls.html" class="story-item">
+        <div class="story-ring live">
+          <div class="story-avatar" style="background: linear-gradient(135deg, #00d2ff, #0066ff);"><i class="fa-solid fa-venus"></i></div>
+        </div>
+        <span class="story-title">অনলাইন মেয়ে</span>
+      </a>
+      <a href="voice.html" class="story-item">
+        <div class="story-ring live">
+          <div class="story-avatar" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-microphone-lines"></i></div>
+        </div>
+        <span class="story-title">ভয়েস নোট</span>
+      </a>
+      <a href="wheel.html" class="story-item">
+        <div class="story-ring">
+          <div class="story-avatar" style="background: linear-gradient(135deg, #fbbf24, #d97706);"><i class="fa-solid fa-dharmachakra"></i></div>
+        </div>
+        <span class="story-title">লাকি হুইল</span>
+      </a>
+      <a href="categories.html" class="story-item">
+        <div class="story-ring">
+          <div class="story-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);"><i class="fa-solid fa-tags"></i></div>
+        </div>
+        <span class="story-title">ক্যাটাগরি</span>
+      </a>
     </div>
-  </div>
 
-  <!-- MODAL / POPUP OVERLAY (AD GATEWAY) -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-      
-      <!-- STATE 1: Simulated Connecting/Matching -->
-      <div class="modal-state active" id="modal-state-connecting">
-        <div class="modal-header">
-          <div class="modal-icon-container" id="modal-conn-icon">
-            <i class="fa-solid fa-circle-nodes"></i>
+    <!-- Main Content Area -->
+    <main class="app-content">
+
+      <!-- Top Sponsored Ad Banner -->
+      <div class="ad-banner-top" onclick="triggerAdRedirect(event)">
+        <span class="ad-label">Sponsored Live</span>
+        <div class="ad-fallback-card">
+          <div class="ad-fallback-badge">
+            <span class="status-dot-mini" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
+            লাইভ স্পেশাল শো
           </div>
-          <h3 class="loading-step-text" id="loading-title">সার্ভারের সাথে কানেক্ট করা হচ্ছে...</h3>
-          <p class="loading-step-sub" id="loading-subtitle">অনুগ্রহ করে কয়েক সেকেন্ড অপেক্ষা করুন</p>
+          <h3 class="ad-fallback-title">🔞 ১-ক্লিকে প্রাইভেট চ্যাট ও ভিডিও রুম আনলক করুন</h3>
+          <p class="ad-fallback-desc">সরাসরি অনলাইন মেয়েদের সাথে ১-অন-১ ক্যামেরা আড্ডা শুরু করতে ট্যাপ করুন</p>
+          <button class="ad-fallback-btn"><i class="fa-solid fa-play"></i> সরাসরি যুক্ত হোন</button>
         </div>
-        
-        <div class="loader-spinner"></div>
-        
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" id="progress-fill"></div>
-        </div>
-        <div style="text-align: center; font-size: 12px; color: var(--muted); font-family: var(--font-outfit);" id="progress-percent">0% Completed</div>
       </div>
 
-      <!-- STATE 2: Verification Required (Ad Gateway) -->
-      <div class="modal-state" id="modal-state-verify">
-        <div class="modal-header">
-          <div class="modal-icon-container" style="background: rgba(251, 191, 36, 0.1); color: var(--yellow); border-color: rgba(251, 191, 36, 0.2);">
-            <i class="fa-solid fa-user-shield"></i>
+      <!-- Hero Panel with Realtime Fluctuation Counters -->
+      <section class="hero-panel">
+        <h1 class="hero-title">এডাল্ট জোন চ্যাট — সরাসরি পার্টনার খুঁজুন</h1>
+        <p class="hero-subtitle">আমাদের চ্যাট রুমে এই মুহূর্তে দেশ ও দেশের বাইরে থেকে শত শত ছেলে ও মেয়ে লাইভ যুক্ত রয়েছে। নিচের যে কোনো অপশন বেছে নিন।</p>
+        
+        <div class="counter-grid">
+          <a href="girls.html" class="counter-card boys-card" onclick="triggerAdRedirect(event)">
+            <div class="counter-icon"><i class="fa-solid fa-mars"></i></div>
+            <div class="counter-number" id="boys-counter">214</div>
+            <div class="counter-label">ছেলে একটিভ</div>
+            <div class="counter-sub"><span class="status-dot-mini"></span> লাইভ ও অনলাইন</div>
+          </a>
+
+          <a href="girls.html" class="counter-card girls-card" onclick="triggerAdRedirect(event)">
+            <div class="counter-icon"><i class="fa-solid fa-venus"></i></div>
+            <div class="counter-number" id="girls-counter">189</div>
+            <div class="counter-label">মেয়ে একটিভ</div>
+            <div class="counter-sub"><span class="status-dot-mini"></span> চ্যাটে উপলব্ধ</div>
+          </a>
+        </div>
+      </section>
+
+      <!-- Quick Action Buttons Grid -->
+      <div class="action-grid">
+        <a href="girls.html" class="action-card" onclick="triggerAdRedirect(event)">
+          <div class="action-icon" style="background: rgba(255, 42, 133, 0.15); color: var(--pink);"><i class="fa-solid fa-comments"></i></div>
+          <div class="action-info">
+            <span class="action-title">মেয়েদের সাথে চ্যাট</span>
+            <span class="action-sub">১-অন-১ প্রাইভেট ইনবক্স</span>
           </div>
-          <h3 class="loading-step-text" id="verify-main-title">ভেরিফিকেশন সম্পন্ন করুন!</h3>
-          <p class="loading-step-sub" id="verify-sub-title">মেসেজের উত্তর দিতে এবং চ্যাট আনলক করতে স্পনসর ভেরিফিকেশন করা আবশ্যক।</p>
-        </div>
+        </a>
 
-        <div class="ad-card-modal" onclick="triggerAdRedirect()">
-          <span class="modal-ad-badge" id="verify-ad-badge">Sponsored Ads</span>
-          <div class="ad-card-modal-title" id="verify-ad-title">🔓 সরাসরি ১-ক্লিক চ্যাট আনলক</div>
-          <div class="ad-card-modal-desc" id="verify-ad-desc">নিচের লিংকে ক্লিক করে আমাদের ভেরিফিকেশন স্পনসর কাজটি সম্পন্ন করলেই সবগুলো ইনবক্স মেসেজ আনলক হয়ে যাবে।</div>
-        </div>
+        <a href="videos.html" class="action-card" onclick="triggerAdRedirect(event)">
+          <div class="action-icon" style="background: rgba(0, 210, 255, 0.15); color: var(--blue);"><i class="fa-solid fa-video"></i></div>
+          <div class="action-info">
+            <span class="action-title">লাইভ ভিডিও কল</span>
+            <span class="action-sub">সরাসরি ক্যামেরা রুম</span>
+          </div>
+        </a>
 
-        <button class="modal-verify-btn" id="verify-ad-btn" onclick="triggerAdRedirect()">
-          <span>চ্যাট আনলক করুন</span>
-          <i class="fa-solid fa-shield-check"></i>
-        </button>
+        <a href="voice.html" class="action-card" onclick="triggerAdRedirect(event)">
+          <div class="action-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--green);"><i class="fa-solid fa-microphone-lines"></i></div>
+          <div class="action-info">
+            <span class="action-title">ভয়েস মেসেজিং</span>
+            <span class="action-sub">গোপন অডিও বার্তা শুনুন</span>
+          </div>
+        </a>
+
+        <a href="wheel.html" class="action-card" onclick="triggerAdRedirect(event)">
+          <div class="action-icon" style="background: rgba(251, 191, 36, 0.15); color: var(--yellow);"><i class="fa-solid fa-dharmachakra"></i></div>
+          <div class="action-info">
+            <span class="action-title">ম্যাচিং হুইল</span>
+            <span class="action-sub">২ সেকেন্ডে ম্যাচ খুঁজুন</span>
+          </div>
+        </a>
       </div>
-    </div>
+
+    </main>
+
+    <!-- Bottom App Navigation Bar -->
+    <nav class="bottom-nav">
+      <a href="index.html" class="bottom-nav-item active"><i class="fa-solid fa-house"></i><span>হোম</span></a>
+      <a href="videos.html" class="bottom-nav-item"><i class="fa-solid fa-video"></i><span>ভিডিও</span></a>
+      <a href="girls.html" class="bottom-nav-item"><i class="fa-solid fa-venus"></i><span>মেয়েরা</span></a>
+      <a href="voice.html" class="bottom-nav-item"><i class="fa-solid fa-microphone-lines"></i><span>ভয়েস</span></a>
+      <a href="wheel.html" class="bottom-nav-item"><i class="fa-solid fa-dharmachakra"></i><span>হুইল</span></a>
+      <a href="categories.html" class="bottom-nav-item"><i class="fa-solid fa-tags"></i><span>ক্যাটাগরি</span></a>
+    </nav>
+
   </div>
 
-  <!-- Mobile Bottom Navigation Bar -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="bottom-nav-item active"><i class="fa-solid fa-house"></i><span>হোম</span></a>
-    <a href="videos.html" class="bottom-nav-item"><i class="fa-solid fa-video"></i><span>ভিডিও</span></a>
-    <a href="girls.html" class="bottom-nav-item"><i class="fa-solid fa-venus"></i><span>মেয়েরা</span></a>
-    <a href="voice.html" class="bottom-nav-item"><i class="fa-solid fa-microphone-lines"></i><span>ভয়েস</span></a>
-    <a href="wheel.html" class="bottom-nav-item"><i class="fa-solid fa-dharmachakra"></i><span>হুইল</span></a>
-    <a href="categories.html" class="bottom-nav-item"><i class="fa-solid fa-tags"></i><span>ক্যাটাগরি</span></a>
-  </nav>
-
-  <!-- Shared App JS with Cache Buster -->
-  <script src="assets/js/app.js?v=5.0"></script>
+  <script src="assets/js/app.js?v=6.0"></script>
 </body>
 </html>
