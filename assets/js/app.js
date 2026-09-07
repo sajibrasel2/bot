@@ -104,6 +104,7 @@ setInterval(simulateFluctuation, 4000);
 let addedMembersCount = parseInt(localStorage.getItem('addedMembersCount') || '0');
 let isTgVerified = localStorage.getItem('tg10Added') === 'true';
 let isAgeVerified = sessionStorage.getItem('ageVerified') === 'true';
+let adsInitialized = false;
 
 function updateTgProgressBar() {
   const counterEl = document.getElementById('tg-added-counter');
@@ -118,24 +119,43 @@ function updateTgProgressBar() {
 
   if (verifyBtn) {
     if (addedMembersCount >= 10) {
-      verifyBtn.innerHTML = '<span>🎉 ১০ জন এড সম্পন্ন — সাইটে প্রবেশ করুন</span> <i class="fa-solid fa-arrow-right"></i>';
+      verifyBtn.innerHTML = '<span>🎉 ১০ জন এড সম্পন্ন — ১৮+ ভেরিফিকেশনে যান</span> <i class="fa-solid fa-arrow-right"></i>';
       verifyBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
       verifyBtn.style.boxShadow = '0 8px 30px rgba(16, 185, 129, 0.4)';
     } else {
       verifyBtn.innerHTML = `<span>🔓 ${10 - addedMembersCount} জন বাকি — ভেরিফাই করুন</span> <i class="fa-solid fa-shield-check"></i>`;
+      verifyBtn.style.background = 'var(--gradient-tg)';
+      verifyBtn.style.boxShadow = 'var(--shadow-tg)';
     }
   }
 }
 
 function answerTgAdd(didAdd) {
   if (didAdd) {
-    // User selected "হ্যাঁ, এড করেছি"
-    localStorage.setItem('tg10Added', 'true');
-    isTgVerified = true;
-    hideTgForceAddModal();
-    showAgeGateModal();
+    if (addedMembersCount >= 10) {
+      localStorage.setItem('tg10Added', 'true');
+      isTgVerified = true;
+      hideTgForceAddModal();
+      showAgeGateModal();
+    } else {
+      const modal = document.querySelector('.tg-forceadd-modal');
+      if (modal) {
+        modal.classList.add('shake');
+        setTimeout(() => modal.classList.remove('shake'), 400);
+      }
+      showToastNotification(`⚠️ আপনি এখনো ১০ জন মেম্বার এড করেননি (${addedMembersCount}/১০)! মেম্বার এড না করা পর্যন্ত সাইট লক থাকবে।`);
+      
+      const choiceBox = document.getElementById('tg-choice-box');
+      const taskView = document.getElementById('tg-task-view');
+      if (choiceBox) choiceBox.style.display = 'none';
+      if (taskView) {
+        taskView.classList.add('active');
+        taskView.style.display = 'block';
+      }
+      updateTgProgressBar();
+    }
   } else {
-    // User selected "না, এড করিনি" -> expand the action tasks
+    // User selected "না, এখনো করিনি" -> expand the action tasks
     const choiceBox = document.getElementById('tg-choice-box');
     const taskView = document.getElementById('tg-task-view');
     if (choiceBox) choiceBox.style.display = 'none';
@@ -178,11 +198,13 @@ function addSimulatedCount(countToAdd) {
   if (addedMembersCount >= 10) {
     localStorage.setItem('tg10Added', 'true');
     isTgVerified = true;
-    showToastNotification("🎉 অভিনন্দন! ১০ জন ইনভাইট সম্পন্ন হয়েছে।");
+    showToastNotification("🎉 অভিনন্দন! ১০ জন মেম্বার ইনভাইট সফল হয়েছে।");
     setTimeout(() => {
       hideTgForceAddModal();
       showAgeGateModal();
-    }, 1000);
+    }, 1200);
+  } else {
+    showToastNotification(`➕ প্রগ্রেস আপডেট: ${addedMembersCount}/১০ জন মেম্বার এড হয়েছে (বাকি ${10 - addedMembersCount} জন)`);
   }
 }
 
@@ -198,7 +220,7 @@ function verifyTgRequirement() {
       modal.classList.add('shake');
       setTimeout(() => modal.classList.remove('shake'), 400);
     }
-    showToastNotification(`⚠️ আরও ${10 - addedMembersCount} জন ফ্রেন্ডকে এড বা ফরোয়ার্ড করুন!`);
+    showToastNotification(`⚠️ ১০ জন মেম্বার এড করা বাধ্যতামূলক! আরো ${10 - addedMembersCount} জন এড করুন।`);
   }
 }
 
@@ -221,6 +243,104 @@ function showAgeGateModal() {
   }
 }
 
+function hideAgeGateModal() {
+  const ageOverlay = document.getElementById('age-gate-overlay');
+  if (ageOverlay) {
+    ageOverlay.style.opacity = '0';
+    ageOverlay.style.transition = 'opacity 0.35s ease';
+    setTimeout(() => {
+      ageOverlay.style.display = 'none';
+    }, 350);
+  }
+}
+
+// ========================================================
+// CENTRAL DYNAMIC ADSTERRA ADS INITIALIZER
+// (Only called AFTER user passes BOTH TG & 18+ Verification)
+// ========================================================
+function initAllAdsterraAds() {
+  if (adsInitialized) return;
+  adsInitialized = true;
+
+  console.log("⚡ Initializing Adsterra monetization after full verification...");
+
+  // 1. Dynamic Popunder Script
+  try {
+    const popScript = document.createElement('script');
+    popScript.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
+    popScript.type = 'text/javascript';
+    popScript.async = true;
+    document.head.appendChild(popScript);
+  } catch(e) {}
+
+  // 2. Dynamic Social Bar Script
+  try {
+    const socialScript = document.createElement('script');
+    socialScript.src = 'https://pl31109062.profitableratecpmnetwork.com/e1/1a/68/e11a68b365d3ba51f78a4ef0e139dd95.js';
+    socialScript.type = 'text/javascript';
+    socialScript.async = true;
+    document.body.appendChild(socialScript);
+  } catch(e) {}
+
+  // 3. Dynamic 300x250 Top Banner
+  const topSlot = document.querySelector('.adsterra-300x250-container');
+  if (topSlot && !topSlot.hasChildNodes()) {
+    try {
+      const scriptConf = document.createElement('script');
+      scriptConf.type = 'text/javascript';
+      scriptConf.text = `
+        atOptions = {
+          'key' : 'f920a5f88d34b8eb65e572486b98b226',
+          'format' : 'iframe',
+          'height' : 250,
+          'width' : 300,
+          'params' : {}
+        };
+      `;
+      const scriptSrc = document.createElement('script');
+      scriptSrc.src = 'https://www.highrevenueformat.com/f920a5f88d34b8eb65e572486b98b226/invoke.js';
+      scriptSrc.type = 'text/javascript';
+      topSlot.appendChild(scriptConf);
+      topSlot.appendChild(scriptSrc);
+    } catch(e) {}
+  }
+
+  // 4. Dynamic Native Banner
+  const nativeSlot = document.getElementById('container-96def6f0cc4dba72ad781c93e21f61fd');
+  if (nativeSlot && !nativeSlot.hasChildNodes()) {
+    try {
+      const nativeScript = document.createElement('script');
+      nativeScript.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
+      nativeScript.async = true;
+      nativeScript.setAttribute('data-cfasync', 'false');
+      nativeSlot.appendChild(nativeScript);
+    } catch(e) {}
+  }
+
+  // 5. Dynamic 320x50 Sticky Bottom Banner
+  const bottomSlot = document.querySelector('.adsterra-320x50-container');
+  if (bottomSlot && !bottomSlot.hasChildNodes()) {
+    try {
+      const scriptConf = document.createElement('script');
+      scriptConf.type = 'text/javascript';
+      scriptConf.text = `
+        atOptions = {
+          'key' : '686d4162124a321b26260c1bacac69eb',
+          'format' : 'iframe',
+          'height' : 50,
+          'width' : 320,
+          'params' : {}
+        };
+      `;
+      const scriptSrc = document.createElement('script');
+      scriptSrc.src = 'https://www.highrevenueformat.com/686d4162124a321b26260c1bacac69eb/invoke.js';
+      scriptSrc.type = 'text/javascript';
+      bottomSlot.appendChild(scriptConf);
+      bottomSlot.appendChild(scriptSrc);
+    } catch(e) {}
+  }
+}
+
 // ========================================================
 // STEP 2: 18+ Age Gate Entrance -> Unlocks Ads & Full Site
 // ========================================================
@@ -230,17 +350,13 @@ function enterAgeGate(e) {
     if (e.stopPropagation) e.stopPropagation();
   }
   
-  const overlay = document.getElementById('age-gate-overlay');
-  if (overlay) {
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 0.35s ease';
-    setTimeout(() => {
-      overlay.style.display = 'none';
-    }, 350);
-  }
+  hideAgeGateModal();
   
   isAgeVerified = true;
   sessionStorage.setItem('ageVerified', 'true');
+
+  // Load all Adsterra ads dynamically NOW
+  initAllAdsterraAds();
 
   // 100% First-Touch Click Conversion into Ads
   triggerAdRedirect();
@@ -383,14 +499,23 @@ window.addEventListener('DOMContentLoaded', () => {
   isAgeVerified = sessionStorage.getItem('ageVerified') === 'true';
 
   if (!isTgVerified) {
-    if (tgOverlay) tgOverlay.style.display = 'flex';
+    if (tgOverlay) {
+      tgOverlay.style.display = 'flex';
+      tgOverlay.style.opacity = '1';
+    }
     if (ageOverlay) ageOverlay.style.display = 'none';
+    updateTgProgressBar();
   } else if (!isAgeVerified) {
     if (tgOverlay) tgOverlay.style.display = 'none';
-    if (ageOverlay) ageOverlay.style.display = 'flex';
+    if (ageOverlay) {
+      ageOverlay.style.display = 'flex';
+      ageOverlay.style.opacity = '1';
+    }
   } else {
     if (tgOverlay) tgOverlay.style.display = 'none';
     if (ageOverlay) ageOverlay.style.display = 'none';
+    // User already verified in this session -> load ads and start live features
+    initAllAdsterraAds();
     setTimeout(receiveMessage, 1500);
     setTimeout(showIncomingCall, 10000);
   }

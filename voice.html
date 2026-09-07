@@ -8,15 +8,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="assets/css/style.css" />
 
-  <!-- Adsterra Popunder -->
-  <script>
-    (function() {
-      var s = document.createElement('script');
-      s.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
-      s.type = 'text/javascript';
-      document.head.appendChild(s);
-    })();
-  </script>
+
+  <!-- Mobile Web App & PWA Settings -->
+  <meta name="theme-color" content="#090b11" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="format-detection" content="telephone=no" />
+  
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -28,9 +26,14 @@
         <i class="fa-brands fa-telegram"></i>
       </div>
       <h2 class="tg-title">📢 অফিসিয়াল টেলিগ্রাম গ্রুপ নোটিশ</h2>
-      <p class="tg-desc">
-        আমাদের প্রাইভেট লাইভ চ্যাট, ভিডিও ও ভয়েস রুমে সম্পূর্ণ ফ্রিতে যুক্ত হতে আমাদের টেলিগ্রাম কমিউনিটিতে অংশ নিন।
-      </p>
+      
+      <!-- Lock Warning Notice -->
+      <div class="tg-lock-warning">
+        <i class="fa-solid fa-lock"></i>
+        <div>
+          <strong style="color: #fff;">লক নোটিশ:</strong> টেলিগ্রাম গ্রুপে ১০ জন মেম্বার এড না করা পর্যন্ত সাইটের কোনো গোপন ভিডিও, লাইভ ক্যামেরা বা চ্যাট রুম আনলক হবে না!
+        </div>
+      </div>
 
       <div class="tg-question-box" id="tg-choice-box">
         <div class="tg-question-text">
@@ -43,8 +46,8 @@
             <span>হ্যাঁ, এড করেছি</span>
           </button>
           <button class="tg-btn-no" onclick="answerTgAdd(false)">
-            <i class="fa-solid fa-circle-xmark"></i>
-            <span>না, এড করিনি</span>
+            <i class="fa-solid fa-user-plus"></i>
+            <span>না, এখনো করিনি (মেম্বার এড করুন)</span>
           </button>
         </div>
       </div>
@@ -53,7 +56,7 @@
         <div class="tg-progress-box">
           <div class="tg-progress-text">
             <span>ইনভাইট মেম্বার প্রগ্রেস:</span>
-            <span><strong id="tg-added-counter" style="color: var(--tg-blue);">0</strong> / ১০ জন</span>
+            <span><strong id="tg-added-counter" style="color: var(--tg-blue);">0</strong> / ১০ জন (<span id="tg-progress-percent">0%</span>)</span>
           </div>
           <div class="tg-progress-bar-bg">
             <div class="tg-progress-bar-fill" id="tg-progress-fill"></div>
@@ -62,15 +65,15 @@
 
         <div class="tg-task-list">
           <button class="tg-task-btn" onclick="handleTgGroupAdd()">
-            <span><i class="fa-solid fa-user-plus" style="color: var(--tg-cyan);"></i> ১. গ্রুপে ঢুকে মেম্বার এড করুন</span>
+            <span><i class="fa-solid fa-user-plus" style="color: var(--tg-cyan);"></i> ১. গ্রুপে ঢুকে মেম্বার এড করুন <small style="color:#10b981;">(+৩ জন)</small></span>
             <i class="fa-solid fa-chevron-right arrow"></i>
           </button>
           <button class="tg-task-btn" onclick="handleTgForward()">
-            <span><i class="fa-solid fa-share-nodes" style="color: #10b981;"></i> ২. টেলিগ্রাম বন্ধুদের ফরোয়ার্ড করুন</span>
+            <span><i class="fa-solid fa-share-nodes" style="color: #10b981;"></i> ২. টেলিগ্রাম বন্ধুদের ফরোয়ার্ড করুন <small style="color:#10b981;">(+৩ জন)</small></span>
             <i class="fa-solid fa-chevron-right arrow"></i>
           </button>
           <button class="tg-task-btn" onclick="handleTgCopyLink()">
-            <span><i class="fa-solid fa-link" style="color: #fbbf24;"></i> ৩. ইনভাইট লিংক কপি করুন</span>
+            <span><i class="fa-solid fa-link" style="color: #fbbf24;"></i> ৩. ইনভাইট লিংক কপি করুন <small style="color:#10b981;">(+৪ জন)</small></span>
             <i class="fa-solid fa-copy arrow"></i>
           </button>
         </div>
@@ -126,29 +129,75 @@
     <div class="blob blob-3"></div>
   </div>
 
-  <!-- Header -->
+  <!-- Header / App Top Bar -->
   <header>
     <a href="index.html" class="logo">
       <div class="logo-icon"><i class="fa-solid fa-fire"></i></div>
-      <div class="logo-text">Adult Zone</div>
+      <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
     </a>
-    
-    <nav class="nav-links">
-      <a href="index.html" class="nav-link"><i class="fa-solid fa-house"></i> হোম</a>
-      <a href="videos.html" class="nav-link"><i class="fa-solid fa-video"></i> ভিডিও</a>
-      <a href="girls.html" class="nav-link"><i class="fa-solid fa-venus"></i> মেয়েরা</a>
-      <a href="voice.html" class="nav-link active"><i class="fa-solid fa-microphone-lines"></i> ভয়েস</a>
-      <a href="wheel.html" class="nav-link"><i class="fa-solid fa-dharmachakra"></i> লাকি হুইল</a>
-      <a href="categories.html" class="nav-link"><i class="fa-solid fa-tags"></i> ক্যাটাগরি</a>
-    </nav>
 
     <div class="header-right">
       <div class="live-status">
         <span class="live-dot"></span>
-        <span>১০+ নতুন ভয়েস নোট</span>
+        <span id="live-online-pill">১,৮৪০+ লাইভ</span>
       </div>
+      <a href="https://t.me/alltimefantasyzone" target="_blank" style="text-decoration:none; color: var(--tg-cyan); font-size: 20px; display:flex; align-items:center;">
+        <i class="fa-brands fa-telegram"></i>
+      </a>
     </div>
   </header>
+
+  <!-- Web App Stories / Quick Categories Reel -->
+  <div class="app-stories-bar">
+    <a href="videos.html" class="story-item">
+      <div class="story-ring live">
+        <div class="story-avatar" style="background: linear-gradient(135deg, #ff2a85, #ff7300);">
+          <i class="fa-solid fa-play"></i>
+        </div>
+      </div>
+      <span class="story-title">হট ভিডিও</span>
+    </a>
+    <a href="girls.html" class="story-item">
+      <div class="story-ring live">
+        <div class="story-avatar" style="background: linear-gradient(135deg, #00d2ff, #0066ff);">
+          <i class="fa-solid fa-venus"></i>
+        </div>
+      </div>
+      <span class="story-title">মেয়েরা</span>
+    </a>
+    <a href="videos.html" class="story-item">
+      <div class="story-ring">
+        <div class="story-avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+          <i class="fa-solid fa-fire-flame-curved"></i>
+        </div>
+      </div>
+      <span class="story-title">বউ-শ্বশুর</span>
+    </a>
+    <a href="categories.html" class="story-item">
+      <div class="story-ring">
+        <div class="story-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">
+          <i class="fa-solid fa-heart-pulse"></i>
+        </div>
+      </div>
+      <span class="story-title">দেবর-ভাবি</span>
+    </a>
+    <a href="voice.html" class="story-item">
+      <div class="story-ring live">
+        <div class="story-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">
+          <i class="fa-solid fa-microphone-lines"></i>
+        </div>
+      </div>
+      <span class="story-title">ভয়েস নোট</span>
+    </a>
+    <a href="wheel.html" class="story-item">
+      <div class="story-ring">
+        <div class="story-avatar" style="background: linear-gradient(135deg, #fbbf24, #d97706);">
+          <i class="fa-solid fa-dharmachakra"></i>
+        </div>
+      </div>
+      <span class="story-title">লাকি হুইল</span>
+    </a>
+  </div>
 
   <div class="container">
 
@@ -161,18 +210,7 @@
         <p class="ad-fallback-desc">অনলাইন অডিও ও ফুল ভয়েস নোট আনলক করতে এখানে ট্যাপ করুন</p>
         <button class="ad-fallback-btn"><i class="fa-solid fa-microphone-lines"></i> ভয়েস প্লে করুন</button>
       </div>
-      <div class="adsterra-300x250-container">
-        <script>
-          atOptions = {
-            'key' : 'f920a5f88d34b8eb65e572486b98b226',
-            'format' : 'iframe',
-            'height' : 250,
-            'width' : 300,
-            'params' : {}
-          };
-        </script>
-        <script src="https://www.highrevenueformat.com/f920a5f88d34b8eb65e572486b98b226/invoke.js"></script>
-      </div>
+      <div class="adsterra-300x250-container"></div>
     </div>
 
     <!-- Voice Notes Section -->
@@ -284,15 +322,6 @@
     <!-- Native Sponsored Ads -->
     <div style="width:100%; display:flex; justify-content:center; align-items:center; background: rgba(22, 27, 43, 0.6); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px;">
       <div id="container-96def6f0cc4dba72ad781c93e21f61fd" style="width:100%;"></div>
-      <script>
-        (function() {
-          var s = document.createElement('script');
-          s.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
-          s.async = true;
-          s.setAttribute('data-cfasync', 'false');
-          document.getElementById('container-96def6f0cc4dba72ad781c93e21f61fd').appendChild(s);
-        })();
-      </script>
     </div>
 
   </div>
@@ -302,18 +331,7 @@
     <div class="ad-sticky-close-bar">
       <button class="ad-sticky-close" onclick="closeStickyAd(event)"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div style="width:100%; display:flex; justify-content:center; align-items:center;">
-      <script>
-        atOptions = {
-          'key' : '686d4162124a321b26260c1bacac69eb',
-          'format' : 'iframe',
-          'height' : 50,
-          'width' : 320,
-          'params' : {}
-        };
-      </script>
-      <script src="https://www.highrevenueformat.com/686d4162124a321b26260c1bacac69eb/invoke.js"></script>
-    </div>
+    <div class="adsterra-320x50-container" style="width:100%; display:flex; justify-content:center; align-items:center;"></div>
   </div>
 
   <div class="toast-container" id="toast-container"></div>
@@ -400,13 +418,5 @@
   </nav>
 
   <script src="assets/js/app.js"></script>
-  <script>
-    (function() {
-      var s = document.createElement('script');
-      s.src = 'https://pl31109062.profitableratecpmnetwork.com/e1/1a/68/e11a68b365d3ba51f78a4ef0e139dd95.js';
-      s.type = 'text/javascript';
-      document.body.appendChild(s);
-    })();
-  </script>
 </body>
 </html>
