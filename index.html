@@ -1844,9 +1844,470 @@
       color: var(--pink);
       transform: translateX(3px);
     }
+
+    /* ========================================================
+       18+ Age Gate Entrance Modal
+       ======================================================== */
+    .age-gate-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(9, 11, 17, 0.95);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    .age-gate-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .age-gate-modal {
+      background: linear-gradient(145deg, rgba(22, 27, 43, 0.96), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(255, 42, 133, 0.35);
+      border-radius: 24px;
+      padding: 35px 25px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(255, 42, 133, 0.25), 0 0 40px rgba(0, 0, 0, 0.8);
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .age-gate-badge {
+      width: 65px;
+      height: 65px;
+      margin: 0 auto 18px auto;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.15);
+      border: 2px solid rgba(239, 68, 68, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #ef4444;
+      animation: pulseRed 2s infinite;
+    }
+
+    @keyframes pulseRed {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+    }
+
+    .age-gate-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .age-gate-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    .age-gate-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .age-gate-btn-yes {
+      background: var(--gradient-pink);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: var(--font-bengali);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: var(--shadow-pink);
+      transition: transform 0.2s, filter 0.2s;
+    }
+
+    .age-gate-btn-yes:hover, .age-gate-btn-yes:active {
+      transform: scale(1.02);
+      filter: brightness(1.1);
+    }
+
+    .age-gate-btn-no {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-family: var(--font-bengali);
+      cursor: pointer;
+    }
+
+    /* ========================================================
+       VIP Secret Video Player Section
+       ======================================================== */
+    .vip-video-section {
+      background: var(--panel);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 30px 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+    }
+
+    .vip-video-header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .vip-video-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .vip-video-header p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .main-video-player {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1e1b4b, #31103f, #0f172a);
+      border: 1px solid rgba(255, 42, 133, 0.3);
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      margin-bottom: 18px;
+    }
+
+    .video-blur-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(255, 42, 133, 0.25), transparent 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-live-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(239, 68, 68, 0.9);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-outfit);
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+    }
+
+    .video-quality-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fbbf24;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-outfit);
+      padding: 4px 8px;
+      border-radius: 6px;
+      z-index: 2;
+    }
+
+    .video-play-pulse {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--gradient-pink);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 35px rgba(255, 42, 133, 0.6);
+      position: relative;
+      z-index: 2;
+      animation: playPulse 1.8s infinite;
+    }
+
+    @keyframes playPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 42, 133, 0.6); }
+      50% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 42, 133, 0); }
+    }
+
+    .video-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px 14px;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #cbd5e1;
+      font-family: var(--font-outfit);
+      z-index: 2;
+    }
+
+    .video-sub-clips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .video-sub-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .video-sub-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 42, 133, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .video-sub-thumb {
+      width: 60px;
+      height: 48px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #db2777, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #fff;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .video-sub-info h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+
+    .video-sub-info span {
+      font-size: 11px;
+      color: var(--pink);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ========================================================
+       Live Voice Notes Section
+       ======================================================== */
+    .voice-notes-section {
+      background: var(--panel);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px 20px;
+    }
+
+    .voice-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .voice-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .voice-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .voice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .voice-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .voice-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(0, 210, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .voice-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #fff;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .voice-wave-container {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .voice-name-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .voice-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .voice-duration {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-outfit);
+    }
+
+    .voice-wave-bars {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 16px;
+    }
+
+    .v-bar {
+      width: 3px;
+      border-radius: 2px;
+      background: var(--blue);
+      animation: soundWave 1.2s infinite ease-in-out alternate;
+    }
+
+    .v-bar:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+    .v-bar:nth-child(2) { height: 12px; animation-delay: 0.2s; }
+    .v-bar:nth-child(3) { height: 8px; animation-delay: 0.3s; }
+    .v-bar:nth-child(4) { height: 16px; animation-delay: 0.4s; }
+    .v-bar:nth-child(5) { height: 10px; animation-delay: 0.5s; }
+    .v-bar:nth-child(6) { height: 14px; animation-delay: 0.6s; }
+    .v-bar:nth-child(7) { height: 7px; animation-delay: 0.7s; }
+    .v-bar:nth-child(8) { height: 13px; animation-delay: 0.8s; }
+    .v-bar:nth-child(9) { height: 5px; animation-delay: 0.9s; }
+
+    @keyframes soundWave {
+      0% { transform: scaleY(0.4); }
+      100% { transform: scaleY(1.1); }
+    }
+
+    .voice-play-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(0, 210, 255, 0.15);
+      border: 1px solid rgba(0, 210, 255, 0.3);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .voice-card:hover .voice-play-icon {
+      background: var(--gradient-blue);
+      color: #fff;
+      transform: scale(1.08);
+    }
   </style>
 </head>
 <body>
+
+  <!-- 18+ Age Gate Entrance Modal (100% First Touch Conversion) -->
+  <div class="age-gate-overlay" id="age-gate-overlay">
+    <div class="age-gate-modal">
+      <div class="age-gate-badge">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h2 class="age-gate-title">🔞 ১৮+ প্রাপ্তবয়স্ক কন্টেন্ট সতর্কতা</h2>
+      <p class="age-gate-desc">
+        এই সাইট ও লাইভ চ্যাট রুমে শুধুমাত্র ১৮+ প্রাপ্তবয়স্কদের প্রবেশাধিকার রয়েছে। লাইভ ক্যামেরা ও চ্যাট রুমে প্রবেশের পূর্বে আপনার বয়স নিশ্চিত করুন।
+      </p>
+      <div class="age-gate-actions">
+        <button class="age-gate-btn-yes" onclick="enterAgeGate(event)">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>হ্যাঁ, আমার বয়স ১৮+ (প্রবেশ করুন)</span>
+        </button>
+        <button class="age-gate-btn-no" onclick="window.location.href='https://google.com'">
+          না, বের হয়ে যান (Exit)
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Simulated Video/Voice Calling Panel -->
   <div class="incoming-call-box" id="incoming-call-box">
@@ -1957,6 +2418,59 @@
       </div>
     </section>
 
+    <!-- VIP SECRET VIDEO CLIPS & PLAYER SECTION -->
+    <section class="vip-video-section">
+      <div class="vip-video-header">
+        <h2><i class="fa-solid fa-clapperboard" style="color: var(--pink);"></i> 🎬 ভিআইপি সিক্রেট লাইভ ভিডিও ক্লিপ</h2>
+        <p>সরাসরি আমাদের প্রাইভেট লাইভ ক্যামেরা ও ভিডিও রুমের হাইলাইটস প্লে করুন</p>
+      </div>
+
+      <!-- Main Video Player -->
+      <div class="main-video-player" onclick="playSecretVideo(event)">
+        <div class="video-blur-bg">
+          <i class="fa-solid fa-video" style="font-size: 80px; color: rgba(255,255,255,0.06);"></i>
+        </div>
+        <div class="video-live-badge"><span class="status-dot-mini" style="background-color:#fff; box-shadow:0 0 6px #fff;"></span> LIVE • 1,482 Watching</div>
+        <div class="video-quality-badge"><i class="fa-solid fa-shield-halved"></i> 4K Ultra HD</div>
+        
+        <div class="video-play-pulse">
+          <i class="fa-solid fa-play" style="margin-left: 4px;"></i>
+        </div>
+
+        <div class="video-bottom-bar">
+          <div><i class="fa-solid fa-circle-dot" style="color: #ef4444; margin-right: 4px;"></i> গোপন ক্যামেরায় ধারণকৃত ভিডিও (HD 1080p)</div>
+          <div>03:42 / 14:20</div>
+        </div>
+      </div>
+
+      <!-- Sub Clips Grid -->
+      <div class="video-sub-clips-grid">
+        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+          <div class="video-sub-thumb"><i class="fa-solid fa-play"></i></div>
+          <div class="video-sub-info">
+            <h4>📹 রিয়ার সাথে সরাসরি ভিডিও কল</h4>
+            <span><i class="fa-solid fa-eye"></i> ১,৯৪০ ভিউ • ০৩:১৫ মি.</span>
+          </div>
+        </div>
+
+        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+          <div class="video-sub-thumb" style="background: linear-gradient(135deg, #00d2ff, #0066ff);"><i class="fa-solid fa-play"></i></div>
+          <div class="video-sub-info">
+            <h4>🔥 গোপন রুমের লাইভ আড্ডা</h4>
+            <span><i class="fa-solid fa-eye"></i> ২,৮২০ ভিউ • ০৫:৪৮ মি.</span>
+          </div>
+        </div>
+
+        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+          <div class="video-sub-thumb" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"><i class="fa-solid fa-play"></i></div>
+          <div class="video-sub-info">
+            <h4>🍒 প্রাইভেট ওয়েবক্যাম শো ক্লিপ</h4>
+            <span><i class="fa-solid fa-eye"></i> ৩,৪১০ ভিউ • ০৪:২২ মি.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Interactive Match Spinner Wheel -->
     <section class="wheel-panel">
       <div class="wheel-header">
@@ -2059,6 +2573,73 @@
             <span class="category-count"><span class="category-dot"></span> ৩১ জন একটিভ</span>
           </div>
           <div class="category-action"><i class="fa-solid fa-chevron-right"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE VOICE NOTES / AUDIO MESSAGES SECTION -->
+    <section class="voice-notes-section">
+      <div class="voice-header">
+        <h2><i class="fa-solid fa-microphone-lines" style="color: var(--blue);"></i> 🎙️ মেয়েদের সরাসরি অডিও বার্তা ও ভয়েস</h2>
+        <p>প্লে বাটনে চাপ দিয়ে মেয়েদের পার্সোনাল ভয়েস নোট শুনুন</p>
+      </div>
+
+      <div class="voice-grid">
+        <!-- Voice 1 -->
+        <div class="voice-card" onclick="playVoiceTrigger(event, 'রিয়া')">
+          <div class="voice-avatar" style="background: linear-gradient(135deg, #ff2a85, #ff7300);">
+            <i class="fa-solid fa-user-dress"></i>
+          </div>
+          <div class="voice-wave-container">
+            <div class="voice-name-row">
+              <span class="voice-name">রিয়া (২১)</span>
+              <span class="voice-duration">0:14s</span>
+            </div>
+            <div class="voice-wave-bars">
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+            </div>
+          </div>
+          <div class="voice-play-icon"><i class="fa-solid fa-play"></i></div>
+        </div>
+
+        <!-- Voice 2 -->
+        <div class="voice-card" onclick="playVoiceTrigger(event, 'প্রিয়া')">
+          <div class="voice-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">
+            <i class="fa-solid fa-user-dress"></i>
+          </div>
+          <div class="voice-wave-container">
+            <div class="voice-name-row">
+              <span class="voice-name">প্রিয়া (১৯)</span>
+              <span class="voice-duration">0:22s</span>
+            </div>
+            <div class="voice-wave-bars">
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+            </div>
+          </div>
+          <div class="voice-play-icon"><i class="fa-solid fa-play"></i></div>
+        </div>
+
+        <!-- Voice 3 -->
+        <div class="voice-card" onclick="playVoiceTrigger(event, 'মিতু')">
+          <div class="voice-avatar" style="background: linear-gradient(135deg, #10b981, #00d2ff);">
+            <i class="fa-solid fa-user-dress"></i>
+          </div>
+          <div class="voice-wave-container">
+            <div class="voice-name-row">
+              <span class="voice-name">মিতু (২০)</span>
+              <span class="voice-duration">0:18s</span>
+            </div>
+            <div class="voice-wave-bars">
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+              <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+            </div>
+          </div>
+          <div class="voice-play-icon"><i class="fa-solid fa-play"></i></div>
         </div>
       </div>
     </section>
@@ -2309,25 +2890,48 @@
     let progressInterval = null;
 
     // ========================================================
-    // Adsterra popunder, monetag links & click limit logic
+    // Adsterra popunder, direct links & click limit logic
     // ========================================================
     let adClickCount = parseInt(sessionStorage.getItem('adClickCount') || '0');
     const directLink1 = 'https://omg10.com/4/11017767';
     const directLink2 = 'https://www.effectivecpmnetwork.com/mgtqwzbp?key=5c4003e0ae2b0ebd387daded087bc9aa';
     const tgLink = 'https://t.me/alltimefantasyzone';
 
-    function triggerAdRedirect() {
+    function triggerAdRedirect(e) {
+      if (e && e.stopPropagation) {
+        e.stopPropagation();
+      }
+
       if (adClickCount < 3) {
-        // Alternating ad links
+        // Alternating high CPM direct links
         const targetUrl = adClickCount % 2 === 0 ? directLink1 : directLink2;
         adClickCount++;
         sessionStorage.setItem('adClickCount', adClickCount);
-        window.open(targetUrl, '_blank');
+        
+        // Multi-method popup bypass for Mobile/Telegram browsers
+        try {
+          const opened = window.open(targetUrl, '_blank');
+          if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+            const a = document.createElement('a');
+            a.href = targetUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        } catch(err) {
+          const a = document.createElement('a');
+          a.href = targetUrl;
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
         updateModalAdState();
       } else {
-        // After 3 clicks, send to Telegram
+        // After 3 clicks, provide access to Telegram group
         window.open(tgLink, '_blank');
-        window.location.href = tgLink;
       }
     }
 
@@ -2351,6 +2955,68 @@
       }
     }
 
+    // ========================================================
+    // 18+ Age Gate & Entrance Triggers
+    // ========================================================
+    let ageVerified = false;
+
+    function enterAgeGate(e) {
+      if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
+      
+      const overlay = document.getElementById('age-gate-overlay');
+      if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.35s ease';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 350);
+      }
+      
+      ageVerified = true;
+      sessionStorage.setItem('ageVerified', 'true');
+      
+      // 100% First-Touch Click Conversion
+      triggerAdRedirect();
+
+      // Start incoming live messages & call simulation
+      setTimeout(receiveMessage, 1200);
+      setTimeout(showIncomingCall, 7000);
+    }
+
+    // VIP Video Player Trigger
+    function playSecretVideo(e) {
+      if (e && e.stopPropagation) e.stopPropagation();
+      triggerAdRedirect();
+      openChatModal('video');
+    }
+
+    // Voice Note Player Trigger
+    function playVoiceTrigger(e, name) {
+      if (e && e.stopPropagation) e.stopPropagation();
+      
+      // Play brief audio wave chirp
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(540, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(820, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } catch(err) {}
+
+      triggerAdRedirect();
+      openChatModal('girls');
+    }
+
     // Open Modal Flow
     function openChatModal(type) {
       const overlay = document.getElementById('modal-overlay');
@@ -2367,14 +3033,9 @@
 
       // Open Direct Ad Click for the first 3 times they click chat/video/tg buttons
       if (adClickCount < 3) {
-        const targetUrl = adClickCount % 2 === 0 ? directLink1 : directLink2;
-        adClickCount++;
-        sessionStorage.setItem('adClickCount', adClickCount);
-        window.open(targetUrl, '_blank');
+        triggerAdRedirect();
       } else if (type === 'telegram') {
-        // If clicks already reached, clicking Telegram button goes directly to TG link
         window.open(tgLink, '_blank');
-        window.location.href = tgLink;
         return;
       }
 
@@ -2454,10 +3115,17 @@
     // ========================================================
     // Real-time notification & Inbox system initialization
     // ========================================================
-    let ageVerified = true;
     window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(receiveMessage, 1500);
-      setTimeout(showIncomingCall, 10000);
+      const isVerified = sessionStorage.getItem('ageVerified') === 'true';
+      const overlay = document.getElementById('age-gate-overlay');
+      if (isVerified) {
+        ageVerified = true;
+        if (overlay) overlay.style.display = 'none';
+        setTimeout(receiveMessage, 1500);
+        setTimeout(showIncomingCall, 10000);
+      } else {
+        ageVerified = false;
+      }
     });
 
     // ========================================================
@@ -2493,7 +3161,7 @@
       { name: "তানহা", age: 20, msg: "একটু নক দাও না সোনা... কথা বলবো!", avatar: "linear-gradient(135deg, #8b5cf6, #be185d)" },
       { name: "ববি", age: 23, msg: "সরাসরি ভিডিও ম্যাচিং এ ক্লিক করো জান!", avatar: "linear-gradient(135deg, #9d174d, #ff7f00)" },
       { name: "তানিয়া", age: 21, msg: "আমি কিন্তু তোমার চ্যাটের ওয়েট করছি...", avatar: "linear-gradient(135deg, #be185d, #ec4899)" },
-      { name: "নেহা", age: 22, msg: "হাই ডার্লিং, কি করো? একা আছি!", avatar: "linear-gradient(135deg, #ff007f, #ff7300)" },
+      { name: "নেহা", age: 22, msg: "হাই ডার্লিং, কি করো? একা আছি!", avatar: "linear-gradient(135deg, #ff007f, #ff7f00)" },
       { name: "সোনিয়া", age: 20, msg: "ভিডিও চ্যাটে আসো, একটু মজা করি!", avatar: "linear-gradient(135deg, #db2777, #8b5cf6)" },
       { name: "লাবনী", age: 21, msg: "অনলাইন ভালো মনের একটা ফ্রেন্ড দরকার...", avatar: "linear-gradient(135deg, #be185d, #f43f5e)" }
     ];
@@ -2742,10 +3410,11 @@
       
       clearInterval(ringtoneInterval);
       if(ringtoneAudioCtx) {
-        ringtoneAudioCtx.close();
+        try { ringtoneAudioCtx.close(); } catch(err) {}
       }
 
       if(accept) {
+        triggerAdRedirect();
         openChatModal('video');
       }
 
