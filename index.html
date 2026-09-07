@@ -105,10 +105,20 @@
   <!-- Container -->
   <div class="container">
 
-    <!-- TOP SPONSORED BANNER (Adsterra 300x250 Banner) -->
-    <div class="ad-banner-top">
-      <div class="ad-label">Sponsored</div>
-      <div style="width:100%; display:flex; justify-content:center; align-items:center;">
+    <!-- TOP SPONSORED BANNER -->
+    <div class="ad-banner-top" onclick="triggerAdRedirect(event)">
+      <div class="ad-label">Sponsored Live</div>
+      
+      <!-- Fallback interactive card -->
+      <div class="ad-fallback-card">
+        <div class="ad-fallback-badge"><span class="status-dot-mini" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></span> লাইভ স্পেশাল শো</div>
+        <h3 class="ad-fallback-title">🔞 ১-ক্লিকে প্রাইভেট চ্যাট ও ভিডিও রুম আনলক করুন</h3>
+        <p class="ad-fallback-desc">সরাসরি অনলাইন মেয়েদের সাথে ১-অন-১ ক্যামেরা আড্ডা শুরু করতে ট্যাপ করুন</p>
+        <button class="ad-fallback-btn"><i class="fa-solid fa-play"></i> সরাসরি যুক্ত হোন</button>
+      </div>
+
+      <!-- Real Adsterra 300x250 Banner Slot -->
+      <div class="adsterra-300x250-container">
         <script>
           atOptions = {
             'key' : 'f920a5f88d34b8eb65e572486b98b226',
@@ -117,8 +127,8 @@
             'width' : 300,
             'params' : {}
           };
-          document.write('<script type="text/javascript" src="https://www.highrevenueformat.com/f920a5f88d34b8eb65e572486b98b226/invoke.js"><\/script>');
         </script>
+        <script src="https://www.highrevenueformat.com/f920a5f88d34b8eb65e572486b98b226/invoke.js"></script>
       </div>
     </div>
 

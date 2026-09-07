@@ -265,19 +265,84 @@ header {
 /* Ads Section: Top Banner */
 .ad-banner-top {
   width: 100%;
-  background: linear-gradient(135deg, rgba(22, 27, 43, 0.8), rgba(15, 23, 42, 0.9));
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(22, 27, 43, 0.9), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(255, 42, 133, 0.25);
   border-radius: var(--radius);
-  padding: 16px 20px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  min-height: 280px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+.ad-fallback-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.ad-fallback-badge {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ad-fallback-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.ad-fallback-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.ad-fallback-btn {
+  background: var(--gradient-pink);
+  border: none;
+  color: #fff;
+  font-family: var(--font-bengali);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 50px;
+  box-shadow: var(--shadow-pink);
+  cursor: pointer;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.2s;
+}
+
+.ad-fallback-btn:hover {
+  transform: scale(1.05);
+}
+
+.adsterra-300x250-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 50px;
 }
 
 .ad-label {
