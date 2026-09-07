@@ -9,3 +9,13 @@ PassengerPython /home/techandc/virtualenv/public_html/bot/3.11/bin/python
 # DO NOT REMOVE. CLOUDLINUX CONSTANT HAWK CONTROL PANEL END
 
 DirectoryIndex index.html
+
+# Prevent browser and proxy caching so all updates load instantly
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|htm|php|js|css|json)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+

@@ -201,10 +201,9 @@ async function checkRealDatabaseInvites(isSilent = false) {
   if (checkBtn) checkBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
   if (verifyBtn) verifyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ডাটাবেজে যাচাই করা হচ্ছে...';
 
-  try {
-    // Query API
-    const apiUrl = `api/check_invites.php?user_id=${encodeURIComponent(rawInput)}`;
-    const res = await fetch(apiUrl);
+    // Query API with cache-busting timestamp
+    const apiUrl = `api/check_invites.php?user_id=${encodeURIComponent(rawInput)}&_t=${Date.now()}`;
+    const res = await fetch(apiUrl, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } });
     const data = await res.json();
 
     if (data && data.success) {
