@@ -7,19 +7,93 @@
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="assets/css/style.css" />
-
-  <!-- Adsterra Popunder -->
-  <script>
-    (function() {
-      var s = document.createElement('script');
-      s.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
-      s.type = 'text/javascript';
-      document.head.appendChild(s);
-    })();
-  </script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+
+  <!-- STEP 1: Telegram 10-Member Force-Add Entrance Modal -->
+  <div class="tg-forceadd-overlay" id="tg-forceadd-overlay">
+    <div class="tg-forceadd-modal">
+      <div class="tg-badge-icon">
+        <i class="fa-brands fa-telegram"></i>
+      </div>
+      <h2 class="tg-title">📢 অফিসিয়াল টেলিগ্রাম গ্রুপ নোটিশ</h2>
+      <p class="tg-desc">
+        আমাদের প্রাইভেট লাইভ চ্যাট, ভিডিও ও ভয়েস রুমে সম্পূর্ণ ফ্রিতে যুক্ত হতে আমাদের টেলিগ্রাম কমিউনিটিতে অংশ নিন।
+      </p>
+
+      <div class="tg-question-box" id="tg-choice-box">
+        <div class="tg-question-text">
+          <i class="fa-solid fa-circle-question" style="color: var(--tg-blue); margin-right: 6px;"></i>
+          আপনি কি আমাদের টেলিগ্রাম গ্রুপে ১০ জন মেম্বার এড করেছেন?
+        </div>
+        <div class="tg-actions-choice">
+          <button class="tg-btn-yes" onclick="answerTgAdd(true)">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>হ্যাঁ, এড করেছি</span>
+          </button>
+          <button class="tg-btn-no" onclick="answerTgAdd(false)">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>না, এড করিনি</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="tg-task-view" id="tg-task-view">
+        <div class="tg-progress-box">
+          <div class="tg-progress-text">
+            <span>ইনভাইট মেম্বার প্রগ্রেস:</span>
+            <span><strong id="tg-added-counter" style="color: var(--tg-blue);">0</strong> / ১০ জন</span>
+          </div>
+          <div class="tg-progress-bar-bg">
+            <div class="tg-progress-bar-fill" id="tg-progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="tg-task-list">
+          <button class="tg-task-btn" onclick="handleTgGroupAdd()">
+            <span><i class="fa-solid fa-user-plus" style="color: var(--tg-cyan);"></i> ১. গ্রুপে ঢুকে মেম্বার এড করুন</span>
+            <i class="fa-solid fa-chevron-right arrow"></i>
+          </button>
+          <button class="tg-task-btn" onclick="handleTgForward()">
+            <span><i class="fa-solid fa-share-nodes" style="color: #10b981;"></i> ২. টেলিগ্রাম বন্ধুদের ফরোয়ার্ড করুন</span>
+            <i class="fa-solid fa-chevron-right arrow"></i>
+          </button>
+          <button class="tg-task-btn" onclick="handleTgCopyLink()">
+            <span><i class="fa-solid fa-link" style="color: #fbbf24;"></i> ৩. ইনভাইট লিংক কপি করুন</span>
+            <i class="fa-solid fa-copy arrow"></i>
+          </button>
+        </div>
+
+        <button class="tg-verify-btn" id="tg-verify-btn" onclick="verifyTgRequirement()">
+          <span>🔓 ভেরিফাই ও সাইটে প্রবেশ করুন</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: 18+ Age Gate Entrance Modal -->
+  <div class="age-gate-overlay" id="age-gate-overlay" style="display: none;">
+    <div class="age-gate-modal">
+      <div class="age-gate-badge">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h2 class="age-gate-title">🔞 ১৮+ প্রাপ্তবয়স্ক কন্টেন্ট সতর্কতা</h2>
+      <p class="age-gate-desc">
+        এই সাইট ও লাইভ চ্যাট রুমে শুধুমাত্র ১৮+ প্রাপ্তবয়স্কদের প্রবেশাধিকার রয়েছে। লাইভ ক্যামেরা, চ্যাট রুম ও ভিডিও ক্লিপসে প্রবেশের পূর্বে আপনার বয়স নিশ্চিত করুন।
+      </p>
+      <div class="age-gate-actions">
+        <button class="age-gate-btn-yes" onclick="enterAgeGate(event)">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>হ্যাঁ, আমার বয়স ১৮+ (প্রবেশ করুন)</span>
+        </button>
+        <button class="age-gate-btn-no" onclick="window.location.href='https://google.com'">
+          না, বের হয়ে যান (Exit)
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Simulated Video/Voice Calling Box -->
   <div class="incoming-call-box" id="incoming-call-box">
@@ -72,27 +146,19 @@
 
   <div class="container">
 
-    <!-- Top Sponsored Ad Banner -->
-    <div class="ad-banner-top" onclick="triggerAdRedirect(event)">
-      <div class="ad-label">Sponsored Live</div>
-      <div class="ad-fallback-card">
-        <div class="ad-fallback-badge"><span class="status-dot-mini" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></span> ভিআইপি লাইভ স্ট্রিম</div>
-        <h3 class="ad-fallback-title">🔞 প্রাইভেট ওয়েবক্যাম ও সিক্রেট ভিডিও আনলক করুন</h3>
-        <p class="ad-fallback-desc">সরাসরি ৪K আল্ট্রা এইচডি লাইভ দেখতে এখানে ট্যাপ করুন</p>
-        <button class="ad-fallback-btn"><i class="fa-solid fa-video"></i> ফুল ভিডিও প্লে করুন</button>
+    <!-- TELEGRAM ANNOUNCEMENT BANNER -->
+    <div class="tg-channel-banner">
+      <div class="tg-channel-info">
+        <div class="tg-channel-badge">
+          <i class="fa-brands fa-telegram"></i>
+          <span>অফিসিয়াল টেলিগ্রাম</span>
+        </div>
+        <h3 class="tg-channel-title">🔥 সরাসরি লাইভ গ্রুপ ও ভিডিও চ্যাট মেম্বারদের সাথে যুক্ত হোন</h3>
       </div>
-      <div class="adsterra-300x250-container">
-        <script>
-          atOptions = {
-            'key' : 'f920a5f88d34b8eb65e572486b98b226',
-            'format' : 'iframe',
-            'height' : 250,
-            'width' : 300,
-            'params' : {}
-          };
-        </script>
-        <script src="https://www.highrevenueformat.com/f920a5f88d34b8eb65e572486b98b226/invoke.js"></script>
-      </div>
+      <a href="https://t.me/alltimefantasyzone" target="_blank" class="tg-channel-btn">
+        <span>গ্রুপে যুক্ত হোন</span>
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </a>
     </div>
 
     <!-- VIP Video Section -->
@@ -122,7 +188,7 @@
 
       <!-- Video Grid -->
       <div class="video-sub-clips-grid">
-        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+        <div class="video-sub-card" onclick="openChatModal('video')">
           <div class="video-sub-thumb"><i class="fa-solid fa-play"></i></div>
           <div class="video-sub-info">
             <h4>📹 রিয়ার সাথে ১-অন-১ লাইভ ভিডিও চ্যাট</h4>
@@ -130,7 +196,7 @@
           </div>
         </div>
 
-        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+        <div class="video-sub-card" onclick="openChatModal('video')">
           <div class="video-sub-thumb" style="background: linear-gradient(135deg, #00d2ff, #0066ff);"><i class="fa-solid fa-play"></i></div>
           <div class="video-sub-info">
             <h4>🔥 মধ্যরাতের গোপন রুমের আড্ডা</h4>
@@ -138,7 +204,7 @@
           </div>
         </div>
 
-        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+        <div class="video-sub-card" onclick="openChatModal('video')">
           <div class="video-sub-thumb" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"><i class="fa-solid fa-play"></i></div>
           <div class="video-sub-info">
             <h4>🍒 প্রাইভেট ড্রয়িং রুম শো ক্লিপ</h4>
@@ -146,7 +212,7 @@
           </div>
         </div>
 
-        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+        <div class="video-sub-card" onclick="openChatModal('video')">
           <div class="video-sub-thumb" style="background: linear-gradient(135deg, #10b981, #00d2ff);"><i class="fa-solid fa-play"></i></div>
           <div class="video-sub-info">
             <h4>💃 মৌ ও প্রিয়ার স্পেশাল গ্রুপ কল</h4>
@@ -154,7 +220,7 @@
           </div>
         </div>
 
-        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+        <div class="video-sub-card" onclick="openChatModal('video')">
           <div class="video-sub-thumb" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);"><i class="fa-solid fa-play"></i></div>
           <div class="video-sub-info">
             <h4>💋 সুমির পার্সোনাল ক্যামেরা শো</h4>
@@ -162,7 +228,7 @@
           </div>
         </div>
 
-        <div class="video-sub-card" onclick="triggerAdRedirect(event)">
+        <div class="video-sub-card" onclick="openChatModal('video')">
           <div class="video-sub-thumb" style="background: linear-gradient(135deg, #ff2a85, #ff7300);"><i class="fa-solid fa-play"></i></div>
           <div class="video-sub-info">
             <h4>🔞 সিক্রেট নাইট চ্যাট লাইভ স্ট্রিম</h4>
@@ -172,39 +238,6 @@
       </div>
     </section>
 
-    <!-- Native Sponsored Ads -->
-    <div style="width:100%; display:flex; justify-content:center; align-items:center; background: rgba(22, 27, 43, 0.6); border: 1px solid var(--border); border-radius: var(--radius); padding: 15px;">
-      <div id="container-96def6f0cc4dba72ad781c93e21f61fd" style="width:100%;"></div>
-      <script>
-        (function() {
-          var s = document.createElement('script');
-          s.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
-          s.async = true;
-          s.setAttribute('data-cfasync', 'false');
-          document.getElementById('container-96def6f0cc4dba72ad781c93e21f61fd').appendChild(s);
-        })();
-      </script>
-    </div>
-
-  </div>
-
-  <!-- Sticky Bottom Ad -->
-  <div class="ad-banner-sticky" id="sticky-ad">
-    <div class="ad-sticky-close-bar">
-      <button class="ad-sticky-close" onclick="closeStickyAd(event)"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div style="width:100%; display:flex; justify-content:center; align-items:center;">
-      <script>
-        atOptions = {
-          'key' : '686d4162124a321b26260c1bacac69eb',
-          'format' : 'iframe',
-          'height' : 50,
-          'width' : 320,
-          'params' : {}
-        };
-      </script>
-      <script src="https://www.highrevenueformat.com/686d4162124a321b26260c1bacac69eb/invoke.js"></script>
-    </div>
   </div>
 
   <!-- Toast Container -->
@@ -264,20 +297,19 @@
 
       <div class="modal-state" id="modal-state-verify">
         <div class="modal-header">
-          <div class="modal-icon-container" style="background: rgba(251, 191, 36, 0.1); color: var(--yellow); border-color: rgba(251, 191, 36, 0.2);">
-            <i class="fa-solid fa-user-shield"></i>
+          <div class="modal-icon-container" style="background: rgba(0, 136, 204, 0.15); color: var(--tg-blue); border-color: rgba(0, 136, 204, 0.3);">
+            <i class="fa-brands fa-telegram"></i>
           </div>
-          <h3 class="loading-step-text" id="verify-main-title">ভিডিও রুম আনলক করুন!</h3>
-          <p class="loading-step-sub" id="verify-sub-title">ভিডিও স্ট্রিমে প্রবেশ করতে স্পনসর ভেরিফিকেশন করা আবশ্যক।</p>
+          <h3 class="loading-step-text" id="verify-main-title">কানেকশন সফল হয়েছে!</h3>
+          <p class="loading-step-sub" id="verify-sub-title">সরাসরি চ্যাট করতে বা লাইভ মেম্বারদের সাথে যুক্ত হতে নিচের বাটনে ক্লিক করুন।</p>
         </div>
-        <div class="ad-card-modal" onclick="triggerAdRedirect()">
-          <span class="modal-ad-badge" id="verify-ad-badge">Sponsored Ads</span>
-          <div class="ad-card-modal-title" id="verify-ad-title">🔓 ১-ক্লিক ভিডিও এক্সেস</div>
-          <div class="ad-card-modal-desc" id="verify-ad-desc">নিচের লিংকে ক্লিক করে আমাদের ভেরিফিকেশন স্পনসর কাজটি সম্পন্ন করলেই ফুল স্ক্রিন ভিডিও আনলক হবে।</div>
+        <div class="tg-progress-box" style="margin-bottom: 20px;">
+          <div style="font-weight: 700; color: #fff; margin-bottom: 5px;" id="verify-ad-title">🎉 অলটাইম ফ্যান্টাসি জোন</div>
+          <div style="font-size: 13px; color: var(--muted);" id="verify-ad-desc">আমাদের টেলিগ্রাম গ্রুপে ফ্রিতে জয়েন করে সরাসরি সকল মেম্বারদের সাথে চ্যাট করুন।</div>
         </div>
-        <button class="modal-verify-btn" id="verify-ad-btn" onclick="triggerAdRedirect()">
-          <span>ভিডিও প্লে করুন</span>
-          <i class="fa-solid fa-play"></i>
+        <button class="modal-verify-btn btn-telegram" id="verify-ad-btn" onclick="window.open('https://t.me/alltimefantasyzone', '_blank')">
+          <span>টেলিগ্রাম গ্রুপ জয়েন করুন</span>
+          <i class="fa-brands fa-telegram"></i>
         </button>
       </div>
     </div>
@@ -294,13 +326,5 @@
   </nav>
 
   <script src="assets/js/app.js"></script>
-  <script>
-    (function() {
-      var s = document.createElement('script');
-      s.src = 'https://pl31109062.profitableratecpmnetwork.com/e1/1a/68/e11a68b365d3ba51f78a4ef0e139dd95.js';
-      s.type = 'text/javascript';
-      document.body.appendChild(s);
-    })();
-  </script>
 </body>
 </html>

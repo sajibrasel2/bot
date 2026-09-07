@@ -11,7 +11,12 @@ if (window.Telegram && window.Telegram.WebApp) {
   }
 }
 
-// Initial Counter values
+// Telegram Group & Channel URLs
+const TG_GROUP_LINK = 'https://t.me/alltimefantasyzone';
+const TG_SHARE_TEXT = encodeURIComponent('সরাসরি লাইভ চ্যাট ও ভিডিও কল গ্রুপে যুক্ত হোন: ');
+const TG_SHARE_URL = `https://t.me/share/url?url=${encodeURIComponent(TG_GROUP_LINK)}&text=${TG_SHARE_TEXT}`;
+
+// Initial Live Online Counters
 let boysCount = 211;
 let girlsCount = 185;
 
@@ -33,77 +38,132 @@ function simulateFluctuation() {
 }
 setInterval(simulateFluctuation, 4000);
 
-// Global variable for progress bar interval
-let progressInterval = null;
-
 // ========================================================
-// Adsterra direct links & click rotation logic
+// STEP 1: Telegram 10-Member Force-Add Verification Logic
 // ========================================================
-let adClickCount = parseInt(sessionStorage.getItem('adClickCount') || '0');
-const directLink1 = 'https://omg10.com/4/11017767';
-const directLink2 = 'https://www.effectivecpmnetwork.com/mgtqwzbp?key=5c4003e0ae2b0ebd387daded087bc9aa';
-const tgLink = 'https://t.me/alltimefantasyzone';
+let addedMembersCount = parseInt(localStorage.getItem('addedMembersCount') || '0');
+let isTgVerified = localStorage.getItem('tg10Added') === 'true';
+let isAgeVerified = sessionStorage.getItem('ageVerified') === 'true';
 
-function triggerAdRedirect(e) {
-  if (e && e.stopPropagation) {
-    e.stopPropagation();
-  }
+function updateTgProgressBar() {
+  const counterEl = document.getElementById('tg-added-counter');
+  const fillEl = document.getElementById('tg-progress-fill');
+  const percentEl = document.getElementById('tg-progress-percent');
+  const verifyBtn = document.getElementById('tg-verify-btn');
+  
+  if (counterEl) counterEl.innerText = addedMembersCount;
+  const pct = Math.min(100, Math.round((addedMembersCount / 10) * 100));
+  if (fillEl) fillEl.style.width = pct + '%';
+  if (percentEl) percentEl.innerText = pct + '%';
 
-  if (adClickCount < 3) {
-    const targetUrl = adClickCount % 2 === 0 ? directLink1 : directLink2;
-    adClickCount++;
-    sessionStorage.setItem('adClickCount', adClickCount);
-    
-    try {
-      const opened = window.open(targetUrl, '_blank');
-      if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-        const a = document.createElement('a');
-        a.href = targetUrl;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-    } catch(err) {
-      const a = document.createElement('a');
-      a.href = targetUrl;
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+  if (verifyBtn) {
+    if (addedMembersCount >= 10) {
+      verifyBtn.innerHTML = '<span>🎉 ১০ জন এড সম্পন্ন — সাইটে প্রবেশ করুন</span> <i class="fa-solid fa-arrow-right"></i>';
+      verifyBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      verifyBtn.style.boxShadow = '0 8px 30px rgba(16, 185, 129, 0.4)';
+    } else {
+      verifyBtn.innerHTML = `<span>🔓 ${10 - addedMembersCount} জন বাকি — ভেরিফাই করুন</span> <i class="fa-solid fa-shield-check"></i>`;
     }
-    updateModalAdState();
+  }
+}
+
+function answerTgAdd(didAdd) {
+  if (didAdd) {
+    // User selected "হ্যাঁ, এড করেছি"
+    localStorage.setItem('tg10Added', 'true');
+    isTgVerified = true;
+    hideTgForceAddModal();
+    showAgeGateModal();
   } else {
-    window.open(tgLink, '_blank');
+    // User selected "না, এড করিনি" -> expand the action tasks
+    const choiceBox = document.getElementById('tg-choice-box');
+    const taskView = document.getElementById('tg-task-view');
+    if (choiceBox) choiceBox.style.display = 'none';
+    if (taskView) {
+      taskView.classList.add('active');
+      taskView.style.display = 'block';
+    }
+    updateTgProgressBar();
   }
 }
 
-function updateModalAdState() {
-  const btn = document.getElementById('verify-ad-btn');
-  const title = document.getElementById('verify-main-title');
-  const subtitle = document.getElementById('verify-sub-title');
-  const adTitle = document.getElementById('verify-ad-title');
-  const adDesc = document.getElementById('verify-ad-desc');
-  const adBadge = document.getElementById('verify-ad-badge');
+function handleTgGroupAdd() {
+  window.open(TG_GROUP_LINK, '_blank');
+  addSimulatedCount(3);
+}
 
-  if (btn && adClickCount >= 3) {
-    if (title) title.innerText = 'ভেরিফিকেশন সফল হয়েছে!';
-    if (subtitle) subtitle.innerText = 'নিচের বাটনে ক্লিক করে সরাসরি আমাদের অফিশিয়াল টেলিগ্রাম গ্রুপে যুক্ত হোন।';
-    if (adTitle) adTitle.innerText = '🎉 অলটাইম ফ্যান্টাসি জোন';
-    if (adDesc) adDesc.innerText = 'আমাদের টেলিগ্রাম গ্রুপে ফ্রিতে জয়েন করে সরাসরি সকল মেম্বারদের সাথে চ্যাট করুন।';
-    if (adBadge) adBadge.innerText = 'Verification Success';
-    btn.innerHTML = '<span>টেলিগ্রাম গ্রুপ জয়েন করুন</span> <i class="fa-brands fa-telegram"></i>';
-    btn.className = 'modal-verify-btn btn-telegram';
-    btn.style.boxShadow = '0 8px 25px rgba(0, 136, 204, 0.4)';
+function handleTgForward() {
+  window.open(TG_SHARE_URL, '_blank');
+  addSimulatedCount(3);
+}
+
+function handleTgCopyLink() {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(TG_GROUP_LINK).then(() => {
+      showToastNotification("ইনভাইট লিংক কপি হয়েছে! বন্ধুদের শেয়ার করুন।");
+    }).catch(() => {
+      showToastNotification("লিংক: " + TG_GROUP_LINK);
+    });
+  } else {
+    showToastNotification("লিংক: " + TG_GROUP_LINK);
+  }
+  addSimulatedCount(4);
+}
+
+function addSimulatedCount(countToAdd) {
+  addedMembersCount = Math.min(10, addedMembersCount + countToAdd);
+  localStorage.setItem('addedMembersCount', addedMembersCount);
+  updateTgProgressBar();
+  
+  if (addedMembersCount >= 10) {
+    localStorage.setItem('tg10Added', 'true');
+    isTgVerified = true;
+    showToastNotification("🎉 অভিনন্দন! ১০ জন ইনভাইট সম্পন্ন হয়েছে।");
+    setTimeout(() => {
+      hideTgForceAddModal();
+      showAgeGateModal();
+    }, 1200);
+  }
+}
+
+function verifyTgRequirement() {
+  if (addedMembersCount >= 10 || isTgVerified) {
+    localStorage.setItem('tg10Added', 'true');
+    isTgVerified = true;
+    hideTgForceAddModal();
+    showAgeGateModal();
+  } else {
+    const modal = document.querySelector('.tg-forceadd-modal');
+    if (modal) {
+      modal.classList.add('shake');
+      setTimeout(() => modal.classList.remove('shake'), 400);
+    }
+    showToastNotification(`⚠️ আরও ${10 - addedMembersCount} জন ফ্রেন্ডকে এড বা ফরোয়ার্ড করুন!`);
+  }
+}
+
+function hideTgForceAddModal() {
+  const tgOverlay = document.getElementById('tg-forceadd-overlay');
+  if (tgOverlay) {
+    tgOverlay.style.opacity = '0';
+    tgOverlay.style.transition = 'opacity 0.35s ease';
+    setTimeout(() => {
+      tgOverlay.style.display = 'none';
+    }, 350);
+  }
+}
+
+function showAgeGateModal() {
+  const ageOverlay = document.getElementById('age-gate-overlay');
+  if (ageOverlay && !isAgeVerified) {
+    ageOverlay.style.display = 'flex';
+    ageOverlay.style.opacity = '1';
   }
 }
 
 // ========================================================
-// 18+ Age Gate & Entrance Triggers
+// STEP 2: 18+ Age Gate Entrance
 // ========================================================
-let ageVerified = false;
-
 function enterAgeGate(e) {
   if (e) {
     if (e.preventDefault) e.preventDefault();
@@ -119,11 +179,8 @@ function enterAgeGate(e) {
     }, 350);
   }
   
-  ageVerified = true;
+  isAgeVerified = true;
   sessionStorage.setItem('ageVerified', 'true');
-  
-  // 100% First-Touch Click Conversion
-  triggerAdRedirect();
 
   // Start incoming live messages & call simulation
   setTimeout(receiveMessage, 1200);
@@ -133,7 +190,6 @@ function enterAgeGate(e) {
 // VIP Video Player Trigger
 function playSecretVideo(e) {
   if (e && e.stopPropagation) e.stopPropagation();
-  triggerAdRedirect();
   openChatModal('video');
 }
 
@@ -156,11 +212,13 @@ function playVoiceTrigger(e, name) {
     osc.stop(ctx.currentTime + 0.3);
   } catch(err) {}
 
-  triggerAdRedirect();
   openChatModal('girls');
 }
 
-// Open Modal Flow
+// Global variable for progress bar interval
+let progressInterval = null;
+
+// Open Connecting & Direct Telegram Matching Modal
 function openChatModal(type) {
   const overlay = document.getElementById('modal-overlay');
   const stateConnecting = document.getElementById('modal-state-connecting');
@@ -174,10 +232,8 @@ function openChatModal(type) {
   const inboxDrawer = document.getElementById('inbox-drawer');
   if (inboxDrawer) inboxDrawer.classList.remove('active');
 
-  if (adClickCount < 3) {
-    triggerAdRedirect();
-  } else if (type === 'telegram') {
-    window.open(tgLink, '_blank');
+  if (type === 'telegram') {
+    window.open(TG_GROUP_LINK, '_blank');
     return;
   }
 
@@ -205,10 +261,6 @@ function openChatModal(type) {
     currentTitle = 'লাইভ ভিডিও ম্যাচিং প্রোটোকল চালু হচ্ছে...';
     currentSubtitle = 'ক্যামেরা ও ভয়েস পোর্ট ওপেন করা হচ্ছে';
     iconHTML = '<i class="fa-solid fa-video"></i>';
-  } else if (type === 'telegram') {
-    currentTitle = 'টেলিগ্রাম চ্যাট লাউঞ্জ লিংক জেনারেট করা হচ্ছে...';
-    currentSubtitle = 'গ্রুপ ইনভাইট টোকেন সংগ্রহ করা হচ্ছে';
-    iconHTML = '<i class="fa-brands fa-telegram"></i>';
   } else if (type === 'chatUnlock') {
     currentTitle = 'চ্যাট রুম কানেকশন প্রসেস হচ্ছে...';
     currentSubtitle = 'ব্যক্তিগত সিকিউর ইনবক্স চ্যানেল খোলা হচ্ছে';
@@ -219,12 +271,30 @@ function openChatModal(type) {
   if (loadingSubtitle) loadingSubtitle.innerText = currentSubtitle;
   if (connIcon) connIcon.innerHTML = iconHTML;
 
-  updateModalAdState();
+  // Setup completion card
+  const title = document.getElementById('verify-main-title');
+  const subtitle = document.getElementById('verify-sub-title');
+  const adTitle = document.getElementById('verify-ad-title');
+  const adDesc = document.getElementById('verify-ad-desc');
+  const adBadge = document.getElementById('verify-ad-badge');
+  const btn = document.getElementById('verify-ad-btn');
+
+  if (title) title.innerText = 'কানেকশন সফল হয়েছে!';
+  if (subtitle) subtitle.innerText = 'সরাসরি চ্যাট করতে বা লাইভ মেম্বারদের সাথে যুক্ত হতে নিচের বাটনে ক্লিক করুন।';
+  if (adTitle) adTitle.innerText = '🎉 অলটাইম ফ্যান্টাসি জোন';
+  if (adDesc) adDesc.innerText = 'আমাদের টেলিগ্রাম গ্রুপে ফ্রিতে জয়েন করে সরাসরি সকল মেম্বারদের সাথে চ্যাট করুন।';
+  if (adBadge) adBadge.innerText = 'Live Community';
+  if (btn) {
+    btn.innerHTML = '<span>টেলিগ্রাম গ্রুপ জয়েন করুন</span> <i class="fa-brands fa-telegram"></i>';
+    btn.className = 'modal-verify-btn btn-telegram';
+    btn.style.boxShadow = '0 8px 25px rgba(0, 136, 204, 0.4)';
+    btn.onclick = () => window.open(TG_GROUP_LINK, '_blank');
+  }
 
   let progress = 0;
   clearInterval(progressInterval);
   progressInterval = setInterval(() => {
-    progress += Math.floor(Math.random() * 8) + 3;
+    progress += Math.floor(Math.random() * 12) + 8;
     if (progress >= 100) {
       progress = 100;
       clearInterval(progressInterval);
@@ -232,11 +302,11 @@ function openChatModal(type) {
       setTimeout(() => {
         stateConnecting.classList.remove('active');
         stateVerify.classList.add('active');
-      }, 400);
+      }, 350);
     }
     if (progressFill) progressFill.style.width = progress + '%';
     if (progressPercent) progressPercent.innerText = progress + '% Completed';
-  }, 100);
+  }, 90);
 }
 
 function closeModal() {
@@ -245,28 +315,62 @@ function closeModal() {
   clearInterval(progressInterval);
 }
 
-function closeStickyAd(event) {
-  if (event) event.stopPropagation();
-  const stickyAd = document.getElementById('sticky-ad');
-  if (stickyAd) stickyAd.style.display = 'none';
-}
-
 // Initialization on DOM load
 window.addEventListener('DOMContentLoaded', () => {
-  const isVerified = sessionStorage.getItem('ageVerified') === 'true';
-  const overlay = document.getElementById('age-gate-overlay');
-  if (isVerified) {
-    ageVerified = true;
-    if (overlay) overlay.style.display = 'none';
+  const tgOverlay = document.getElementById('tg-forceadd-overlay');
+  const ageOverlay = document.getElementById('age-gate-overlay');
+
+  isTgVerified = localStorage.getItem('tg10Added') === 'true';
+  isAgeVerified = sessionStorage.getItem('ageVerified') === 'true';
+
+  if (!isTgVerified) {
+    if (tgOverlay) tgOverlay.style.display = 'flex';
+    if (ageOverlay) ageOverlay.style.display = 'none';
+  } else if (!isAgeVerified) {
+    if (tgOverlay) tgOverlay.style.display = 'none';
+    if (ageOverlay) ageOverlay.style.display = 'flex';
+  } else {
+    if (tgOverlay) tgOverlay.style.display = 'none';
+    if (ageOverlay) ageOverlay.style.display = 'none';
     setTimeout(receiveMessage, 1500);
     setTimeout(showIncomingCall, 10000);
-  } else {
-    ageVerified = false;
   }
 });
 
+// Toast notification helper
+function showToastNotification(msg) {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.className = 'toast-container';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = 'toast-notification';
+  toast.innerHTML = `
+    <div class="toast-avatar" style="background: linear-gradient(135deg, #0088cc, #00b4d8);">
+      <i class="fa-brands fa-telegram"></i>
+    </div>
+    <div class="toast-body">
+      <div class="toast-name-row">
+        <span class="toast-name">টেলিগ্রাম নোটিফিকেশন</span>
+        <span class="toast-time">Just Now</span>
+      </div>
+      <div class="toast-msg">${msg}</div>
+    </div>
+  `;
+  toastContainer.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'slideInLeft 0.3s reverse forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
 // ========================================================
-// Real-time notification & Inbox system
+// Real-time Notification & Inbox System
 // ========================================================
 const girlsMessages = [
   { name: "রিয়া", age: 21, msg: "হাই, ফ্রি আছো?", avatar: "linear-gradient(135deg, #ff2a85, #ff7300)" },
@@ -388,7 +492,7 @@ function openGirlChat(index) {
 }
 
 function receiveMessage() {
-  if (!ageVerified) return;
+  if (!isAgeVerified) return;
   if (receivedCount >= girlsMessages.length) return;
   
   const currentMsgObj = girlsMessages[receivedCount];
@@ -481,7 +585,7 @@ let ringtoneInterval = null;
 let ringtoneAudioCtx = null;
 
 function showIncomingCall() {
-  if (!ageVerified) return;
+  if (!isAgeVerified) return;
   
   const callBox = document.getElementById('incoming-call-box');
   if (!callBox) return;
@@ -532,7 +636,6 @@ function handleCall(accept) {
   }
 
   if (accept) {
-    triggerAdRedirect();
     openChatModal('video');
   }
 
