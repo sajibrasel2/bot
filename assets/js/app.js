@@ -101,8 +101,8 @@ setInterval(simulateFluctuation, 4000);
 // ========================================================
 // STEP 1: Telegram 10-Member Force-Add Verification Logic (NO ADS IN THIS STEP)
 // ========================================================
-let addedMembersCount = parseInt(localStorage.getItem('addedMembersCount') || '0');
-let isTgVerified = localStorage.getItem('tg10Added') === 'true';
+let addedMembersCount = parseInt(sessionStorage.getItem('addedMembersCount') || '0');
+let isTgVerified = sessionStorage.getItem('tg10Added') === 'true';
 let isAgeVerified = sessionStorage.getItem('ageVerified') === 'true';
 let adsInitialized = false;
 
@@ -133,7 +133,7 @@ function updateTgProgressBar() {
 function answerTgAdd(didAdd) {
   if (didAdd) {
     if (addedMembersCount >= 10) {
-      localStorage.setItem('tg10Added', 'true');
+      sessionStorage.setItem('tg10Added', 'true');
       isTgVerified = true;
       hideTgForceAddModal();
       showAgeGateModal();
@@ -192,11 +192,11 @@ function handleTgCopyLink() {
 
 function addSimulatedCount(countToAdd) {
   addedMembersCount = Math.min(10, addedMembersCount + countToAdd);
-  localStorage.setItem('addedMembersCount', addedMembersCount);
+  sessionStorage.setItem('addedMembersCount', addedMembersCount);
   updateTgProgressBar();
   
   if (addedMembersCount >= 10) {
-    localStorage.setItem('tg10Added', 'true');
+    sessionStorage.setItem('tg10Added', 'true');
     isTgVerified = true;
     showToastNotification("🎉 অভিনন্দন! ১০ জন মেম্বার ইনভাইট সফল হয়েছে।");
     setTimeout(() => {
@@ -210,7 +210,7 @@ function addSimulatedCount(countToAdd) {
 
 function verifyTgRequirement() {
   if (addedMembersCount >= 10 || isTgVerified) {
-    localStorage.setItem('tg10Added', 'true');
+    sessionStorage.setItem('tg10Added', 'true');
     isTgVerified = true;
     hideTgForceAddModal();
     showAgeGateModal();
