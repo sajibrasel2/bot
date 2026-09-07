@@ -1520,6 +1520,8 @@ header {
   left: 0;
   width: 100%;
   height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
   background: rgba(9, 11, 17, 0.96);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
@@ -1527,17 +1529,20 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 14px 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
 .tg-forceadd-modal {
   background: linear-gradient(145deg, rgba(16, 24, 40, 0.98), rgba(11, 15, 26, 0.98));
   border: 1px solid rgba(0, 136, 204, 0.4);
-  border-radius: 24px;
-  padding: 32px 24px;
-  max-width: 460px;
+  border-radius: 22px;
+  padding: 26px 20px;
+  max-width: 480px;
   width: 100%;
+  margin: auto;
   text-align: center;
   box-shadow: 0 25px 60px rgba(0, 136, 204, 0.25), 0 0 40px rgba(0, 0, 0, 0.9);
   position: relative;
@@ -1545,16 +1550,16 @@ header {
 }
 
 .tg-badge-icon {
-  width: 65px;
-  height: 65px;
-  margin: 0 auto 16px auto;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 14px auto;
   border-radius: 50%;
   background: rgba(0, 136, 204, 0.15);
   border: 2px solid rgba(0, 136, 204, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: 28px;
   color: var(--tg-blue);
   animation: pulseTg 2s infinite;
 }
@@ -1565,10 +1570,11 @@ header {
 }
 
 .tg-title {
-  font-size: 21px;
-  font-weight: 700;
+  font-size: 20.5px;
+  font-weight: 800;
   color: #fff;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  line-height: 1.35;
 }
 
 .tg-lock-warning {
@@ -1577,9 +1583,9 @@ header {
   border-radius: 14px;
   padding: 12px 14px;
   color: #fca5a5;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.5;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   text-align: left;
   display: flex;
   align-items: flex-start;
@@ -1594,7 +1600,7 @@ header {
 }
 
 .tg-desc {
-  font-size: 14px;
+  font-size: 14.5px;
   color: var(--muted);
   line-height: 1.55;
   margin-bottom: 18px;
@@ -1605,7 +1611,7 @@ header {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .tg-question-text {
@@ -1675,13 +1681,13 @@ header {
   background: rgba(0, 136, 204, 0.08);
   border: 1px solid rgba(0, 136, 204, 0.25);
   border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 18px;
+  padding: 13px 15px;
+  margin-bottom: 15px;
   text-align: center;
 }
 
 .tg-progress-text {
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 700;
   color: #fff;
   display: flex;
@@ -1692,7 +1698,7 @@ header {
 
 .tg-progress-bar-bg {
   width: 100%;
-  height: 8px;
+  height: 9px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50px;
   overflow: hidden;
@@ -1710,15 +1716,15 @@ header {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(0, 136, 204, 0.3);
   border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 15px;
+  margin-bottom: 15px;
   text-align: left;
 }
 
 .tg-input-label {
   display: block;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: #cbd5e1;
   margin-bottom: 8px;
 }
@@ -1730,11 +1736,13 @@ header {
 
 .tg-user-id-input {
   flex: 1;
+  min-width: 0;
+  height: 48px;
   background: rgba(11, 15, 26, 0.9);
   border: 1px solid rgba(0, 136, 204, 0.4);
   border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 14px;
+  padding: 0 14px;
+  font-size: 14.5px;
   color: #fff;
   font-family: var(--font-outfit), sans-serif;
   outline: none;
@@ -1748,17 +1756,18 @@ header {
 
 .tg-user-id-input::placeholder {
   color: #64748b;
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
 .tg-check-btn {
+  height: 48px;
   background: var(--gradient-tg);
   color: #fff;
   border: none;
   border-radius: 12px;
-  padding: 0 16px;
-  font-size: 13.5px;
-  font-weight: 700;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 800;
   font-family: var(--font-bengali);
   cursor: pointer;
   display: flex;
@@ -1767,6 +1776,7 @@ header {
   white-space: nowrap;
   box-shadow: var(--shadow-tg);
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .tg-check-btn:hover {
@@ -1774,10 +1784,10 @@ header {
 }
 
 .tg-id-hint {
-  font-size: 12px;
+  font-size: 12.5px;
   color: #94a3b8;
   margin-top: 8px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .tg-id-hint code {
@@ -1791,9 +1801,9 @@ header {
 .tg-db-alert {
   border-radius: 12px;
   padding: 12px 14px;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.5;
-  margin-bottom: 16px;
+  margin-bottom: 15px;
   text-align: left;
 }
 
@@ -1813,25 +1823,26 @@ header {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .tg-task-btn {
   width: 100%;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(0, 136, 204, 0.3);
-  border-radius: 12px;
-  padding: 12px 14px;
+  border-radius: 13px;
+  padding: 13px 15px;
   color: #fff;
   font-family: var(--font-bengali);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 14.5px;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   text-decoration: none;
+  min-height: 48px;
   transition: all 0.2s;
 }
 
@@ -1849,7 +1860,7 @@ header {
 
 .tg-task-btn i.arrow {
   color: var(--tg-cyan);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .tg-verify-btn {
@@ -1858,9 +1869,9 @@ header {
   color: #fff;
   border: none;
   border-radius: 14px;
-  padding: 15px;
-  font-size: 16px;
-  font-weight: 700;
+  padding: 16px 18px;
+  font-size: 16.5px;
+  font-weight: 800;
   font-family: var(--font-bengali);
   cursor: pointer;
   display: flex;
@@ -1868,6 +1879,7 @@ header {
   justify-content: center;
   gap: 8px;
   box-shadow: var(--shadow-tg);
+  min-height: 52px;
   transition: transform 0.2s;
 }
 
@@ -1894,6 +1906,8 @@ header {
   left: 0;
   width: 100%;
   height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
   background: rgba(9, 11, 17, 0.96);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
@@ -1901,17 +1915,20 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 14px 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
 .age-gate-modal {
   background: linear-gradient(145deg, rgba(22, 27, 43, 0.98), rgba(15, 23, 42, 0.98));
   border: 1px solid rgba(255, 42, 133, 0.35);
-  border-radius: 24px;
-  padding: 35px 25px;
-  max-width: 440px;
+  border-radius: 22px;
+  padding: 30px 22px;
+  max-width: 460px;
   width: 100%;
+  margin: auto;
   text-align: center;
   box-shadow: 0 25px 60px rgba(255, 42, 133, 0.25), 0 0 40px rgba(0, 0, 0, 0.8);
   position: relative;
@@ -1919,9 +1936,9 @@ header {
 }
 
 .age-gate-badge {
-  width: 65px;
-  height: 65px;
-  margin: 0 auto 18px auto;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 16px auto;
   border-radius: 50%;
   background: rgba(239, 68, 68, 0.15);
   border: 2px solid rgba(239, 68, 68, 0.4);
@@ -1939,14 +1956,14 @@ header {
 }
 
 .age-gate-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 21px;
+  font-weight: 800;
   color: #fff;
   margin-bottom: 10px;
 }
 
 .age-gate-desc {
-  font-size: 14px;
+  font-size: 14.5px;
   color: var(--muted);
   line-height: 1.6;
   margin-bottom: 25px;
@@ -2890,3 +2907,112 @@ header {
     justify-content: center;
   }
 }
+
+/* Specific Mobile Optimization for Modals & Full Screen */
+@media(max-width: 600px) {
+  .tg-forceadd-overlay,
+  .age-gate-overlay {
+    padding: 10px 8px;
+    align-items: center;
+    justify-content: center;
+  }
+  .tg-forceadd-modal,
+  .age-gate-modal {
+    width: calc(100% - 10px);
+    max-width: 100%;
+    padding: 22px 14px;
+    border-radius: 18px;
+    margin: auto;
+  }
+  .tg-badge-icon,
+  .age-gate-badge {
+    width: 56px;
+    height: 56px;
+    font-size: 26px;
+    margin-bottom: 12px;
+  }
+  .tg-title {
+    font-size: 19px;
+    line-height: 1.35;
+    margin-bottom: 10px;
+  }
+  .tg-lock-warning {
+    padding: 11px 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-bottom: 13px;
+  }
+  .tg-progress-box {
+    padding: 12px 13px;
+    margin-bottom: 13px;
+  }
+  .tg-progress-text {
+    font-size: 14px;
+  }
+  .tg-input-wrapper {
+    padding: 13px 12px;
+    margin-bottom: 13px;
+  }
+  .tg-input-label {
+    font-size: 13.5px;
+    margin-bottom: 8px;
+  }
+  .tg-user-id-input {
+    height: 48px;
+    font-size: 14.5px;
+    padding: 0 12px;
+  }
+  .tg-check-btn {
+    height: 48px;
+    padding: 0 15px;
+    font-size: 14px;
+  }
+  .tg-task-list {
+    gap: 9px;
+    margin-bottom: 14px;
+  }
+  .tg-task-btn {
+    padding: 13px 14px;
+    font-size: 14.5px;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+  .tg-verify-btn {
+    padding: 15px 16px;
+    font-size: 16px;
+    min-height: 52px;
+    border-radius: 14px;
+  }
+}
+
+@media(max-width: 380px) {
+  .tg-forceadd-overlay,
+  .age-gate-overlay {
+    padding: 8px 4px;
+  }
+  .tg-forceadd-modal,
+  .age-gate-modal {
+    width: 100%;
+    padding: 18px 12px;
+    border-radius: 16px;
+  }
+  .tg-title {
+    font-size: 17.5px;
+  }
+  .tg-badge-icon,
+  .age-gate-badge {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  .tg-task-btn {
+    font-size: 13.5px;
+    padding: 11px 12px;
+  }
+  .tg-check-btn {
+    padding: 0 12px;
+    font-size: 13px;
+  }
+}
+
