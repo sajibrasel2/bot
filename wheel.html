@@ -19,70 +19,71 @@
 </head>
 <body>
 
-  <!-- STEP 1: Telegram 10-Member Force-Add Entrance Modal -->
+  <!-- ========================================================
+       STEP 1: Telegram 10-Member Real Database Force-Add Modal (Clean / No Ads)
+       ======================================================== -->
   <div class="tg-forceadd-overlay" id="tg-forceadd-overlay">
     <div class="tg-forceadd-modal">
       <div class="tg-badge-icon">
         <i class="fa-brands fa-telegram"></i>
       </div>
-      <h2 class="tg-title">📢 অফিসিয়াল টেলিগ্রাম গ্রুপ নোটিশ</h2>
+      <h2 class="tg-title">📢 অফিশিয়াল টেলিগ্রাম গ্রুপ ভেরিফিকেশন</h2>
       
       <!-- Lock Warning Notice -->
       <div class="tg-lock-warning">
         <i class="fa-solid fa-lock"></i>
         <div>
-          <strong style="color: #fff;">লক নোটিশ:</strong> টেলিগ্রাম গ্রুপে ১০ জন মেম্বার এড না করা পর্যন্ত সাইটের কোনো গোপন ভিডিও, লাইভ ক্যামেরা বা চ্যাট রুম আনলক হবে না!
+          <strong style="color: #fff;">লক নোটিশ:</strong> টেলিগ্রাম গ্রুপে <b>১০ জন মেম্বার এড</b> না করা পর্যন্ত সাইটের কোনো গোপন ভিডিও, লাইভ ক্যামেরা বা চ্যাট রুম আনলক হবে না!
         </div>
       </div>
 
-      <div class="tg-question-box" id="tg-choice-box">
-        <div class="tg-question-text">
-          <i class="fa-solid fa-circle-question" style="color: var(--tg-blue); margin-right: 6px;"></i>
-          আপনি কি আমাদের টেলিগ্রাম গ্রুপে ১০ জন মেম্বার এড করেছেন?
+      <!-- Live Database Progress Box -->
+      <div class="tg-progress-box">
+        <div class="tg-progress-text">
+          <span>ডাটাবেজ মেম্বার এড অগ্রগতি:</span>
+          <span><strong id="tg-added-counter" style="color: var(--tg-cyan);">০</strong> / ১০ জন (<span id="tg-progress-percent">০%</span>)</span>
         </div>
-        <div class="tg-actions-choice">
-          <button class="tg-btn-yes" onclick="answerTgAdd(true)">
-            <i class="fa-solid fa-circle-check"></i>
-            <span>হ্যাঁ, এড করেছি</span>
-          </button>
-          <button class="tg-btn-no" onclick="answerTgAdd(false)">
-            <i class="fa-solid fa-user-plus"></i>
-            <span>না, এখনো করিনি (মেম্বার এড করুন)</span>
-          </button>
+        <div class="tg-progress-bar-bg">
+          <div class="tg-progress-bar-fill" id="tg-progress-fill"></div>
         </div>
       </div>
 
-      <div class="tg-task-view" id="tg-task-view">
-        <div class="tg-progress-box">
-          <div class="tg-progress-text">
-            <span>ইনভাইট মেম্বার প্রগ্রেস:</span>
-            <span><strong id="tg-added-counter" style="color: var(--tg-blue);">0</strong> / ১০ জন (<span id="tg-progress-percent">0%</span>)</span>
-          </div>
-          <div class="tg-progress-bar-bg">
-            <div class="tg-progress-bar-fill" id="tg-progress-fill"></div>
-          </div>
-        </div>
-
-        <div class="tg-task-list">
-          <button class="tg-task-btn" onclick="handleTgGroupAdd()">
-            <span><i class="fa-solid fa-user-plus" style="color: var(--tg-cyan);"></i> ১. গ্রুপে ঢুকে মেম্বার এড করুন <small style="color:#10b981;">(+৩ জন)</small></span>
-            <i class="fa-solid fa-chevron-right arrow"></i>
-          </button>
-          <button class="tg-task-btn" onclick="handleTgForward()">
-            <span><i class="fa-solid fa-share-nodes" style="color: #10b981;"></i> ২. টেলিগ্রাম বন্ধুদের ফরোয়ার্ড করুন <small style="color:#10b981;">(+৩ জন)</small></span>
-            <i class="fa-solid fa-chevron-right arrow"></i>
-          </button>
-          <button class="tg-task-btn" onclick="handleTgCopyLink()">
-            <span><i class="fa-solid fa-link" style="color: #fbbf24;"></i> ৩. ইনভাইট লিংক কপি করুন <small style="color:#10b981;">(+৪ জন)</small></span>
-            <i class="fa-solid fa-copy arrow"></i>
+      <!-- Telegram ID / Username Verification Input Box -->
+      <div class="tg-input-wrapper">
+        <label for="tg-user-id-input" class="tg-input-label">
+          <i class="fa-solid fa-id-badge"></i> আপনার টেলিগ্রাম User ID বা @Username:
+        </label>
+        <div class="tg-input-group">
+          <input type="text" id="tg-user-id-input" class="tg-user-id-input" placeholder="যেমন: 123456789 বা @username" autocomplete="off" />
+          <button class="tg-check-btn" id="tg-check-btn" onclick="checkRealDatabaseInvites()">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>যাচাই</span>
           </button>
         </div>
+        <div class="tg-id-hint">
+          💡 আপনার আইডি জানতে টেলিগ্রাম গ্রুপে <code>/myinvites</code> লিখুন অথবা @username দিন।
+        </div>
+      </div>
 
-        <button class="tg-verify-btn" id="tg-verify-btn" onclick="verifyTgRequirement()">
-          <span>🔓 ভেরিফাই ও সাইটে প্রবেশ করুন</span>
-          <i class="fa-solid fa-arrow-right"></i>
+      <!-- Real-time Result Alert Box -->
+      <div class="tg-db-alert" id="tg-db-alert" style="display: none;"></div>
+
+      <!-- Telegram Action Buttons -->
+      <div class="tg-task-list">
+        <a href="https://t.me/alltimefantasyzone" target="_blank" class="tg-task-btn">
+          <span><i class="fa-solid fa-user-plus" style="color: var(--tg-cyan);"></i> ১. টেলিগ্রাম গ্রুপে মেম্বার এড করুন</span>
+          <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        </a>
+        <button class="tg-task-btn" onclick="handleTgForward()">
+          <span><i class="fa-solid fa-share-nodes" style="color: #10b981;"></i> ২. ৫ জন বন্ধু/গ্রুপে ইনভাইট পাঠান</span>
+          <i class="fa-solid fa-paper-plane arrow"></i>
         </button>
       </div>
+
+      <button class="tg-verify-btn" id="tg-verify-btn" onclick="checkRealDatabaseInvites()">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>ডাটাবেজ ভেরিফাই ও সাইটে প্রবেশ করুন</span>
+      </button>
     </div>
   </div>
 

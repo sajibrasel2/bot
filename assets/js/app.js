@@ -132,129 +132,163 @@ function simulateFluctuation() {
 setInterval(simulateFluctuation, 4000);
 
 // ========================================================
-// STEP 1: Telegram 10-Member Force-Add Verification Logic (NO ADS IN THIS STEP)
+// STEP 1: Telegram 10-Member Real Database Force-Add Verification Logic (NO ADS IN THIS STEP)
 // ========================================================
-let addedMembersCount = parseInt(sessionStorage.getItem('addedMembersCount') || '0');
 let isTgVerified = sessionStorage.getItem('tg10Added') === 'true';
 let isAgeVerified = sessionStorage.getItem('ageVerified') === 'true';
+let savedTgId = sessionStorage.getItem('tgUserId') || '';
 let adsInitialized = false;
 
-function updateTgProgressBar() {
-  const counterEl = document.getElementById('tg-added-counter');
-  const fillEl = document.getElementById('tg-progress-fill');
-  const percentEl = document.getElementById('tg-progress-percent');
-  const verifyBtn = document.getElementById('tg-verify-btn');
-  
-  if (counterEl) counterEl.innerText = addedMembersCount;
-  const pct = Math.min(100, Math.round((addedMembersCount / 10) * 100));
-  if (fillEl) fillEl.style.width = pct + '%';
-  if (percentEl) percentEl.innerText = pct + '%';
-
-  if (verifyBtn) {
-    if (addedMembersCount >= 10) {
-      verifyBtn.innerHTML = '<span>🎉 ১০ জন এড সম্পন্ন — ১৮+ ভেরিফিকেশনে যান</span> <i class="fa-solid fa-arrow-right"></i>';
-      verifyBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-      verifyBtn.style.boxShadow = '0 8px 30px rgba(16, 185, 129, 0.4)';
-    } else {
-      verifyBtn.innerHTML = `<span>🔓 ${10 - addedMembersCount} জন বাকি — ভেরিফাই করুন</span> <i class="fa-solid fa-shield-check"></i>`;
-      verifyBtn.style.background = 'var(--gradient-tg)';
-      verifyBtn.style.boxShadow = 'var(--shadow-tg)';
+// Auto-check on page load if user already entered an ID or running in Telegram WebApp
+function initTelegramGateState() {
+  const inputEl = document.getElementById('tg-user-id-input');
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+    const tgId = String(tgUser.id || tgUser.username || '');
+    if (tgId && inputEl) {
+      inputEl.value = tgId;
+      checkRealDatabaseInvites(true);
+      return;
     }
+  }
+
+  if (savedTgId && inputEl) {
+    inputEl.value = savedTgId;
+    checkRealDatabaseInvites(true);
   }
 }
 
-function answerTgAdd(didAdd) {
-  if (didAdd) {
-    if (addedMembersCount >= 10) {
-      sessionStorage.setItem('tg10Added', 'true');
-      isTgVerified = true;
-      hideTgForceAddModal();
-      showAgeGateModal();
-    } else {
-      const modal = document.querySelector('.tg-forceadd-modal');
+async function checkRealDatabaseInvites(isSilent = false) {
+  const inputEl = document.getElementById('tg-user-id-input');
+  const alertEl = document.getElementById('tg-db-alert');
+  const checkBtn = document.getElementById('tg-check-btn');
+  const verifyBtn = document.getElementById('tg-verify-btn');
+  const counterEl = document.getElementById('tg-added-counter');
+  const fillEl = document.getElementById('tg-progress-fill');
+  const percentEl = document.getElementById('tg-progress-percent');
+  const modal = document.querySelector('.tg-forceadd-modal');
+
+  let rawInput = (inputEl ? inputEl.value : '').trim();
+
+  // If auto-detecting from Telegram WebApp
+  if (!rawInput && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+    const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+    rawInput = String(tgUser.id || tgUser.username || '');
+    if (inputEl) inputEl.value = rawInput;
+  }
+
+  if (!rawInput && savedTgId) {
+    rawInput = savedTgId;
+    if (inputEl) inputEl.value = rawInput;
+  }
+
+  if (!rawInput) {
+    if (!isSilent) {
+      if (alertEl) {
+        alertEl.style.display = 'block';
+        alertEl.className = 'tg-db-alert error';
+        alertEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> অনুগ্রহ করে আপনার টেলিগ্রাম User ID বা @username লিখুন!';
+      }
       if (modal) {
         modal.classList.add('shake');
         setTimeout(() => modal.classList.remove('shake'), 400);
       }
-      showToastNotification(`⚠️ আপনি এখনো ১০ জন মেম্বার এড করেননি (${addedMembersCount}/১০)! মেম্বার এড না করা পর্যন্ত সাইট লক থাকবে।`);
-      
-      const choiceBox = document.getElementById('tg-choice-box');
-      const taskView = document.getElementById('tg-task-view');
-      if (choiceBox) choiceBox.style.display = 'none';
-      if (taskView) {
-        taskView.classList.add('active');
-        taskView.style.display = 'block';
+    }
+    return;
+  }
+
+  // Show loading indicator
+  if (checkBtn) checkBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  if (verifyBtn) verifyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ডাটাবেজে যাচাই করা হচ্ছে...';
+
+  try {
+    // Query API
+    const apiUrl = `api/check_invites.php?user_id=${encodeURIComponent(rawInput)}`;
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+
+    if (data && data.success) {
+      const count = parseInt(data.invites || 0);
+      const req = parseInt(data.required || 10);
+      const pct = Math.min(100, Math.round((count / req) * 100));
+
+      if (counterEl) counterEl.innerText = count;
+      if (fillEl) fillEl.style.width = pct + '%';
+      if (percentEl) percentEl.innerText = pct + '%';
+
+      sessionStorage.setItem('tgUserId', rawInput);
+
+      if (data.unlocked || count >= req) {
+        // 10+ real database invites confirmed!
+        sessionStorage.setItem('tg10Added', 'true');
+        isTgVerified = true;
+        if (alertEl) {
+          alertEl.style.display = 'block';
+          alertEl.className = 'tg-db-alert success';
+          alertEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${data.message || '১০ জন মেম্বার এড সম্পন্ন হয়েছে!'}`;
+        }
+        if (fillEl) {
+          fillEl.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        }
+        if (verifyBtn) {
+          verifyBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> ভেরিফিকেশন সফল — ১৮+ গেটে প্রবেশ করুন';
+          verifyBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        }
+        showToastNotification("🎉 অভিনন্দন! ডাটাবেজ অনুসারে ১০ জন মেম্বার এড সম্পন্ন হয়েছে।");
+        setTimeout(() => {
+          hideTgForceAddModal();
+          showAgeGateModal();
+        }, 1200);
+      } else {
+        // Locked - real count is less than 10
+        if (alertEl) {
+          alertEl.style.display = 'block';
+          alertEl.className = 'tg-db-alert error';
+          alertEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${data.message}`;
+        }
+        if (!isSilent && modal) {
+          modal.classList.add('shake');
+          setTimeout(() => modal.classList.remove('shake'), 400);
+        }
+        if (verifyBtn) {
+          verifyBtn.innerHTML = `<i class="fa-solid fa-lock"></i> আরও ${data.remaining} জন এড করে আবার চেক করুন`;
+        }
+        if (!isSilent) {
+          showToastNotification(`❌ আপনি মাত্র ${count} জন এড করেছেন! আরও ${data.remaining} জন বন্ধুকে গ্রুপে এড করুন।`);
+        }
       }
-      updateTgProgressBar();
+    } else {
+      if (alertEl) {
+        alertEl.style.display = 'block';
+        alertEl.className = 'tg-db-alert error';
+        alertEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${data ? data.message : 'আইডি পাওয়া যায়নি। টেলিগ্রাম গ্রুপে /myinvites দিয়ে সঠিক আইডি চেক করুন।'}`;
+      }
+      if (!isSilent && modal) {
+        modal.classList.add('shake');
+        setTimeout(() => modal.classList.remove('shake'), 400);
+      }
+      if (verifyBtn) {
+        verifyBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> ডাটাবেজ ভেরিফাই ও সাইটে প্রবেশ করুন';
+      }
     }
-  } else {
-    // User selected "না, এখনো করিনি" -> expand the action tasks
-    const choiceBox = document.getElementById('tg-choice-box');
-    const taskView = document.getElementById('tg-task-view');
-    if (choiceBox) choiceBox.style.display = 'none';
-    if (taskView) {
-      taskView.classList.add('active');
-      taskView.style.display = 'block';
+  } catch (err) {
+    console.error("Database invite check error:", err);
+    if (!isSilent && alertEl) {
+      alertEl.style.display = 'block';
+      alertEl.className = 'tg-db-alert error';
+      alertEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ডাটাবেজে কানেক্ট করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।';
     }
-    updateTgProgressBar();
+  } finally {
+    if (checkBtn) checkBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> <span>চেক করুন</span>';
   }
 }
 
 function handleTgGroupAdd() {
   window.open(TG_GROUP_LINK, '_blank');
-  addSimulatedCount(3);
 }
 
 function handleTgForward() {
   window.open(TG_SHARE_URL, '_blank');
-  addSimulatedCount(3);
-}
-
-function handleTgCopyLink() {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(TG_GROUP_LINK).then(() => {
-      showToastNotification("ইনভাইট লিংক কপি হয়েছে! বন্ধুদের শেয়ার করুন।");
-    }).catch(() => {
-      showToastNotification("লিংক: " + TG_GROUP_LINK);
-    });
-  } else {
-    showToastNotification("লিংক: " + TG_GROUP_LINK);
-  }
-  addSimulatedCount(4);
-}
-
-function addSimulatedCount(countToAdd) {
-  addedMembersCount = Math.min(10, addedMembersCount + countToAdd);
-  sessionStorage.setItem('addedMembersCount', addedMembersCount);
-  updateTgProgressBar();
-  
-  if (addedMembersCount >= 10) {
-    sessionStorage.setItem('tg10Added', 'true');
-    isTgVerified = true;
-    showToastNotification("🎉 অভিনন্দন! ১০ জন মেম্বার ইনভাইট সফল হয়েছে।");
-    setTimeout(() => {
-      hideTgForceAddModal();
-      showAgeGateModal();
-    }, 1200);
-  } else {
-    showToastNotification(`➕ প্রগ্রেস আপডেট: ${addedMembersCount}/১০ জন মেম্বার এড হয়েছে (বাকি ${10 - addedMembersCount} জন)`);
-  }
-}
-
-function verifyTgRequirement() {
-  if (addedMembersCount >= 10 || isTgVerified) {
-    sessionStorage.setItem('tg10Added', 'true');
-    isTgVerified = true;
-    hideTgForceAddModal();
-    showAgeGateModal();
-  } else {
-    const modal = document.querySelector('.tg-forceadd-modal');
-    if (modal) {
-      modal.classList.add('shake');
-      setTimeout(() => modal.classList.remove('shake'), 400);
-    }
-    showToastNotification(`⚠️ ১০ জন মেম্বার এড করা বাধ্যতামূলক! আরো ${10 - addedMembersCount} জন এড করুন।`);
-  }
 }
 
 function hideTgForceAddModal() {
@@ -904,3 +938,35 @@ function playSpinTick(ctx) {
   osc.start();
   osc.stop(ctx.currentTime + 0.05);
 }
+
+// ========================================================
+// Global DOM Startup Initialization
+// ========================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const tgOverlay = document.getElementById('tg-forceadd-overlay');
+  const ageOverlay = document.getElementById('age-gate-overlay');
+
+  if (!isTgVerified) {
+    if (tgOverlay) {
+      tgOverlay.style.display = 'flex';
+      tgOverlay.style.opacity = '1';
+    }
+    if (ageOverlay) {
+      ageOverlay.style.display = 'none';
+    }
+    initTelegramGateState();
+  } else if (!isAgeVerified) {
+    if (tgOverlay) tgOverlay.style.display = 'none';
+    if (ageOverlay) {
+      ageOverlay.style.display = 'flex';
+      ageOverlay.style.opacity = '1';
+    }
+  } else {
+    if (tgOverlay) tgOverlay.style.display = 'none';
+    if (ageOverlay) ageOverlay.style.display = 'none';
+    initAllAdsterraAds();
+    setTimeout(receiveMessage, 1200);
+    setTimeout(showIncomingCall, 7000);
+  }
+});
+

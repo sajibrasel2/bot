@@ -496,6 +496,73 @@ def api_stats():
     return jsonify(get_stats())
 
 
+@app.route("/api/check_invites", methods=["GET", "POST"])
+def api_check_invites():
+    raw_input = request.args.get("user_id") or request.args.get("username") or ""
+    if not raw_input and request.is_json:
+        data = request.get_json(silent=True) or {}
+        raw_input = data.get("user_id") or data.get("username") or ""
+    if not raw_input and request.form:
+        raw_input = request.form.get("user_id") or request.form.get("username") or ""
+
+    raw_input = str(raw_input).strip()
+    if not raw_input:
+        return jsonify({
+            "success": False,
+            "unlocked": False,
+            "invites": 0,
+            "required": 10,
+            "message": "অনুগ্রহ করে আপনার টেলিগ্রাম ইউজার আইডি বা @ইউজারনেম লিখুন।"
+        })
+
+    clean_input = raw_input.lstrip("@")
+    user_id = None
+    username = ""
+    first_name = ""
+
+    if clean_input.isdigit():
+        user_id = int(clean_input)
+        u = _query("SELECT user_id, username, first_name FROM users WHERE user_id=%s LIMIT 1", (user_id,), fetchone=True)
+        if u:
+            username = u.get("username") or ""
+            first_name = u.get("first_name") or ""
+    else:
+        u = _query("SELECT user_id, username, first_name FROM users WHERE LOWER(username)=LOWER(%s) LIMIT 1", (clean_input,), fetchone=True)
+        if u:
+            user_id = int(u.get("user_id"))
+            username = u.get("username") or ""
+            first_name = u.get("first_name") or ""
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "unlocked": False,
+            "invites": 0,
+            "required": 10,
+            "remaining": 10,
+            "message": f"❌ টেলিগ্রাম আইডি '{raw_input}' ডাটাবেজে পাওয়া যায়নি। আপনি কি গ্রুপে কাউকে এড করেছেন? টেলিগ্রাম গ্রুপে /myinvites লিখে আপনার সঠিক আইডি দেখে নিন।"
+        })
+
+    # Count actual invites
+    row = _query("SELECT COUNT(*) as cnt FROM user_invites WHERE inviter_id=%s", (user_id,), fetchone=True)
+    invite_count = int(row.get("cnt") or 0) if row else 0
+    required = 10
+    unlocked = (invite_count >= required)
+    remaining = max(0, required - invite_count)
+
+    return jsonify({
+        "success": True,
+        "user_id": user_id,
+        "username": username,
+        "first_name": first_name,
+        "invites": invite_count,
+        "required": required,
+        "remaining": remaining,
+        "unlocked": unlocked,
+        "message": f"✅ অভিনন্দন! আপনি সফলভাবে {invite_count} জন মেম্বার এড করেছেন।" if unlocked else f"❌ আপনি মাত্র {invite_count} জন মেম্বার এড করেছেন! সাইটের কন্টেন্ট আনলক করতে আরও {remaining} জন বন্ধুকে টেলিগ্রাম গ্রুপে এড করতে হবে।"
+    })
+
+
 @app.route("/bot_admins", methods=["GET", "POST"])
 @login_required
 def bot_admins():
