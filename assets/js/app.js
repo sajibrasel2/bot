@@ -239,6 +239,52 @@ function enterAgeGate(e) {
   unlockAllAndStart();
 }
 
+let adsInitialized = false;
+
+function initAllAdsterraAds() {
+  if (adsInitialized) return;
+  adsInitialized = true;
+
+  // 1. Dynamic Popunder Script
+  try {
+    const popScript = document.createElement('script');
+    popScript.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
+    document.body.appendChild(popScript);
+  } catch(e) {}
+
+  // 2. Dynamic Native Social Bar Script
+  try {
+    const nativeScript = document.createElement('script');
+    nativeScript.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
+    nativeScript.async = true;
+    nativeScript.setAttribute('data-cfasync', 'false');
+    document.body.appendChild(nativeScript);
+  } catch(e) {}
+
+  // 3. Dynamic 300x250 Banner Slot
+  const topSlot = document.querySelector('.adsterra-300x250-container');
+  if (topSlot && !topSlot.hasChildNodes()) {
+    try {
+      const scriptConf = document.createElement('script');
+      scriptConf.type = 'text/javascript';
+      scriptConf.text = `
+        atOptions = {
+          'key' : 'f920a5f88d34b8eb65e572486b98b226',
+          'format' : 'iframe',
+          'height' : 250,
+          'width' : 300,
+          'params' : {}
+        };
+      `;
+      const scriptSrc = document.createElement('script');
+      scriptSrc.src = 'https://www.highrevenueformat.com/f920a5f88d34b8eb65e572486b98b226/invoke.js';
+      scriptSrc.type = 'text/javascript';
+      topSlot.appendChild(scriptConf);
+      topSlot.appendChild(scriptSrc);
+    } catch(e) {}
+  }
+}
+
 function unlockAllAndStart() {
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
@@ -246,6 +292,7 @@ function unlockAllAndStart() {
   if (tgOverlay) tgOverlay.style.display = 'none';
   if (ageOverlay) ageOverlay.style.display = 'none';
 
+  initAllAdsterraAds();
   startFluctuationEngine();
   setTimeout(showIncomingCall, 6000);
 }
