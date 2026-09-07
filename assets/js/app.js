@@ -561,7 +561,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
 
-  isTgVerified = localStorage.getItem('tg10Added') === 'true';
+  // Clean any old lingering localStorage keys so Telegram Gate ALWAYS displays
+  localStorage.removeItem('tg10Added');
+  localStorage.removeItem('ageVerified');
+
+  isTgVerified = sessionStorage.getItem('tg10Added') === 'true';
   isAgeVerified = sessionStorage.getItem('ageVerified') === 'true';
 
   if (!isTgVerified) {
@@ -570,7 +574,7 @@ window.addEventListener('DOMContentLoaded', () => {
       tgOverlay.style.opacity = '1';
     }
     if (ageOverlay) ageOverlay.style.display = 'none';
-    updateTgProgressBar();
+    initTelegramGateState();
   } else if (!isAgeVerified) {
     if (tgOverlay) tgOverlay.style.display = 'none';
     if (ageOverlay) {
