@@ -11,7 +11,7 @@
   <meta http-equiv="Expires" content="0" />
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="assets/css/style.css?v=4.0" />
+  <link rel="stylesheet" href="assets/css/style.css?v=5.0" />
 
   <!-- Critical Mobile Modal & Viewport Responsive Styles (Guarantees Instant Full-Screen on Mobile) -->
   <style>
@@ -21,13 +21,14 @@
       left: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
+      min-height: 100vh !important;
       min-height: -webkit-fill-available !important;
       background: rgba(9, 11, 17, 0.98) !important;
       z-index: 100000 !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 12px 10px !important;
+      padding: 16px !important;
       box-sizing: border-box !important;
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch !important;
@@ -38,13 +39,14 @@
       left: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
+      min-height: 100vh !important;
       min-height: -webkit-fill-available !important;
       background: rgba(9, 11, 17, 0.98) !important;
       z-index: 99999 !important;
       display: none !important;
       align-items: center !important;
       justify-content: center !important;
-      padding: 12px 10px !important;
+      padding: 16px !important;
       box-sizing: border-box !important;
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch !important;
@@ -52,19 +54,21 @@
     .tg-forceadd-modal, .age-gate-modal {
       width: 100% !important;
       max-width: 500px !important;
-      padding: 26px 18px !important;
+      padding: 28px 20px !important;
       border-radius: 22px !important;
       margin: auto !important;
       box-sizing: border-box !important;
       background: linear-gradient(145deg, #101828, #0b0f1a) !important;
       border: 1px solid rgba(0, 136, 204, 0.45) !important;
       box-shadow: 0 10px 40px rgba(0, 136, 204, 0.35), 0 0 50px rgba(0, 0, 0, 0.9) !important;
+      text-align: center !important;
     }
     .tg-badge-icon, .age-gate-badge {
       width: 68px !important;
       height: 68px !important;
       font-size: 32px !important;
       margin: 0 auto 14px auto !important;
+      border-radius: 20px !important;
     }
     .tg-title, .age-gate-title {
       font-size: 21px !important;
@@ -140,15 +144,131 @@
       border-radius: 14px !important;
       width: 100% !important;
     }
+    /* Native Fullscreen Mobile App Viewport (max-width: 600px) */
     @media (max-width: 600px) {
-      .tg-forceadd-overlay {
-        padding: 8px 6px !important;
+      .tg-forceadd-overlay, .age-gate-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        min-height: -webkit-fill-available !important;
+        background: #090b11 !important;
+        z-index: 100000 !important;
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      .age-gate-overlay {
+        display: none !important;
+        z-index: 99999 !important;
       }
       .tg-forceadd-modal, .age-gate-modal {
         width: 100% !important;
         max-width: 100% !important;
-        padding: 22px 14px !important;
-        border-radius: 20px !important;
+        min-height: 100vh !important;
+        min-height: -webkit-fill-available !important;
+        padding: 24px 16px 42px 16px !important;
+        border-radius: 0 !important;
+        border: none !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        background: #090b11 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        box-sizing: border-box !important;
+      }
+      .tg-badge-icon, .age-gate-badge {
+        width: 64px !important;
+        height: 64px !important;
+        font-size: 30px !important;
+        margin: 6px auto 10px auto !important;
+        border-radius: 18px !important;
+        flex-shrink: 0 !important;
+      }
+      .tg-title, .age-gate-title {
+        font-size: 20px !important;
+        font-weight: 800 !important;
+        line-height: 1.35 !important;
+        margin-bottom: 6px !important;
+      }
+      .tg-lock-warning {
+        font-size: 14px !important;
+        line-height: 1.5 !important;
+        padding: 12px 14px !important;
+        border-radius: 13px !important;
+        margin-bottom: 6px !important;
+      }
+      .tg-progress-box {
+        padding: 14px 15px !important;
+        border-radius: 13px !important;
+        margin-bottom: 6px !important;
+      }
+      .tg-progress-text {
+        font-size: 14.5px !important;
+      }
+      .tg-input-wrapper {
+        padding: 14px 14px !important;
+        border-radius: 13px !important;
+        margin-bottom: 6px !important;
+      }
+      .tg-user-id-input {
+        height: 50px !important;
+        font-size: 15px !important;
+        padding: 0 14px !important;
+        border-radius: 12px !important;
+      }
+      .tg-check-btn {
+        height: 50px !important;
+        font-size: 15px !important;
+        padding: 0 18px !important;
+        border-radius: 12px !important;
+      }
+      .tg-task-list {
+        gap: 10px !important;
+        margin-bottom: 6px !important;
+      }
+      .tg-task-btn {
+        padding: 14px 15px !important;
+        font-size: 14.5px !important;
+        min-height: 50px !important;
+        border-radius: 13px !important;
+      }
+      .tg-verify-btn, .age-gate-btn-yes {
+        padding: 16px 18px !important;
+        font-size: 16.5px !important;
+        font-weight: 800 !important;
+        min-height: 54px !important;
+        border-radius: 14px !important;
+        width: 100% !important;
+        margin-top: 4px !important;
+      }
+      .age-gate-desc {
+        font-size: 15px !important;
+        line-height: 1.6 !important;
+        margin-bottom: 16px !important;
+      }
+      .age-gate-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+      }
+      .age-gate-btn-no {
+        padding: 14px 16px !important;
+        font-size: 14.5px !important;
+        border-radius: 12px !important;
+        width: 100% !important;
       }
     }
   </style>
@@ -563,6 +683,6 @@
     <a href="categories.html" class="bottom-nav-item"><i class="fa-solid fa-tags"></i><span>ক্যাটাগরি</span></a>
   </nav>
 
-  <script src="assets/js/app.js?v=4.0"></script>
+  <script src="assets/js/app.js?v=5.0"></script>
 </body>
 </html>

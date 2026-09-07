@@ -2908,111 +2908,402 @@ header {
   }
 }
 
-/* Specific Mobile Optimization for Modals & Full Screen */
-@media(max-width: 600px) {
-  .tg-forceadd-overlay,
-  .age-gate-overlay {
-    padding: 10px 8px;
-    align-items: center;
-    justify-content: center;
-  }
-  .tg-forceadd-modal,
-  .age-gate-modal {
-    width: calc(100% - 10px);
-    max-width: 100%;
-    padding: 22px 14px;
-    border-radius: 18px;
-    margin: auto;
-  }
-  .tg-badge-icon,
-  .age-gate-badge {
-    width: 56px;
-    height: 56px;
-    font-size: 26px;
-    margin-bottom: 12px;
-  }
-  .tg-title {
-    font-size: 19px;
-    line-height: 1.35;
-    margin-bottom: 10px;
-  }
-  .tg-lock-warning {
-    padding: 11px 12px;
-    font-size: 13.5px;
-    line-height: 1.5;
-    margin-bottom: 13px;
-  }
-  .tg-progress-box {
-    padding: 12px 13px;
-    margin-bottom: 13px;
-  }
-  .tg-progress-text {
-    font-size: 14px;
-  }
-  .tg-input-wrapper {
-    padding: 13px 12px;
-    margin-bottom: 13px;
-  }
-  .tg-input-label {
-    font-size: 13.5px;
-    margin-bottom: 8px;
-  }
-  .tg-user-id-input {
-    height: 48px;
-    font-size: 14.5px;
-    padding: 0 12px;
-  }
-  .tg-check-btn {
-    height: 48px;
-    padding: 0 15px;
-    font-size: 14px;
-  }
-  .tg-task-list {
-    gap: 9px;
-    margin-bottom: 14px;
-  }
-  .tg-task-btn {
-    padding: 13px 14px;
-    font-size: 14.5px;
-    min-height: 48px;
-    border-radius: 12px;
-  }
-  .tg-verify-btn {
-    padding: 15px 16px;
-    font-size: 16px;
-    min-height: 52px;
-    border-radius: 14px;
-  }
+/* ========================================================
+   TELEGRAM 10-MEMBER & AGE GATE VERIFICATION MODALS
+   ======================================================== */
+.tg-forceadd-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  min-height: -webkit-fill-available !important;
+  background: rgba(9, 11, 17, 0.98) !important;
+  z-index: 100000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
-@media(max-width: 380px) {
-  .tg-forceadd-overlay,
+.age-gate-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  min-height: -webkit-fill-available !important;
+  background: rgba(9, 11, 17, 0.98) !important;
+  z-index: 99999 !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.tg-forceadd-modal, .age-gate-modal {
+  width: 100% !important;
+  max-width: 500px !important;
+  padding: 28px 20px !important;
+  border-radius: 22px !important;
+  margin: auto !important;
+  box-sizing: border-box !important;
+  background: linear-gradient(145deg, #101828, #0b0f1a) !important;
+  border: 1px solid rgba(0, 136, 204, 0.45) !important;
+  box-shadow: 0 10px 40px rgba(0, 136, 204, 0.35), 0 0 50px rgba(0, 0, 0, 0.9) !important;
+  text-align: center !important;
+}
+
+.tg-badge-icon, .age-gate-badge {
+  width: 68px !important;
+  height: 68px !important;
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #0088cc, #00b4d8) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 32px !important;
+  color: #fff !important;
+  margin: 0 auto 14px auto !important;
+  box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4) !important;
+}
+
+.age-gate-badge {
+  background: linear-gradient(135deg, #ff2a85, #ff7300) !important;
+  box-shadow: 0 6px 20px rgba(255, 42, 133, 0.4) !important;
+}
+
+.tg-title, .age-gate-title {
+  font-size: 21px !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+  color: #fff !important;
+  margin-bottom: 12px !important;
+}
+
+.tg-lock-warning {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+  border-radius: 14px !important;
+  padding: 13px 15px !important;
+  font-size: 14.5px !important;
+  line-height: 1.55 !important;
+  color: #fca5a5 !important;
+  margin-bottom: 14px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  text-align: left !important;
+}
+
+.tg-lock-warning i {
+  font-size: 18px !important;
+  color: #ef4444 !important;
+  margin-top: 2px !important;
+  flex-shrink: 0 !important;
+}
+
+.tg-progress-box {
+  background: rgba(0, 136, 204, 0.12) !important;
+  border: 1px solid rgba(0, 136, 204, 0.3) !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  margin-bottom: 14px !important;
+  text-align: left !important;
+}
+
+.tg-progress-text {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+  margin-bottom: 8px !important;
+}
+
+.tg-progress-bar-bg {
+  width: 100% !important;
+  height: 10px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 50px !important;
+  overflow: hidden !important;
+}
+
+.tg-progress-bar-fill {
+  height: 100% !important;
+  background: linear-gradient(90deg, #0088cc, #00d2ff) !important;
+  width: 0% !important;
+  transition: width 0.4s ease !important;
+  border-radius: 50px !important;
+}
+
+.tg-input-wrapper {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  padding: 15px 14px !important;
+  margin-bottom: 14px !important;
+  text-align: left !important;
+}
+
+.tg-input-label {
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+  margin-bottom: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.tg-input-group {
+  display: flex !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.tg-user-id-input {
+  flex: 1 !important;
+  height: 50px !important;
+  background: #0c101c !important;
+  border: 1.5px solid rgba(0, 136, 204, 0.4) !important;
+  border-radius: 12px !important;
+  padding: 0 14px !important;
+  color: #fff !important;
+  font-size: 15px !important;
+  outline: none !important;
+}
+
+.tg-check-btn {
+  height: 50px !important;
+  padding: 0 18px !important;
+  background: linear-gradient(135deg, #0088cc, #00d2ff) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+}
+
+.tg-id-hint {
+  font-size: 13px !important;
+  color: #94a3b8 !important;
+  line-height: 1.5 !important;
+  margin-top: 8px !important;
+}
+
+.tg-task-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin-bottom: 15px !important;
+}
+
+.tg-task-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 16px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 13px !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  min-height: 50px !important;
+  cursor: pointer !important;
+}
+
+.tg-verify-btn, .age-gate-btn-yes {
+  padding: 16px 18px !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  min-height: 54px !important;
+  border-radius: 14px !important;
+  width: 100% !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  color: #fff !important;
+  background: linear-gradient(135deg, #0088cc, #00b4d8) !important;
+  box-shadow: 0 8px 25px rgba(0, 136, 204, 0.4) !important;
+}
+
+.age-gate-desc {
+  font-size: 15.5px !important;
+  line-height: 1.6 !important;
+  color: #cbd5e1 !important;
+  margin-bottom: 22px !important;
+}
+
+.age-gate-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.age-gate-btn-yes {
+  background: linear-gradient(135deg, #ff2a85, #ff7300) !important;
+  box-shadow: 0 8px 25px rgba(255, 42, 133, 0.4) !important;
+}
+
+.age-gate-btn-no {
+  padding: 14px 16px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  width: 100% !important;
+}
+
+/* ========================================================
+   NATIVE FULLSCREEN MOBILE APP VIEWPORT (max-width: 600px)
+   ======================================================== */
+@media (max-width: 600px) {
+  .tg-forceadd-overlay, .age-gate-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    min-height: -webkit-fill-available !important;
+    background: #090b11 !important;
+    z-index: 100000 !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
   .age-gate-overlay {
-    padding: 8px 4px;
+    display: none !important;
+    z-index: 99999 !important;
   }
-  .tg-forceadd-modal,
-  .age-gate-modal {
-    width: 100%;
-    padding: 18px 12px;
-    border-radius: 16px;
+  .tg-forceadd-modal, .age-gate-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    min-height: -webkit-fill-available !important;
+    padding: 24px 16px 42px 16px !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: #090b11 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    box-sizing: border-box !important;
   }
-  .tg-title {
-    font-size: 17.5px;
+  .tg-badge-icon, .age-gate-badge {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 30px !important;
+    margin: 6px auto 10px auto !important;
+    border-radius: 18px !important;
+    flex-shrink: 0 !important;
   }
-  .tg-badge-icon,
-  .age-gate-badge {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-    margin-bottom: 10px;
+  .tg-title, .age-gate-title {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    line-height: 1.35 !important;
+    margin-bottom: 6px !important;
   }
-  .tg-task-btn {
-    font-size: 13.5px;
-    padding: 11px 12px;
+  .tg-lock-warning {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    padding: 12px 14px !important;
+    border-radius: 13px !important;
+    margin-bottom: 6px !important;
+  }
+  .tg-progress-box {
+    padding: 14px 15px !important;
+    border-radius: 13px !important;
+    margin-bottom: 6px !important;
+  }
+  .tg-progress-text {
+    font-size: 14.5px !important;
+  }
+  .tg-input-wrapper {
+    padding: 14px 14px !important;
+    border-radius: 13px !important;
+    margin-bottom: 6px !important;
+  }
+  .tg-user-id-input {
+    height: 50px !important;
+    font-size: 15px !important;
+    padding: 0 14px !important;
+    border-radius: 12px !important;
   }
   .tg-check-btn {
-    padding: 0 12px;
-    font-size: 13px;
+    height: 50px !important;
+    font-size: 15px !important;
+    padding: 0 18px !important;
+    border-radius: 12px !important;
+  }
+  .tg-task-list {
+    gap: 10px !important;
+    margin-bottom: 6px !important;
+  }
+  .tg-task-btn {
+    padding: 14px 15px !important;
+    font-size: 14.5px !important;
+    min-height: 50px !important;
+    border-radius: 13px !important;
+  }
+  .tg-verify-btn, .age-gate-btn-yes {
+    padding: 16px 18px !important;
+    font-size: 16.5px !important;
+    font-weight: 800 !important;
+    min-height: 54px !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    margin-top: 4px !important;
+  }
+  .age-gate-desc {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 16px !important;
+  }
+  .age-gate-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+  .age-gate-btn-no {
+    padding: 14px 16px !important;
+    font-size: 14.5px !important;
+    border-radius: 12px !important;
+    width: 100% !important;
   }
 }
 
