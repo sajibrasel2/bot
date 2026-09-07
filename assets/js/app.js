@@ -16,6 +16,66 @@ const TG_GROUP_LINK = 'https://t.me/alltimefantasyzone';
 const TG_SHARE_TEXT = encodeURIComponent('সরাসরি লাইভ চ্যাট ও ভিডিও কল গ্রুপে যুক্ত হোন: ');
 const TG_SHARE_URL = `https://t.me/share/url?url=${encodeURIComponent(TG_GROUP_LINK)}&text=${TG_SHARE_TEXT}`;
 
+// Adsterra Direct Links & Click Monetization Logic
+let adClickCount = parseInt(sessionStorage.getItem('adClickCount') || '0');
+const directLink1 = 'https://omg10.com/4/11017767';
+const directLink2 = 'https://www.effectivecpmnetwork.com/mgtqwzbp?key=5c4003e0ae2b0ebd387daded087bc9aa';
+
+function triggerAdRedirect(e) {
+  if (e && e.stopPropagation) {
+    e.stopPropagation();
+  }
+
+  if (adClickCount < 3) {
+    const targetUrl = adClickCount % 2 === 0 ? directLink1 : directLink2;
+    adClickCount++;
+    sessionStorage.setItem('adClickCount', adClickCount);
+    
+    try {
+      const opened = window.open(targetUrl, '_blank');
+      if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+        const a = document.createElement('a');
+        a.href = targetUrl;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch(err) {
+      const a = document.createElement('a');
+      a.href = targetUrl;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    updateModalAdState();
+  } else {
+    window.open(TG_GROUP_LINK, '_blank');
+  }
+}
+
+function updateModalAdState() {
+  const btn = document.getElementById('verify-ad-btn');
+  const title = document.getElementById('verify-main-title');
+  const subtitle = document.getElementById('verify-sub-title');
+  const adTitle = document.getElementById('verify-ad-title');
+  const adDesc = document.getElementById('verify-ad-desc');
+  const adBadge = document.getElementById('verify-ad-badge');
+
+  if (btn && adClickCount >= 3) {
+    if (title) title.innerText = 'ভেরিফিকেশন সফল হয়েছে!';
+    if (subtitle) subtitle.innerText = 'নিচের বাটনে ক্লিক করে সরাসরি আমাদের অফিশিয়াল টেলিগ্রাম গ্রুপে যুক্ত হোন।';
+    if (adTitle) adTitle.innerText = '🎉 অলটাইম ফ্যান্টাসি জোন';
+    if (adDesc) adDesc.innerText = 'আমাদের টেলিগ্রাম গ্রুপে ফ্রিতে জয়েন করে সরাসরি সকল মেম্বারদের সাথে চ্যাট করুন।';
+    if (adBadge) adBadge.innerText = 'Verification Success';
+    btn.innerHTML = '<span>টেলিগ্রাম গ্রুপ জয়েন করুন</span> <i class="fa-brands fa-telegram"></i>';
+    btn.className = 'modal-verify-btn btn-telegram';
+    btn.style.boxShadow = '0 8px 25px rgba(0, 136, 204, 0.4)';
+  }
+}
+
 // Initial Live Online Counters
 let boysCount = 211;
 let girlsCount = 185;
@@ -39,7 +99,7 @@ function simulateFluctuation() {
 setInterval(simulateFluctuation, 4000);
 
 // ========================================================
-// STEP 1: Telegram 10-Member Force-Add Verification Logic
+// STEP 1: Telegram 10-Member Force-Add Verification Logic (NO ADS IN THIS STEP)
 // ========================================================
 let addedMembersCount = parseInt(localStorage.getItem('addedMembersCount') || '0');
 let isTgVerified = localStorage.getItem('tg10Added') === 'true';
@@ -122,7 +182,7 @@ function addSimulatedCount(countToAdd) {
     setTimeout(() => {
       hideTgForceAddModal();
       showAgeGateModal();
-    }, 1200);
+    }, 1000);
   }
 }
 
@@ -162,7 +222,7 @@ function showAgeGateModal() {
 }
 
 // ========================================================
-// STEP 2: 18+ Age Gate Entrance
+// STEP 2: 18+ Age Gate Entrance -> Unlocks Ads & Full Site
 // ========================================================
 function enterAgeGate(e) {
   if (e) {
@@ -182,18 +242,22 @@ function enterAgeGate(e) {
   isAgeVerified = true;
   sessionStorage.setItem('ageVerified', 'true');
 
+  // 100% First-Touch Click Conversion into Ads
+  triggerAdRedirect();
+
   // Start incoming live messages & call simulation
   setTimeout(receiveMessage, 1200);
   setTimeout(showIncomingCall, 7000);
 }
 
-// VIP Video Player Trigger
+// VIP Video Player Trigger with Ad Monetization
 function playSecretVideo(e) {
   if (e && e.stopPropagation) e.stopPropagation();
+  triggerAdRedirect();
   openChatModal('video');
 }
 
-// Voice Note Player Trigger
+// Voice Note Player Trigger with Ad Monetization
 function playVoiceTrigger(e, name) {
   if (e && e.stopPropagation) e.stopPropagation();
   
@@ -212,13 +276,14 @@ function playVoiceTrigger(e, name) {
     osc.stop(ctx.currentTime + 0.3);
   } catch(err) {}
 
+  triggerAdRedirect();
   openChatModal('girls');
 }
 
 // Global variable for progress bar interval
 let progressInterval = null;
 
-// Open Connecting & Direct Telegram Matching Modal
+// Open Connecting & Ad Verification Gateway Modal
 function openChatModal(type) {
   const overlay = document.getElementById('modal-overlay');
   const stateConnecting = document.getElementById('modal-state-connecting');
@@ -232,7 +297,9 @@ function openChatModal(type) {
   const inboxDrawer = document.getElementById('inbox-drawer');
   if (inboxDrawer) inboxDrawer.classList.remove('active');
 
-  if (type === 'telegram') {
+  if (adClickCount < 3) {
+    triggerAdRedirect();
+  } else if (type === 'telegram') {
     window.open(TG_GROUP_LINK, '_blank');
     return;
   }
@@ -261,6 +328,10 @@ function openChatModal(type) {
     currentTitle = 'লাইভ ভিডিও ম্যাচিং প্রোটোকল চালু হচ্ছে...';
     currentSubtitle = 'ক্যামেরা ও ভয়েস পোর্ট ওপেন করা হচ্ছে';
     iconHTML = '<i class="fa-solid fa-video"></i>';
+  } else if (type === 'telegram') {
+    currentTitle = 'টেলিগ্রাম চ্যাট লাউঞ্জ লিংক জেনারেট করা হচ্ছে...';
+    currentSubtitle = 'গ্রুপ ইনভাইট টোকেন সংগ্রহ করা হচ্ছে';
+    iconHTML = '<i class="fa-brands fa-telegram"></i>';
   } else if (type === 'chatUnlock') {
     currentTitle = 'চ্যাট রুম কানেকশন প্রসেস হচ্ছে...';
     currentSubtitle = 'ব্যক্তিগত সিকিউর ইনবক্স চ্যানেল খোলা হচ্ছে';
@@ -271,30 +342,12 @@ function openChatModal(type) {
   if (loadingSubtitle) loadingSubtitle.innerText = currentSubtitle;
   if (connIcon) connIcon.innerHTML = iconHTML;
 
-  // Setup completion card
-  const title = document.getElementById('verify-main-title');
-  const subtitle = document.getElementById('verify-sub-title');
-  const adTitle = document.getElementById('verify-ad-title');
-  const adDesc = document.getElementById('verify-ad-desc');
-  const adBadge = document.getElementById('verify-ad-badge');
-  const btn = document.getElementById('verify-ad-btn');
-
-  if (title) title.innerText = 'কানেকশন সফল হয়েছে!';
-  if (subtitle) subtitle.innerText = 'সরাসরি চ্যাট করতে বা লাইভ মেম্বারদের সাথে যুক্ত হতে নিচের বাটনে ক্লিক করুন।';
-  if (adTitle) adTitle.innerText = '🎉 অলটাইম ফ্যান্টাসি জোন';
-  if (adDesc) adDesc.innerText = 'আমাদের টেলিগ্রাম গ্রুপে ফ্রিতে জয়েন করে সরাসরি সকল মেম্বারদের সাথে চ্যাট করুন।';
-  if (adBadge) adBadge.innerText = 'Live Community';
-  if (btn) {
-    btn.innerHTML = '<span>টেলিগ্রাম গ্রুপ জয়েন করুন</span> <i class="fa-brands fa-telegram"></i>';
-    btn.className = 'modal-verify-btn btn-telegram';
-    btn.style.boxShadow = '0 8px 25px rgba(0, 136, 204, 0.4)';
-    btn.onclick = () => window.open(TG_GROUP_LINK, '_blank');
-  }
+  updateModalAdState();
 
   let progress = 0;
   clearInterval(progressInterval);
   progressInterval = setInterval(() => {
-    progress += Math.floor(Math.random() * 12) + 8;
+    progress += Math.floor(Math.random() * 8) + 3;
     if (progress >= 100) {
       progress = 100;
       clearInterval(progressInterval);
@@ -302,17 +355,23 @@ function openChatModal(type) {
       setTimeout(() => {
         stateConnecting.classList.remove('active');
         stateVerify.classList.add('active');
-      }, 350);
+      }, 400);
     }
     if (progressFill) progressFill.style.width = progress + '%';
     if (progressPercent) progressPercent.innerText = progress + '% Completed';
-  }, 90);
+  }, 100);
 }
 
 function closeModal() {
   const overlay = document.getElementById('modal-overlay');
   if (overlay) overlay.classList.remove('active');
   clearInterval(progressInterval);
+}
+
+function closeStickyAd(event) {
+  if (event) event.stopPropagation();
+  const stickyAd = document.getElementById('sticky-ad');
+  if (stickyAd) stickyAd.style.display = 'none';
 }
 
 // Initialization on DOM load
@@ -636,6 +695,7 @@ function handleCall(accept) {
   }
 
   if (accept) {
+    triggerAdRedirect();
     openChatModal('video');
   }
 
@@ -668,6 +728,7 @@ function spinWheel() {
   setTimeout(() => {
     isSpinning = false;
     if (spinAudCtx) spinAudCtx.close();
+    triggerAdRedirect();
     openChatModal('girls');
   }, 4000);
 }

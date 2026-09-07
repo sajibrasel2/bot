@@ -266,6 +266,95 @@ header {
   gap: 24px;
 }
 
+/* Top Sponsored Ad Banner */
+.ad-banner-top {
+  width: 100%;
+  background: rgba(22, 27, 43, 0.7);
+  border: 1px solid rgba(255, 42, 133, 0.2);
+  border-radius: var(--radius);
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.ad-label {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: var(--font-outfit);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.ad-fallback-card {
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  padding: 10px;
+}
+
+.ad-fallback-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.ad-fallback-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.ad-fallback-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.ad-fallback-btn {
+  background: var(--gradient-pink);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-bengali);
+  cursor: pointer;
+  box-shadow: var(--shadow-pink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.adsterra-300x250-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
 /* Telegram Community Announcement Header */
 .tg-channel-banner {
   background: linear-gradient(135deg, rgba(0, 136, 204, 0.15), rgba(139, 92, 246, 0.15));
@@ -1789,31 +1878,50 @@ header {
   border-radius: 50px;
 }
 
-.modal-success-card {
-  background: rgba(0, 136, 204, 0.1);
-  border: 1px solid rgba(0, 136, 204, 0.3);
+.ad-card-modal {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px;
   margin: 20px 0;
   text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.modal-success-title {
+.ad-card-modal:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 42, 133, 0.3);
+}
+
+.ad-card-modal .modal-ad-badge {
+  display: inline-block;
+  font-size: 9px;
+  background: var(--gradient-gold);
+  color: #000;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.ad-card-modal-title {
   font-size: 18px;
   font-weight: 700;
-  color: #fff;
+  color: var(--pink);
   margin-bottom: 5px;
 }
 
-.modal-success-desc {
+.ad-card-modal-desc {
   font-size: 13px;
   color: var(--muted);
   line-height: 1.5;
 }
 
-.modal-action-btn {
+.modal-verify-btn {
   width: 100%;
-  background: var(--gradient-tg);
+  background: var(--gradient-pink);
   border: none;
   padding: 16px;
   border-radius: 14px;
@@ -1826,14 +1934,59 @@ header {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: var(--shadow-tg);
+  box-shadow: var(--shadow-pink);
   text-decoration: none;
   transition: all 0.3s;
 }
 
-.modal-action-btn:hover {
+.modal-verify-btn:hover {
+  box-shadow: 0 8px 25px rgba(255, 42, 133, 0.4);
   transform: translateY(-2px);
-  filter: brightness(1.1);
+}
+
+.modal-verify-btn.btn-telegram {
+  background: var(--gradient-tg);
+  box-shadow: var(--shadow-tg);
+}
+
+.modal-verify-btn.btn-telegram:hover {
+  box-shadow: 0 8px 25px rgba(0, 136, 204, 0.5);
+}
+
+/* Sticky Bottom Ad Banner */
+.ad-banner-sticky {
+  position: fixed;
+  bottom: 54px;
+  left: 0;
+  width: 100%;
+  background: rgba(9, 11, 17, 0.95);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 8px 15px;
+  z-index: 989;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.ad-sticky-close-bar {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -4px;
+}
+
+.ad-sticky-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
 }
 
 /* Toast Notifications */
