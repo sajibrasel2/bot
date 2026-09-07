@@ -106,8 +106,9 @@ def generate_promo_message(users: list) -> tuple:
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
-        [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣🔥", url="https://techandclick.site/bot/")],
-        [InlineKeyboardButton(text="🟢 🔞🔥 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url="https://techandclick.site/bot/")],
+        [InlineKeyboardButton(text="🔞 👰‍♀️ বউ ও শ্বশুর স্পেশাল গোপন ভিডিও 🔥", url="https://techandclick.site/bot/videos.html")],
+        [InlineKeyboardButton(text="🔞 💃 দেবর-ভাবি ও পরকীয়া রোমান্স রুম 🍒", url="https://techandclick.site/bot/categories.html")],
+        [InlineKeyboardButton(text="🔴 💋 কলেজ ছাত্রী ও ভাবির ১-অন-১ লাইভ চ্যাট 💬", url="https://techandclick.site/bot/girls.html")],
     ])
 
     return text, keyboard

@@ -34,8 +34,8 @@ async def _auto_delete(message, delay: int = AUTO_DELETE_SECONDS) -> None:
 DEFAULT_WELCOME = (
     "🌟 <b>স্বাগতম {mention}!</b> 🌸\n"
     "🏠 <b>{chatname}</b> • আপনি আমাদের <b>#{count}</b> তম সদস্য।\n\n"
-    "🔞 <b>ভিআইপি লাইভ চ্যাট রুম আনলক করতে:</b>\n"
-    "👥 গ্রুপে ৫ জন বন্ধুকে অ্যাড করুন এবং নিচের বাটনে ক্লিক করে যুক্ত হোন 👇"
+    "🔞 <b>হট ও ভাইরাল ভিডিও ক্যাটাগরি দেখতে নিচে ক্লিক করুন:</b>\n"
+    "👇 আপনার পছন্দের ক্যাটাগরি বেছে নিন এবং সরাসরি সাইটে প্রবেশ করুন 👇"
 )
 
 DEFAULT_GOODBYE = (
@@ -65,7 +65,7 @@ def _format(text: str, user, chat, count) -> str:
 
 
 def _build_button(settings: dict):
-    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় ২-সারির কালারফুল বাটন তৈরি করে।"""
+    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় মাল্টি-ক্যাটাগরি বাটন তৈরি করে।"""
     custom_btn = (settings.get("welcome_button_text") or "").strip()
     custom_url = (settings.get("welcome_button_url") or "").strip()
     
@@ -75,11 +75,13 @@ def _build_button(settings: dict):
             InlineKeyboardButton(text=custom_btn, url=custom_url)
         ]])
 
-    # Default: 2-Row High-Converting Colorful Buttons
-    target_url = custom_url if custom_url else DEFAULT_BUTTON_URL
+    # Default: Multi-Category High-Converting Viral Buttons
+    base_url = custom_url.rstrip("/") if custom_url else "https://techandclick.site/bot"
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(text="🔴 🍒💋 গোপন ক্যামেরায় ধরা পড়া ক্লিপ 🫣🔥", url=target_url)],
-        [InlineKeyboardButton(text="🟢 🔞🔥 সরাসরি লাইভ চ্যাটে যুক্ত হোন 💬💋", url=target_url)],
+        [InlineKeyboardButton(text="🔞 👰‍♀️ বউ ও শ্বশুর স্পেশাল গোপন ভিডিও 🔥", url=f"{base_url}/videos.html")],
+        [InlineKeyboardButton(text="🔞 💃 দেবর-ভাবি ও পরকীয়া রোমান্স রুম 🍒", url=f"{base_url}/categories.html")],
+        [InlineKeyboardButton(text="🔴 💋 কলেজ ছাত্রী ও ভাবির ১-অন-১ লাইভ চ্যাট 💬", url=f"{base_url}/girls.html")],
+        [InlineKeyboardButton(text="🟢 🔥 সরাসরি ফুল ভিডিও ও চ্যাট দেখুন ➜", url=f"{base_url}/index.html")],
     ])
 
 
