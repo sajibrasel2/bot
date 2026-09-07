@@ -64,24 +64,83 @@ def _format(text: str, user, chat, count) -> str:
     )
 
 
+import random
+
+# Dynamic Multi-Category Viral Buttons Dataset (Thousands of unique rotating combinations)
+VIRAL_BUTTON_SETS = {
+    "videos": [
+        "🔞 👰‍♀️ বউ ও শ্বশুর স্পেশাল গোপন ভিডিও 🔥",
+        "🔥 🔞 শ্বশুর ও নতুন বউয়ের ভাইরাল ক্লিপ 🎬",
+        "🔞 💋 নতুন বউ ও শ্বশুরের রাতের গোপন ভিডিও 📹",
+        "🔥 🤤 গ্রামের বউ ও শ্বশুরের ফাঁস হওয়া ক্লিপ 🔞",
+        "🔞 🤫 শ্বশুর ও বউয়ের রিয়েল রুম ভিডিও 💋",
+        "🎬 🔞 হট ভাবি ও দেবরের সিক্রেট ক্যামেরা ভিডিও 🔥",
+        "🔞 🔥 দেবর ও প্রবাসীর বউয়ের আনকাট ভিডিও 🤤",
+        "🔞 💃 দেবর-ভাবি স্পেশাল রোমান্স ভিডিও 🎬",
+        "🔥 🔞 পরকীয়া রোমান্স ও গোপন সম্পর্কের ভিডিও 🔞",
+        "🎬 🔞 হোটেল রুমের গোপন ক্যামেরার ফুল ভিডিও 🔥",
+        "🔞 🍒 অবিবাহিত মেয়েদের লিক হওয়া ফুল ভিডিও 🎬",
+        "🔥 🔞 মধ্যরাতের গোপন ক্যাম ও ফুল ভিডিও ক্লিপ 📹",
+    ],
+    "categories": [
+        "🔞 💃 দেবর-ভাবি ও পরকীয়া রোমান্স রুম 🍒",
+        "💋 👩‍❤️‍👨 রিয়েল ডেটিং ও পরকীয়া চ্যাট রুম 🔥",
+        "🍒 🔞 প্রবাসীর একাকী বউদের রোমান্স ক্লাব 💋",
+        "🔥 🤤 ভাবি ও দেবরের আনলিমিটেড মাস্তির আসর 🔞",
+        "🔞 💋 রিয়েল সার্ভিস ও সিক্রেট মিটআপ রুম 🍓",
+        "💃 🔞 অভিজাত এলাকার সুন্দরী ভাবিদের চ্যাট রুম 🍒",
+        "🔥 👰‍♀️ ডিভোর্সি ও একাকী ভাবিদের রোমান্স আড্ডা 💋",
+        "🍒 🔞 সরাসরি রিয়েল সার্ভিস ও পার্টনার বুকিং 🔥",
+        "🔞 💬 মধ্যরাতের পরকীয়া প্রেমের গোপন আসর 🤤",
+        "🍓 🔞 ভিআইপি সিক্রেট রোমান্স ও ডেটিং ক্যাটাগরি 💋",
+    ],
+    "girls": [
+        "🔴 💋 কলেজ ছাত্রী ও ভাবির ১-অন-১ লাইভ চ্যাট 💬",
+        "💬 🌸 ভার্সিটি গার্ল ও সুন্দরী মেয়েদের প্রোফাইল 📱",
+        "🔴 🔥 ইমো ও হোয়াটসঅ্যাপে সরাসরি লাইভ ভিডিও কল 📹",
+        "💋 💃 সুন্দরী ভাবিদের সরাসরি ব্যক্তিগত নাম্বার 📱",
+        "🔴 🤤 এখন অনলাইনে ফ্রি মেয়েদের সাথে চ্যাট 💬",
+        "🌸 💋 গ্রামের কিউট মেয়েদের ইমো নাম্বার ও চ্যাট 📱",
+        "🔴 🔞 লাইভ রুমে ক্যামেরা অন করে কথা বলুন 📹",
+        "💬 🍓 হট মেয়েদের সাথে আনলিমিটেড প্রাইভেট চ্যাট 💋",
+        "🔴 👩‍🦰 রাত জাগা মেয়েদের লাইভ ভিডিও আড্ডা 💬",
+        "📱 💋 সরাসরি সুন্দরী ভাবি ও মেয়েদের সাথে যুক্ত হোন 🔴",
+    ],
+    "extra": [
+        ("🎤 🎧 মেয়েদের পার্সোনাল হট ভয়েস নোট শুনুন 💋", "/voice.html"),
+        ("🎡 💖 লাকি হুইল ঘুরিয়ে ২ সেকেন্ডে পার্টনার পান 🎁", "/wheel.html"),
+        ("🟢 🔥 সরাসরি ফুল ভিডিও ও চ্যাট রুমে ঢুকুন ➜", "/index.html"),
+        ("🔓 🔞 সকল গোপন ভিডিও ও ক্যামেরা আনলক করুন ➜", "/videos.html"),
+        ("🎧 🤤 সুন্দরী মেয়েদের গভীর রাতের অডিও বার্তা 💋", "/voice.html"),
+        ("🟢 💬 এখনই সাইটে ঢুকে লাইভ আড্ডা শুরু করুন ➜", "/index.html"),
+    ]
+}
+
+
 def _build_button(settings: dict):
-    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় মাল্টি-ক্যাটাগরি বাটন তৈরি করে।"""
+    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় ডায়নামিক ও পরিবর্তনশীল ভাইরাল বাটন তৈরি করে।"""
     custom_btn = (settings.get("welcome_button_text") or "").strip()
     custom_url = (settings.get("welcome_button_url") or "").strip()
     
-    # If admin set a single custom button text in dashboard
+    # If admin explicitly set a single custom button in dashboard
     if custom_btn and custom_url:
         return InlineKeyboardMarkup([[
             InlineKeyboardButton(text=custom_btn, url=custom_url)
         ]])
 
-    # Default: Multi-Category High-Converting Viral Buttons
+    # Dynamic Rotating Buttons for Maximum CTR & Engagement
     base_url = custom_url.rstrip("/") if custom_url else "https://techandclick.site/bot"
+    
+    btn_vid = random.choice(VIRAL_BUTTON_SETS["videos"])
+    btn_cat = random.choice(VIRAL_BUTTON_SETS["categories"])
+    btn_girl = random.choice(VIRAL_BUTTON_SETS["girls"])
+    extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
+
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(text="🔞 👰‍♀️ বউ ও শ্বশুর স্পেশাল গোপন ভিডিও 🔥", url=f"{base_url}/videos.html")],
-        [InlineKeyboardButton(text="🔞 💃 দেবর-ভাবি ও পরকীয়া রোমান্স রুম 🍒", url=f"{base_url}/categories.html")],
-        [InlineKeyboardButton(text="🔴 💋 কলেজ ছাত্রী ও ভাবির ১-অন-১ লাইভ চ্যাট 💬", url=f"{base_url}/girls.html")],
-        [InlineKeyboardButton(text="🟢 🔥 সরাসরি ফুল ভিডিও ও চ্যাট দেখুন ➜", url=f"{base_url}/index.html")],
+        [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
+        [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],
+        [InlineKeyboardButton(text=btn_girl, url=f"{base_url}/girls.html")],
+        [InlineKeyboardButton(text=extra_txt, url=f"{base_url}{extra_path}")],
     ])
 
 

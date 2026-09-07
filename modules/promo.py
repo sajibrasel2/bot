@@ -104,11 +104,20 @@ def generate_promo_message(users: list) -> tuple:
         f"২. নিচের <b>\"🔴 সরাসরি চ্যাট করুন\"</b> বাটনে ক্লিক করে রুমে যুক্ত হোন!"
     )
 
+    from modules.welcome import VIRAL_BUTTON_SETS
+
+    base_url = "https://techandclick.site/bot"
+    btn_vid = random.choice(VIRAL_BUTTON_SETS["videos"])
+    btn_cat = random.choice(VIRAL_BUTTON_SETS["categories"])
+    btn_girl = random.choice(VIRAL_BUTTON_SETS["girls"])
+    extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
+
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
-        [InlineKeyboardButton(text="🔞 👰‍♀️ বউ ও শ্বশুর স্পেশাল গোপন ভিডিও 🔥", url="https://techandclick.site/bot/videos.html")],
-        [InlineKeyboardButton(text="🔞 💃 দেবর-ভাবি ও পরকীয়া রোমান্স রুম 🍒", url="https://techandclick.site/bot/categories.html")],
-        [InlineKeyboardButton(text="🔴 💋 কলেজ ছাত্রী ও ভাবির ১-অন-১ লাইভ চ্যাট 💬", url="https://techandclick.site/bot/girls.html")],
+        [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
+        [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],
+        [InlineKeyboardButton(text=btn_girl, url=f"{base_url}/girls.html")],
+        [InlineKeyboardButton(text=extra_txt, url=f"{base_url}{extra_path}")],
     ])
 
     return text, keyboard
