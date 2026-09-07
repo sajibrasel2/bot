@@ -4,12 +4,45 @@ if (window.Telegram && window.Telegram.WebApp) {
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
+    if (tg.disableVerticalSwipes) {
+      tg.disableVerticalSwipes();
+    }
     tg.setHeaderColor('#090b11');
     tg.setBackgroundColor('#090b11');
   } catch (e) {
     console.error("Telegram WebApp init error:", e);
   }
 }
+
+// Native Mobile App Viewport Lockdown (Prevents zoom in / zoom out / gesture distortion)
+document.addEventListener('gesturestart', function (e) {
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('gesturechange', function (e) {
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('gestureend', function (e) {
+  e.preventDefault();
+}, { passive: false });
+
+// Prevent 2-finger pinch zoom
+document.addEventListener('touchstart', function (e) {
+  if (e.touches && e.touches.length > 1) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+// Prevent double-tap zooming on mobile
+let lastTouchEndTime = 0;
+document.addEventListener('touchend', function (e) {
+  const now = Date.now();
+  if (now - lastTouchEndTime <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEndTime = now;
+}, { passive: false });
 
 // Telegram Group & Channel URLs
 const TG_GROUP_LINK = 'https://t.me/alltimefantasyzone';

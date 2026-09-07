@@ -32,11 +32,22 @@
   --font-bengali: 'Hind Siliguri', sans-serif;
 }
 
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 body {
@@ -44,13 +55,18 @@ body {
   background-color: var(--bg);
   color: var(--text);
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
   position: relative;
-  padding-bottom: 80px;
+  padding-bottom: 85px;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
 }
 
 /* App touch feedback */
