@@ -1,21 +1,24 @@
-/**
- * Adult Zone Live — Native Mobile WebApp Controller
- * Version: 7.0 (Unified SPA Mobile Architecture)
- */
+// ========================================================
+// 1. Telegram WebApp SDK Initialization & Context
+// ========================================================
+let tgApp = null;
+let tgUser = null;
 
-// ========================================================
-// 1. Telegram WebApp SDK Initialization
-// ========================================================
-if (window.Telegram && window.Telegram.WebApp) {
+if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) {
   try {
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-    if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
-    tg.setHeaderColor('#07090e');
-    tg.setBackgroundColor('#07090e');
+    tgApp = window.Telegram.WebApp;
+    tgApp.ready();
+    tgApp.expand();
+    if (tgApp.disableVerticalSwipes) tgApp.disableVerticalSwipes();
+    if (tgApp.enableClosingConfirmation) tgApp.enableClosingConfirmation();
+    if (tgApp.setHeaderColor) tgApp.setHeaderColor('#07090e');
+    if (tgApp.setBackgroundColor) tgApp.setBackgroundColor('#07090e');
+
+    if (tgApp.initDataUnsafe && tgApp.initDataUnsafe.user) {
+      tgUser = tgApp.initDataUnsafe.user;
+    }
   } catch (e) {
-    console.log("TG SDK init:", e);
+    console.log("TG WebApp SDK Init Notice:", e);
   }
 }
 
@@ -31,7 +34,7 @@ document.addEventListener('touchstart', (e) => {
 // 2. Constants, Links & Gate States
 // ========================================================
 const TG_GROUP_LINK = 'https://t.me/alltimefantasyzone';
-const TG_SHARE_TEXT = encodeURIComponent('সরাসরি লাইভ চ্যাট ও ভিডিও কল গ্রুপে যুক্ত হোন: ');
+const TG_SHARE_TEXT = encodeURIComponent('🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 https://t.me/alltimefantasyzone');
 const TG_SHARE_URL = `https://t.me/share/url?url=${encodeURIComponent(TG_GROUP_LINK)}&text=${TG_SHARE_TEXT}`;
 
 const DIRECT_LINK_1 = 'https://omg10.com/4/11017767';
@@ -156,7 +159,7 @@ function handleTgForward() {
   window.open(TG_SHARE_URL, '_blank');
 }
 
-async function checkRealDatabaseInvites() {
+async function checkRealDatabaseInvites(isAutoCheck = false) {
   const inputEl = document.getElementById('tg-user-id-input');
   const alertEl = document.getElementById('tg-db-alert');
   const btnEl = document.getElementById('tg-check-btn');
@@ -164,32 +167,20 @@ async function checkRealDatabaseInvites() {
   const percentEl = document.getElementById('tg-progress-percent');
   const fillEl = document.getElementById('tg-progress-fill');
   const verifyBtn = document.getElementById('tg-verify-btn');
+  const tgOverlay = document.getElementById('tg-forceadd-overlay');
 
-  if (!inputEl) return;
-  const val = inputEl.value.trim();
+  let val = inputEl ? inputEl.value.trim() : '';
+  if (!val && tgUser && (tgUser.id || tgUser.username)) {
+    val = String(tgUser.id || tgUser.username);
+    if (inputEl) inputEl.value = val;
+  }
 
   if (!val) {
-    if (alertEl) {
+    if (alertEl && !isAutoCheck) {
       alertEl.style.display = 'block';
       alertEl.className = 'tg-db-alert alert-error';
       alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> অনুগ্রহ করে আপনার টেলিগ্রাম User ID বা @Username লিখুন।';
     }
-    return;
-  }
-
-  // Developer / Test bypass
-  if (val.toLowerCase() === 'test' || val.toLowerCase() === 'demo' || val === '99999') {
-    if (counterEl) counterEl.innerText = '১০';
-    if (percentEl) percentEl.innerText = '১০০%';
-    if (fillEl) fillEl.style.width = '100%';
-    if (alertEl) {
-      alertEl.style.display = 'block';
-      alertEl.className = 'tg-db-alert alert-success';
-      alertEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> টেস্ট মোড ভেরিফিকেশন সফল! ১৮+ ভেরিফিকেশনে নিয়ে যাওয়া হচ্ছে...';
-    }
-    setTimeout(() => {
-      unlockTelegramGate();
-    }, 900);
     return;
   }
 
@@ -240,19 +231,29 @@ async function checkRealDatabaseInvites() {
         }
         setTimeout(() => {
           unlockTelegramGate();
-        }, 1200);
+        }, 1100);
       } else {
+        // STRICT LOCK ENFORCEMENT: Member count is less than required (10)
+        isTgVerified = false;
+        localStorage.removeItem('tg10Added');
+        if (tgOverlay) tgOverlay.style.display = 'block';
+
         if (alertEl) {
           alertEl.style.display = 'block';
           alertEl.className = 'tg-db-alert alert-error';
-          alertEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${data.message || `আপনি মাত্র ${count} জন এড করেছেন! আরও ${data.remaining} জন এড করতে হবে।`}`;
+          alertEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${data.message || `আপনি মাত্র ${toBengaliNumerals(count)} জন এড করেছেন! সাইটে প্রবেশ করতে আরও ${toBengaliNumerals(data.remaining || (required - count))} জন বন্ধুকে টেলিগ্রাম গ্রুপে এড করুন।`}`;
         }
       }
     } else {
+      // ID not found
+      isTgVerified = false;
+      localStorage.removeItem('tg10Added');
+      if (tgOverlay) tgOverlay.style.display = 'block';
+
       if (alertEl) {
         alertEl.style.display = 'block';
         alertEl.className = 'tg-db-alert alert-error';
-        alertEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${data.message || 'আইডি পাওয়া যায়নি।'}`;
+        alertEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${data.message || 'আইডি পাওয়া যায়নি। টেলিগ্রাম গ্রুপে জয়েন করে মেম্বার এড করুন।'}`;
       }
     }
   } catch (err) {
@@ -314,6 +315,33 @@ function unlockAllAndStart() {
   initAllAdsterraAds();
   startFluctuationEngine();
   setTimeout(showIncomingCall, 7000);
+  handleTargetNavigation();
+}
+
+function handleTargetNavigation() {
+  let targetTab = null;
+
+  // 1. Check Telegram Mini App start_param
+  if (tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.start_param) {
+    targetTab = tgApp.initDataUnsafe.start_param.toLowerCase().trim();
+  }
+
+  // 2. Check URL search param (?tab=videos)
+  if (!targetTab) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      targetTab = params.get('tab');
+    } catch(e) {}
+  }
+
+  // 3. Check URL hash (#videos, #girls)
+  if (!targetTab && window.location.hash) {
+    targetTab = window.location.hash.replace('#', '').trim();
+  }
+
+  if (targetTab && document.getElementById(`tab-${targetTab}`)) {
+    switchTab(targetTab);
+  }
 }
 
 // ========================================================
@@ -803,12 +831,24 @@ function filterCategories() {
 }
 
 // ========================================================
-// 14. Startup DOM Router & Hash Listener
+// 14. Startup DOM Router & Auto Verification Trigger
 // ========================================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
+  const inputEl = document.getElementById('tg-user-id-input');
 
+  // 1. If running inside Telegram with user profile, pre-fill and verify immediately
+  if (tgUser && (tgUser.id || tgUser.username)) {
+    const uid = tgUser.id || tgUser.username;
+    if (inputEl) inputEl.value = uid;
+    
+    // Automatically verify member adds from real database
+    await checkRealDatabaseInvites(true);
+    return;
+  }
+
+  // 2. Standard gate display logic
   if (!isTgVerified) {
     if (tgOverlay) tgOverlay.style.display = 'block';
     if (ageOverlay) ageOverlay.style.display = 'none';
@@ -819,9 +859,8 @@ document.addEventListener('DOMContentLoaded', () => {
     unlockAllAndStart();
   }
 
-  // Handle URL hash navigation (e.g. #girls, #videos)
-  const hash = window.location.hash.replace('#', '');
-  if (hash && document.getElementById(`tab-${hash}`)) {
-    switchTab(hash);
+  // 3. Handle initial tab navigation if already unlocked
+  if (isTgVerified && isAgeVerified) {
+    handleTargetNavigation();
   }
 });
