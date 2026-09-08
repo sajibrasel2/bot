@@ -40,19 +40,49 @@ if ($is_local && $db_user === 'techandc_bot') {
     $db_pass = '';
 }
 
+$pdo = null;
+$db_type = 'mysql';
+
+// 1. Try Primary MySQL Connection
 try {
     $pdo = new PDO("mysql:host={$db_host};dbname={$db_name};charset=utf8mb4", $db_user, $db_pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
-} catch (Exception $e) {
+} catch (Exception $e1) {
+    // 2. Try Fallback MySQL db name 'sweetnikita_bot' on local
+    if ($is_local) {
+        try {
+            $pdo = new PDO("mysql:host={$db_host};dbname=sweetnikita_bot;charset=utf8mb4", $db_user, $db_pass, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            ]);
+        } catch (Exception $e2) {}
+    }
+    
+    // 3. Try Fallback SQLite database
+    if (!$pdo) {
+        $sqlite_file = __DIR__ . '/../data/bot.db';
+        if (file_exists($sqlite_file)) {
+            try {
+                $pdo = new PDO("sqlite:" . $sqlite_file, null, null, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                ]);
+                $db_type = 'sqlite';
+            } catch (Exception $e3) {}
+        }
+    }
+}
+
+if (!$pdo) {
     echo json_encode([
         'success' => false,
         'unlocked' => false,
         'invites' => 0,
         'required' => 10,
-        'error' => 'Database connection failed: ' . $e->getMessage(),
-        'message' => 'ডাটাবেজের সাথে সংযোগ স্থাপন করা যায়নি।'
+        'error' => 'Database connection failed',
+        'message' => 'সার্ভারের সাথে সংযোগ স্থাপন করা যায়নি। অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন।'
     ]);
     exit;
 }
@@ -79,24 +109,28 @@ $first_name = '';
 
 if (is_numeric($clean_input)) {
     $user_id = (int)$clean_input;
-    // Look up user info from users table
-    $stmt = $pdo->prepare("SELECT user_id, username, first_name FROM users WHERE user_id = ? LIMIT 1");
-    $stmt->execute([$user_id]);
-    $user = $stmt->fetch();
-    if ($user) {
-        $username = $user['username'] ?? '';
-        $first_name = $user['first_name'] ?? '';
-    }
+    // Look up user info from users table if available
+    try {
+        $stmt = $pdo->prepare("SELECT user_id, username, first_name FROM users WHERE user_id = ? LIMIT 1");
+        $stmt->execute([$user_id]);
+        $user = $stmt->fetch();
+        if ($user) {
+            $username = $user['username'] ?? '';
+            $first_name = $user['first_name'] ?? '';
+        }
+    } catch (Exception $e) {}
 } else {
     // Look up user by username (case-insensitive)
-    $stmt = $pdo->prepare("SELECT user_id, username, first_name FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1");
-    $stmt->execute([$clean_input]);
-    $user = $stmt->fetch();
-    if ($user) {
-        $user_id = (int)$user['user_id'];
-        $username = $user['username'] ?? '';
-        $first_name = $user['first_name'] ?? '';
-    }
+    try {
+        $stmt = $pdo->prepare("SELECT user_id, username, first_name FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1");
+        $stmt->execute([$clean_input]);
+        $user = $stmt->fetch();
+        if ($user) {
+            $user_id = (int)$user['user_id'];
+            $username = $user['username'] ?? '';
+            $first_name = $user['first_name'] ?? '';
+        }
+    } catch (Exception $e) {}
 }
 
 if (!$user_id) {
@@ -106,16 +140,21 @@ if (!$user_id) {
         'invites' => 0,
         'required' => 10,
         'remaining' => 10,
-        'message' => "❌ টেলিগ্রাম আইডি '{$raw_input}' ডাটাবেজে পাওয়া যায়নি। আপনি কি গ্রুপে জয়েন বা কোনো মেম্বার এড করেছেন? টেলিগ্রাম গ্রুপে /myinvites লিখে আপনার সঠিক আইডি দেখে নিন।"
+        'message' => "❌ টেলিগ্রাম ইউজার '{$raw_input}' পাওয়া যায়নি। আপনি কি টেলিগ্রাম গ্রুপে জয়েন বা মেম্বার এড করেছেন? সঠিক আইডি জানতে টেলিগ্রাম গ্রুপে /myinvites লিখুন।"
     ]);
     exit;
 }
 
 // Query real member invites from user_invites table
-$stmt = $pdo->prepare("SELECT COUNT(*) as cnt FROM user_invites WHERE inviter_id = ?");
-$stmt->execute([$user_id]);
-$row = $stmt->fetch();
-$invite_count = (int)($row['cnt'] ?? 0);
+$invite_count = 0;
+try {
+    $stmt = $pdo->prepare("SELECT COUNT(*) as cnt FROM user_invites WHERE inviter_id = ?");
+    $stmt->execute([$user_id]);
+    $row = $stmt->fetch();
+    $invite_count = (int)($row['cnt'] ?? 0);
+} catch (Exception $e) {
+    $invite_count = 0;
+}
 
 $required = 10;
 $unlocked = ($invite_count >= $required);
@@ -131,6 +170,6 @@ echo json_encode([
     'remaining' => $remaining,
     'unlocked' => $unlocked,
     'message' => $unlocked 
-        ? "✅ অভিনন্দন! আপনি ডাটাবেজ অনুসারে সফলভাবে {$invite_count} জন মেম্বার এড করেছেন।"
-        : "❌ আপনি মাত্র {$invite_count} জন মেম্বার এড করেছেন! সাইটের কন্টেন্ট আনলক করতে আরও {$remaining} জন বন্ধুকে টেলিগ্রাম গ্রুপে এড করতে হবে।"
+        ? "✅ অভিনন্দন! আপনি সফলভাবে {$invite_count} জন মেম্বার এড করেছেন।"
+        : "❌ আপনি মাত্র {$invite_count} জন মেম্বার এড করেছেন! সাইটে প্রবেশ করতে আরও {$remaining} জন বন্ধুকে টেলিগ্রাম গ্রুপে এড করুন।"
 ]);

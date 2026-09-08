@@ -1,0 +1,22 @@
+{
+  "name": "Adult Zone Live",
+  "short_name": "AdultZone",
+  "description": "সরাসরি লাইভ চ্যাট ও ভিডিও পার্টনার রুম",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#07090e",
+  "theme_color": "#07090e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/img/mitu.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "assets/img/mitu.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

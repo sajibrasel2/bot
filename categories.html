@@ -9,13 +9,14 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="assets/css/style.css?v=6.0" />
-
-  <meta name="theme-color" content="#090b11" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#07090e" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/style.css?v=7.0" />
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -31,7 +32,7 @@
       </div>
       <div class="tg-progress-box">
         <div class="tg-progress-text">
-          <span>ডাটাবেজ অগ্রগতি:</span>
+          <span>মেম্বার এড অগ্রগতি:</span>
           <span><strong id="tg-added-counter" style="color: var(--tg-cyan);">০</strong> / ১০ জন (<span id="tg-progress-percent">০%</span>)</span>
         </div>
         <div class="tg-progress-bar-bg"><div class="tg-progress-bar-fill" id="tg-progress-fill"></div></div>
@@ -54,7 +55,7 @@
           <i class="fa-solid fa-paper-plane arrow"></i>
         </button>
       </div>
-      <button class="tg-verify-btn" id="tg-verify-btn" onclick="checkRealDatabaseInvites()"><i class="fa-solid fa-shield-halved"></i><span>ডাটাবেজ ভেরিফাই ও প্রবেশ করুন</span></button>
+      <button class="tg-verify-btn" id="tg-verify-btn" onclick="checkRealDatabaseInvites()"><i class="fa-solid fa-shield-halved"></i><span>ভেরিফাই করে প্রবেশ করুন</span></button>
     </div>
   </div>
 
@@ -71,19 +72,6 @@
     </div>
   </div>
 
-  <!-- Heads-up Incoming Call Simulator -->
-  <div class="incoming-call-box" id="incoming-call-box">
-    <div class="call-avatar" style="background: linear-gradient(135deg, #db2777, #f472b6);"><i class="fa-solid fa-user-dress"></i></div>
-    <div class="call-info">
-      <span class="call-tag">ইনকামিং ভিডিও কল...</span>
-      <h4 id="call-active-name">মিতু (২১)</h4>
-    </div>
-    <div class="call-actions">
-      <button class="call-btn btn-decline" onclick="handleCall(false)"><i class="fa-solid fa-phone-slash"></i></button>
-      <button class="call-btn btn-accept" onclick="handleCall(true)"><i class="fa-solid fa-video"></i></button>
-    </div>
-  </div>
-
   <!-- Background Ambient Glow -->
   <div class="bg-blobs">
     <div class="blob blob-1"></div>
@@ -96,11 +84,14 @@
     <header class="app-header">
       <a href="index.html" class="logo">
         <div class="logo-icon"><i class="fa-solid fa-fire"></i></div>
-        <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
+        <div class="logo-info">
+          <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
+          <span class="logo-badge">CATEGORIES</span>
+        </div>
       </a>
       <div class="header-right">
         <div class="live-status-pill"><span class="live-dot"></span><span id="live-online-pill">২০০+ ক্যাটাগরি</span></div>
-        <a href="https://t.me/alltimefantasyzone" target="_blank" class="tg-header-btn"><i class="fa-brands fa-telegram"></i></a>
+        <a href="https://t.me/alltimefantasyzone" target="_blank" class="header-btn tg-btn"><i class="fa-brands fa-telegram"></i></a>
       </div>
     </header>
 
@@ -119,10 +110,15 @@
         <div class="adsterra-300x250-container"></div>
       </div>
 
-      <!-- Categories Action Grid -->
-      <div class="action-grid">
+      <div class="category-search-box">
+        <i class="fa-solid fa-magnifying-glass category-search-icon"></i>
+        <input type="text" id="category-search-input" class="category-search-input" placeholder="ক্যাটাগরি বা চ্যাট রুম খুঁজুন..." oninput="filterCategories()" />
+      </div>
 
-        <div class="action-card" onclick="triggerAdRedirect(event)">
+      <!-- Categories Action Grid -->
+      <div class="action-grid" id="categories-grid">
+
+        <div class="action-card category-card" data-title="বউ-শ্বশুর গল্প ও চ্যাট" onclick="triggerAdRedirect(event)">
           <div class="action-icon" style="background: rgba(255, 42, 133, 0.15); color: var(--pink);"><i class="fa-solid fa-fire"></i></div>
           <div class="action-info">
             <span class="action-title">বউ-শ্বশুর গল্প ও চ্যাট</span>
@@ -130,7 +126,7 @@
           </div>
         </div>
 
-        <div class="action-card" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="দেবর-ভাবি আড্ডা" onclick="triggerAdRedirect(event)">
           <div class="action-icon" style="background: rgba(0, 210, 255, 0.15); color: var(--blue);"><i class="fa-solid fa-heart-pulse"></i></div>
           <div class="action-info">
             <span class="action-title">দেবর-ভাবি আড্ডা</span>
@@ -138,7 +134,7 @@
           </div>
         </div>
 
-        <div class="action-card" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="কলেজ ছাত্রী চ্যাট রুম" onclick="triggerAdRedirect(event)">
           <div class="action-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--green);"><i class="fa-solid fa-graduation-cap"></i></div>
           <div class="action-info">
             <span class="action-title">কলেজ ছাত্রী চ্যাট রুম</span>
@@ -146,7 +142,7 @@
           </div>
         </div>
 
-        <div class="action-card" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="প্রবাসী ভাবি আড্ডা" onclick="triggerAdRedirect(event)">
           <div class="action-icon" style="background: rgba(251, 191, 36, 0.15); color: var(--yellow);"><i class="fa-solid fa-ring"></i></div>
           <div class="action-info">
             <span class="action-title">প্রবাসী ভাবি আড্ডা</span>
@@ -154,7 +150,7 @@
           </div>
         </div>
 
-        <div class="action-card" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="ডিভোর্সি ভাবি চ্যাট" onclick="triggerAdRedirect(event)">
           <div class="action-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--purple);"><i class="fa-solid fa-venus"></i></div>
           <div class="action-info">
             <span class="action-title">ডিভোর্সি ভাবি চ্যাট</span>
@@ -162,7 +158,7 @@
           </div>
         </div>
 
-        <div class="action-card" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="লাইভ ক্যামেরা শো" onclick="triggerAdRedirect(event)">
           <div class="action-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--red);"><i class="fa-solid fa-camera-retro"></i></div>
           <div class="action-info">
             <span class="action-title">লাইভ ক্যামেরা শো</span>
@@ -176,7 +172,7 @@
 
     <!-- Bottom App Navigation Bar -->
     <nav class="bottom-nav">
-      <a href="index.html" class="bottom-nav-item"><i class="fa-solid fa-house"></i><span>হোম</span></a>
+      <a href="index.html#home" class="bottom-nav-item"><i class="fa-solid fa-house"></i><span>হোম</span></a>
       <a href="videos.html" class="bottom-nav-item"><i class="fa-solid fa-video"></i><span>ভিডিও</span></a>
       <a href="girls.html" class="bottom-nav-item"><i class="fa-solid fa-venus"></i><span>মেয়েরা</span></a>
       <a href="voice.html" class="bottom-nav-item"><i class="fa-solid fa-microphone-lines"></i><span>ভয়েস</span></a>
@@ -186,6 +182,6 @@
 
   </div>
 
-  <script src="assets/js/app.js?v=6.0"></script>
+  <script src="assets/js/app.js?v=7.0"></script>
 </body>
 </html>

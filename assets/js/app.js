@@ -1,6 +1,6 @@
 /**
- * Adult Zone Live — Native WebApp Core Controller
- * Version: 5.0 (Cohesive Mobile Architecture)
+ * Adult Zone Live — Native Mobile WebApp Controller
+ * Version: 7.0 (Unified SPA Mobile Architecture)
  */
 
 // ========================================================
@@ -12,8 +12,8 @@ if (window.Telegram && window.Telegram.WebApp) {
     tg.ready();
     tg.expand();
     if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
-    tg.setHeaderColor('#090b11');
-    tg.setBackgroundColor('#090b11');
+    tg.setHeaderColor('#07090e');
+    tg.setBackgroundColor('#07090e');
   } catch (e) {
     console.log("TG SDK init:", e);
   }
@@ -26,15 +26,9 @@ document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: fa
 document.addEventListener('touchstart', (e) => {
   if (e.touches && e.touches.length > 1) e.preventDefault();
 }, { passive: false });
-let lastTap = 0;
-document.addEventListener('touchend', (e) => {
-  const now = Date.now();
-  if (now - lastTap <= 300) e.preventDefault();
-  lastTap = now;
-}, { passive: false });
 
 // ========================================================
-// 2. Constants & Links
+// 2. Constants, Links & Gate States
 // ========================================================
 const TG_GROUP_LINK = 'https://t.me/alltimefantasyzone';
 const TG_SHARE_TEXT = encodeURIComponent('সরাসরি লাইভ চ্যাট ও ভিডিও কল গ্রুপে যুক্ত হোন: ');
@@ -43,11 +37,19 @@ const TG_SHARE_URL = `https://t.me/share/url?url=${encodeURIComponent(TG_GROUP_L
 const DIRECT_LINK_1 = 'https://omg10.com/4/11017767';
 const DIRECT_LINK_2 = 'https://www.effectivecpmnetwork.com/mgtqwzbp?key=5c4003e0ae2b0ebd387daded087bc9aa';
 
+let isTgVerified = (localStorage.getItem('tg10Added') === 'true');
+let isAgeVerified = (localStorage.getItem('age18Verified') === 'true');
+
 let adClickCount = parseInt(sessionStorage.getItem('adClickCount') || '0');
 
 function triggerAdRedirect(e) {
   if (e && e.stopPropagation) e.stopPropagation();
   
+  // STRICT GATING: Never show or trigger ads while Telegram/Age verification gates are active
+  if (!isTgVerified || !isAgeVerified) {
+    return;
+  }
+
   const targetUrl = (adClickCount % 2 === 0) ? DIRECT_LINK_1 : DIRECT_LINK_2;
   adClickCount++;
   sessionStorage.setItem('adClickCount', adClickCount);
@@ -73,11 +75,77 @@ function triggerAdRedirect(e) {
   }
 }
 
+let adsInitialized = false;
+function initAllAdsterraAds() {
+  if (adsInitialized) return;
+  adsInitialized = true;
+
+  // 1. Dynamic Popunder Script
+  try {
+    const popScript = document.createElement('script');
+    popScript.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
+    document.body.appendChild(popScript);
+  } catch(e) {}
+
+  // 2. Dynamic Native Social Bar Script
+  try {
+    const nativeScript = document.createElement('script');
+    nativeScript.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
+    nativeScript.async = true;
+    nativeScript.setAttribute('data-cfasync', 'false');
+    document.body.appendChild(nativeScript);
+  } catch(e) {}
+
+  // 3. Dynamic 300x250 Banner Slots across all containers
+  const adContainers = document.querySelectorAll('.adsterra-300x250-container');
+  adContainers.forEach((container) => {
+    if (!container.hasChildNodes()) {
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '300px';
+        iframe.style.height = '250px';
+        iframe.style.border = 'none';
+        iframe.style.overflow = 'hidden';
+        iframe.style.margin = '0 auto';
+        iframe.style.display = 'block';
+        iframe.setAttribute('scrolling', 'no');
+        
+        container.appendChild(iframe);
+        
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;background:transparent;overflow:hidden;}</style>
+          </head>
+          <body>
+            <script type="text/javascript">
+              atOptions = {
+                'key' : 'f920a5f88d34b8eb65e572486b98b226',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            <\/script>
+            <script type="text/javascript" src="https://www.highrevenueformat.com/f920a5f88d34b8eb65e572486b98b226/invoke.js"><\/script>
+          </body>
+          </html>
+        `);
+        iframeDoc.close();
+      } catch(e) {
+        console.log("Ad banner render error:", e);
+      }
+    }
+  });
+}
+
 // ========================================================
-// 3. Gate 1: Telegram 10-Member Database Verification
+// 3. Telegram 10-Member Database Gate & 18+ Age Verification
 // ========================================================
-let isTgVerified = (localStorage.getItem('tg10Added') === 'true');
-let isAgeVerified = (localStorage.getItem('age18Verified') === 'true');
 
 function toBengaliNumerals(num) {
   const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
@@ -131,14 +199,14 @@ async function checkRealDatabaseInvites() {
   }
   if (verifyBtn) {
     verifyBtn.disabled = true;
-    verifyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>ডাটাবেজ চেক করা হচ্ছে...</span>';
+    verifyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>চেক হচ্ছে...</span>';
   }
   if (alertEl) {
     alertEl.style.display = 'block';
     alertEl.className = 'tg-db-alert';
     alertEl.style.background = 'rgba(0, 136, 204, 0.15)';
     alertEl.style.color = '#7dd3fc';
-    alertEl.innerHTML = '<i class="fa-solid fa-magnifying-glass fa-spin"></i> টেলিগ্রাম ডাটাবেজে আপনার মেম্বার সংখ্যা খোঁজা হচ্ছে...';
+    alertEl.innerHTML = '<i class="fa-solid fa-magnifying-glass fa-spin"></i> মেম্বার সংখ্যা যাচাই করা হচ্ছে...';
   }
 
   try {
@@ -152,7 +220,7 @@ async function checkRealDatabaseInvites() {
     }
     if (verifyBtn) {
       verifyBtn.disabled = false;
-      verifyBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i><span>ডাটাবেজ ভেরিফাই ও সাইটে প্রবেশ করুন</span>';
+      verifyBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i><span>ভেরিফাই করে সাইটে প্রবেশ করুন</span>';
     }
 
     if (data.success) {
@@ -194,12 +262,12 @@ async function checkRealDatabaseInvites() {
     }
     if (verifyBtn) {
       verifyBtn.disabled = false;
-      verifyBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i><span>ডাটাবেজ ভেরিফাই ও সাইটে প্রবেশ করুন</span>';
+      verifyBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i><span>ভেরিফাই করে সাইটে প্রবেশ করুন</span>';
     }
     if (alertEl) {
       alertEl.style.display = 'block';
       alertEl.className = 'tg-db-alert alert-error';
-      alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ডাটাবেজ যাচাই ব্যর্থ হয়েছে। আপনার ইন্টারনেট কানেকশন চেক করুন।';
+      alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> যাচাই ব্যর্থ হয়েছে। আপনার ইন্টারনেট কানেকশন চেক করুন।';
     }
   }
 }
@@ -223,9 +291,6 @@ function unlockTelegramGate() {
   }
 }
 
-// ========================================================
-// 4. Gate 2: 18+ Age Gate Entrance
-// ========================================================
 function enterAgeGate(e) {
   if (e && e.preventDefault) e.preventDefault();
 
@@ -239,52 +304,6 @@ function enterAgeGate(e) {
   unlockAllAndStart();
 }
 
-let adsInitialized = false;
-
-function initAllAdsterraAds() {
-  if (adsInitialized) return;
-  adsInitialized = true;
-
-  // 1. Dynamic Popunder Script
-  try {
-    const popScript = document.createElement('script');
-    popScript.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
-    document.body.appendChild(popScript);
-  } catch(e) {}
-
-  // 2. Dynamic Native Social Bar Script
-  try {
-    const nativeScript = document.createElement('script');
-    nativeScript.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
-    nativeScript.async = true;
-    nativeScript.setAttribute('data-cfasync', 'false');
-    document.body.appendChild(nativeScript);
-  } catch(e) {}
-
-  // 3. Dynamic 300x250 Banner Slot
-  const topSlot = document.querySelector('.adsterra-300x250-container');
-  if (topSlot && !topSlot.hasChildNodes()) {
-    try {
-      const scriptConf = document.createElement('script');
-      scriptConf.type = 'text/javascript';
-      scriptConf.text = `
-        atOptions = {
-          'key' : 'f920a5f88d34b8eb65e572486b98b226',
-          'format' : 'iframe',
-          'height' : 250,
-          'width' : 300,
-          'params' : {}
-        };
-      `;
-      const scriptSrc = document.createElement('script');
-      scriptSrc.src = 'https://www.highrevenueformat.com/f920a5f88d34b8eb65e572486b98b226/invoke.js';
-      scriptSrc.type = 'text/javascript';
-      topSlot.appendChild(scriptConf);
-      topSlot.appendChild(scriptSrc);
-    } catch(e) {}
-  }
-}
-
 function unlockAllAndStart() {
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
@@ -294,11 +313,333 @@ function unlockAllAndStart() {
 
   initAllAdsterraAds();
   startFluctuationEngine();
-  setTimeout(showIncomingCall, 6000);
+  setTimeout(showIncomingCall, 7000);
 }
 
 // ========================================================
-// 5. Live Fluctuation Counters
+// 4. Instant Mobile Tab Switching (SPA Navigation Engine)
+// ========================================================
+function switchTab(tabName) {
+  // Check if we are on index.html with SPA tab panes
+  const targetPane = document.getElementById(`tab-${tabName}`);
+  const navItems = document.querySelectorAll('.bottom-nav-item');
+  
+  if (targetPane) {
+    // Hide all panes
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+    targetPane.classList.add('active');
+
+    // Update nav active states
+    navItems.forEach(item => {
+      if (item.getAttribute('data-tab') === tabName) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Update browser URL hash without full reload
+    history.replaceState(null, null, `#${tabName}`);
+  } else {
+    // Fallback if accessed from separate page
+    const pageMap = {
+      'home': 'index.html',
+      'videos': 'videos.html',
+      'girls': 'girls.html',
+      'voice': 'voice.html',
+      'wheel': 'wheel.html',
+      'categories': 'categories.html'
+    };
+    if (pageMap[tabName]) {
+      window.location.href = pageMap[tabName];
+    }
+  }
+}
+
+// ========================================================
+// 5. Notifications Dropdown Panel
+// ========================================================
+function toggleNotifications() {
+  const dropdown = document.getElementById('notif-dropdown');
+  const badge = document.getElementById('notif-badge');
+  if (!dropdown) return;
+
+  dropdown.classList.toggle('active');
+  if (badge) {
+    badge.style.display = 'none';
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const notifBtn = document.getElementById('notif-toggle-btn');
+  const dropdown = document.getElementById('notif-dropdown');
+  if (dropdown && dropdown.classList.contains('active')) {
+    if (!dropdown.contains(e.target) && !notifBtn.contains(e.target)) {
+      dropdown.classList.remove('active');
+    }
+  }
+});
+
+// ========================================================
+// 6. Instagram/Telegram-Style Stories Reel & Viewer
+// ========================================================
+const storiesData = [
+  { name: 'মিতু', time: '১৫ মিনিট আগে', avatar: 'assets/img/mitu.jpg', media: 'assets/img/mitu.jpg', caption: 'আজ রাতে লাইভে কে কে থাকবে? কমেন্ট করো 🔥' },
+  { name: 'রিয়া', time: '৪৫ মিনিট আগে', avatar: 'assets/img/riya.jpg', media: 'assets/img/riya.jpg', caption: 'নতুন ড্রেসে সেলফি... কেমন লাগছে বলো তো? 💖' },
+  { name: 'সাদিয়া', time: '১ ঘণ্টা আগে', avatar: 'assets/img/sadia.jpg', media: 'assets/img/sadia.jpg', caption: 'একটু আড্ডা দিতে আসলাম, ইনবক্স চেক করো 💬' },
+  { name: 'নুসরাত', time: '২ ঘণ্টা আগে', avatar: 'assets/img/nusrat.jpg', media: 'assets/img/nusrat.jpg', caption: 'আজকের স্পেশাল ভিডিও সেশন শুরু হয়েছে 🎥' },
+  { name: 'মিম', time: '৩ ঘণ্টা আগে', avatar: 'assets/img/mim.jpg', media: 'assets/img/mim.jpg', caption: 'বৃষ্টির দিনে গান শুনতে কার কার ভালো লাগে? 🎙️' },
+  { name: 'তানিয়া', time: '৪ ঘণ্টা আগে', avatar: 'assets/img/tania.jpg', media: 'assets/img/tania.jpg', caption: 'নতুন লাইভ রুম ক্রিয়েট করলাম... জলদি আসো 🎡' }
+];
+
+let currentStoryIdx = 0;
+let storyTimer = null;
+
+function openStory(idx) {
+  currentStoryIdx = idx;
+  const overlay = document.getElementById('story-viewer-overlay');
+  if (!overlay) return;
+
+  updateStoryContent();
+  overlay.classList.add('active');
+  startStoryTimer();
+}
+
+function updateStoryContent() {
+  const story = storiesData[currentStoryIdx];
+  if (!story) return;
+
+  const avatarEl = document.getElementById('story-viewer-avatar');
+  const nameEl = document.getElementById('story-viewer-name');
+  const timeEl = document.getElementById('story-viewer-time');
+  const mediaEl = document.getElementById('story-viewer-media');
+  const captionEl = document.getElementById('story-viewer-caption');
+
+  if (avatarEl) avatarEl.src = story.avatar;
+  if (nameEl) nameEl.innerText = story.name;
+  if (timeEl) timeEl.innerText = story.time;
+  if (mediaEl) mediaEl.src = story.media;
+  if (captionEl) captionEl.innerText = story.caption;
+}
+
+function startStoryTimer() {
+  const fillEl = document.getElementById('story-progress-fill');
+  if (fillEl) fillEl.style.width = '0%';
+  if (storyTimer) clearInterval(storyTimer);
+
+  let progress = 0;
+  storyTimer = setInterval(() => {
+    progress += 2;
+    if (fillEl) fillEl.style.width = `${progress}%`;
+
+    if (progress >= 100) {
+      clearInterval(storyTimer);
+      if (currentStoryIdx < storiesData.length - 1) {
+        currentStoryIdx++;
+        updateStoryContent();
+        startStoryTimer();
+      } else {
+        closeStory();
+      }
+    }
+  }, 100);
+}
+
+function closeStory() {
+  const overlay = document.getElementById('story-viewer-overlay');
+  if (overlay) overlay.classList.remove('active');
+  if (storyTimer) clearInterval(storyTimer);
+}
+
+function sendStoryReaction() {
+  playSyntheticTone(650, 800, 0.2);
+  const container = document.getElementById('story-media-view');
+  if (!container) return;
+
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      const heart = document.createElement('div');
+      heart.className = 'float-heart';
+      heart.innerHTML = '💖';
+      heart.style.left = `${40 + Math.random() * 40}%`;
+      heart.style.bottom = '30px';
+      container.appendChild(heart);
+      setTimeout(() => heart.remove(), 2000);
+    }, i * 150);
+  }
+}
+
+// ========================================================
+// 7. Live 1-on-1 Chat Simulator Sheet Modal
+// ========================================================
+let activeChatGirl = {
+  name: 'মিতু আক্তার',
+  age: '২১',
+  city: 'ঢাকা',
+  avatar: 'assets/img/mitu.jpg'
+};
+
+const girlAutoReplies = [
+  'হাই জান! কি করছো এখন? 🥰',
+  'আমি এতক্ষণ তোমার মেসেজের অপেক্ষায় ছিলাম...',
+  'চলো আজ রাতে একটু ভিডিও কলে আড্ডা দেই? 🎥',
+  'তুমি কি এখন একা আছো রুমে? 🙈',
+  'আমার একটা নতুন ছবি দেখতে চাও? 😉',
+  'আমাকে একটা ভয়েস মেসেজ পাঠাও না, তোমার কন্ঠ শুনবো! 🎙️'
+];
+
+function openChatSheet(name, age, city, avatarUrl) {
+  activeChatGirl = { name, age, city, avatar: avatarUrl };
+  
+  const sheet = document.getElementById('chat-sheet-overlay');
+  const nameEl = document.getElementById('chat-sheet-name');
+  const avatarEl = document.getElementById('chat-sheet-avatar');
+  const statusEl = document.getElementById('chat-sheet-status');
+  const messagesEl = document.getElementById('chat-messages-body');
+
+  if (nameEl) nameEl.innerHTML = `${name} <span class="girl-age">(${age} বছর)</span>`;
+  if (avatarEl) avatarEl.src = avatarUrl;
+  if (statusEl) statusEl.innerHTML = '<span class="status-dot-mini"></span> অনলাইন (১-অন-১ প্রাইভেট চ্যাট)';
+
+  // Reset messages with personalized welcome
+  if (messagesEl) {
+    messagesEl.innerHTML = `
+      <div class="chat-bubble incoming">
+        হাই! আমি ${name} (${city})। তুমি কি এখন কথা বলতে ফ্রি আছো? 💖
+        <div class="chat-bubble-time">এইমাত্র</div>
+      </div>
+    `;
+  }
+
+  if (sheet) sheet.classList.add('active');
+}
+
+function closeChatSheet() {
+  const sheet = document.getElementById('chat-sheet-overlay');
+  if (sheet) sheet.classList.remove('active');
+}
+
+function sendChatMessage(presetText) {
+  const inputEl = document.getElementById('chat-text-input');
+  const messagesEl = document.getElementById('chat-messages-body');
+  const typingEl = document.getElementById('chat-typing-indicator');
+
+  let text = presetText;
+  if (!text && inputEl) {
+    text = inputEl.value.trim();
+    inputEl.value = '';
+  }
+
+  if (!text || !messagesEl) return;
+
+  // Add outgoing user bubble
+  const userBubble = document.createElement('div');
+  userBubble.className = 'chat-bubble outgoing';
+  userBubble.innerHTML = `${text}<div class="chat-bubble-time">এইমাত্র ✔✔</div>`;
+  messagesEl.appendChild(userBubble);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  playSyntheticTone(500, 700, 0.1);
+
+  // Show typing indicator after 500ms
+  if (typingEl) typingEl.style.display = 'flex';
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  // Simulate auto reply after 1.6s
+  setTimeout(() => {
+    if (typingEl) typingEl.style.display = 'none';
+    const replyText = girlAutoReplies[Math.floor(Math.random() * girlAutoReplies.length)];
+    
+    const girlBubble = document.createElement('div');
+    girlBubble.className = 'chat-bubble incoming';
+    girlBubble.innerHTML = `${replyText}<div class="chat-bubble-time">এইমাত্র</div>`;
+    messagesEl.appendChild(girlBubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    playSyntheticTone(700, 850, 0.15);
+  }, 1600);
+}
+
+function sendQuickReply(text) {
+  sendChatMessage(text);
+}
+
+// ========================================================
+// 8. In-App Video Player Sheet Modal
+// ========================================================
+const simulatedComments = [
+  { user: 'সাকিব', text: 'অনেক কিউট লাগছে! 😍' },
+  { user: 'রাকিব', text: 'সাউন্ড একদম ক্লিয়ার আসছে ভাই 🔥' },
+  { user: 'অনিন্দ্য', text: 'লাইভ শো চালিয়ে যান আপু 💖' },
+  { user: 'তানভীর', text: 'চমৎকার কোয়ালিটি 💯' },
+  { user: 'হাসান', text: 'ঢাকার কোথায় থাকেন আপু?' }
+];
+
+let commentInterval = null;
+
+function openVideoPlayer(title, viewerCount, coverUrl) {
+  const modal = document.getElementById('video-player-modal');
+  const titleEl = document.getElementById('video-player-title');
+  const countEl = document.getElementById('video-player-viewers');
+  const coverEl = document.getElementById('video-player-cover');
+  const commentsBox = document.getElementById('video-live-comments');
+
+  if (titleEl) titleEl.innerText = title;
+  if (countEl) countEl.innerText = `${viewerCount} জন দেখছেন`;
+  if (coverEl) coverEl.src = coverUrl;
+
+  if (modal) modal.classList.add('active');
+
+  // Spawn live comments stream
+  if (commentsBox) {
+    commentsBox.innerHTML = '';
+    if (commentInterval) clearInterval(commentInterval);
+    
+    let commentIdx = 0;
+    commentInterval = setInterval(() => {
+      const c = simulatedComments[commentIdx % simulatedComments.length];
+      const bubble = document.createElement('div');
+      bubble.className = 'comment-bubble';
+      bubble.innerHTML = `<b>${c.user}:</b> ${c.text}`;
+      commentsBox.appendChild(bubble);
+
+      if (commentsBox.children.length > 3) {
+        commentsBox.removeChild(commentsBox.children[0]);
+      }
+      commentIdx++;
+    }, 2200);
+  }
+}
+
+function closeVideoPlayer() {
+  const modal = document.getElementById('video-player-modal');
+  if (modal) modal.classList.remove('active');
+  if (commentInterval) clearInterval(commentInterval);
+}
+
+function sendVideoHeart() {
+  playSyntheticTone(700, 900, 0.15);
+  const container = document.getElementById('floating-hearts-container');
+  if (!container) return;
+
+  const hearts = ['❤️', '💖', '🔥', '✨', '😍'];
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      const h = document.createElement('div');
+      h.className = 'float-heart';
+      h.innerHTML = hearts[Math.floor(Math.random() * hearts.length)];
+      h.style.right = `${5 + Math.random() * 25}px`;
+      container.appendChild(h);
+      setTimeout(() => h.remove(), 2200);
+    }, i * 120);
+  }
+}
+
+// ========================================================
+// 9. Live Fluctuation Counters Engine
 // ========================================================
 let boysCount = 214;
 let girlsCount = 189;
@@ -312,8 +653,8 @@ function startFluctuationEngine() {
     boysCount += Math.floor(Math.random() * 5) - 2;
     girlsCount += Math.floor(Math.random() * 5) - 2;
 
-    if (boysCount < 180) boysCount = 195;
-    if (girlsCount < 160) girlsCount = 175;
+    if (boysCount < 185) boysCount = 205;
+    if (girlsCount < 165) girlsCount = 185;
 
     if (boysEl) boysEl.innerText = boysCount;
     if (girlsEl) girlsEl.innerText = girlsCount;
@@ -322,7 +663,7 @@ function startFluctuationEngine() {
 }
 
 // ========================================================
-// 6. Web Audio API Synthetic Chimes & Ringers
+// 10. Web Audio API Synthetic Chimes & Ringers
 // ========================================================
 let ringAudioCtx = null;
 let ringInterval = null;
@@ -382,12 +723,12 @@ function handleCall(accept) {
 
   if (accept) {
     triggerAdRedirect();
-    window.location.href = 'girls.html';
+    switchTab('girls');
   }
 }
 
 // ========================================================
-// 7. Lucky Match Wheel Spinner
+// 11. Lucky Match Wheel Spinner
 // ========================================================
 let isSpinning = false;
 function spinWheel() {
@@ -409,12 +750,12 @@ function spinWheel() {
   setTimeout(() => {
     isSpinning = false;
     triggerAdRedirect();
-    alert('🎉 অভিনন্দন! আপনার সাথে পছন্দের পার্টনার ম্যাচ হয়েছে! চ্যাট আনলক করতে স্পনসর ভেরিফিকেশন সম্পন্ন করুন।');
-  }, 4200);
+    openChatSheet('রিয়া চৌধুরী', '২২', 'চট্টগ্রাম', 'assets/img/riya.jpg');
+  }, 4400);
 }
 
 // ========================================================
-// 8. Voice Note Waveform Player Simulator
+// 12. Voice Note Waveform Player Simulator
 // ========================================================
 let currentPlayingVoice = null;
 function toggleVoiceNote(id) {
@@ -428,9 +769,9 @@ function toggleVoiceNote(id) {
   } else {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
     bars.forEach((b, i) => {
-      setTimeout(() => b.classList.add('active'), i * 80);
+      setTimeout(() => b.classList.add('active'), i * 60);
     });
-    playSyntheticTone(440, 554, 1.2);
+    playSyntheticTone(440, 554, 1.4);
     currentPlayingVoice = id;
     setTimeout(() => {
       if (currentPlayingVoice === id) {
@@ -443,7 +784,26 @@ function toggleVoiceNote(id) {
 }
 
 // ========================================================
-// 9. Startup DOM Router
+// 13. Category Filter & Search Engine
+// ========================================================
+function filterCategories() {
+  const input = document.getElementById('category-search-input');
+  const cards = document.querySelectorAll('.category-card');
+  if (!input) return;
+
+  const filter = input.value.toLowerCase().trim();
+  cards.forEach(card => {
+    const title = card.getAttribute('data-title') || card.innerText;
+    if (title.toLowerCase().includes(filter)) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+// ========================================================
+// 14. Startup DOM Router & Hash Listener
 // ========================================================
 document.addEventListener('DOMContentLoaded', () => {
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
@@ -457,5 +817,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ageOverlay) ageOverlay.style.display = 'block';
   } else {
     unlockAllAndStart();
+  }
+
+  // Handle URL hash navigation (e.g. #girls, #videos)
+  const hash = window.location.hash.replace('#', '');
+  if (hash && document.getElementById(`tab-${hash}`)) {
+    switchTab(hash);
   }
 });

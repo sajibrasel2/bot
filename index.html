@@ -9,21 +9,22 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   
-  <!-- FontAwesome & Google Fonts -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="assets/css/style.css?v=6.0" />
-
-  <meta name="theme-color" content="#090b11" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#07090e" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
+  <!-- FontAwesome & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/style.css?v=7.0" />
+
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
   <!-- ========================================================
-       STEP 1: Telegram 10-Member Force-Add Real Database Verification
+       STEP 1: Telegram 10-Member Force-Add Database Verification Gate
        ======================================================== -->
   <div class="tg-forceadd-overlay" id="tg-forceadd-overlay">
     <div class="tg-forceadd-modal">
@@ -41,7 +42,7 @@
 
       <div class="tg-progress-box">
         <div class="tg-progress-text">
-          <span>ডাটাবেজ মেম্বার এড অগ্রগতি:</span>
+          <span>মেম্বার এড অগ্রগতি:</span>
           <span><strong id="tg-added-counter" style="color: var(--tg-cyan);">০</strong> / ১০ জন (<span id="tg-progress-percent">০%</span>)</span>
         </div>
         <div class="tg-progress-bar-bg">
@@ -80,7 +81,7 @@
 
       <button class="tg-verify-btn" id="tg-verify-btn" onclick="checkRealDatabaseInvites()">
         <i class="fa-solid fa-shield-halved"></i>
-        <span>ডাটাবেজ ভেরিফাই ও সাইটে প্রবেশ করুন</span>
+        <span>ভেরিফাই করে সাইটে প্রবেশ করুন</span>
       </button>
     </div>
   </div>
@@ -109,13 +110,11 @@
     </div>
   </div>
 
-  <!-- Heads-up Incoming Call Simulator -->
+  <!-- Heads-up Incoming Call Simulator HUD -->
   <div class="incoming-call-box" id="incoming-call-box">
-    <div class="call-avatar" style="background: linear-gradient(135deg, #db2777, #f472b6);">
-      <i class="fa-solid fa-user-dress"></i>
-    </div>
+    <img src="assets/img/mitu.jpg" class="call-avatar" alt="Avatar" />
     <div class="call-info">
-      <span class="call-tag">ইনকামিং ভিডিও কল...</span>
+      <span class="call-tag">ইনকামিং লাইভ ভিডিও কল...</span>
       <h4 id="call-active-name">মিতু (২১)</h4>
     </div>
     <div class="call-actions">
@@ -132,6 +131,7 @@
   <div class="bg-blobs">
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
   </div>
 
   <!-- App Wrapper Container -->
@@ -139,144 +139,821 @@
 
     <!-- Top App Header -->
     <header class="app-header">
-      <a href="index.html" class="logo">
+      <a href="javascript:void(0)" onclick="switchTab('home')" class="logo">
         <div class="logo-icon"><i class="fa-solid fa-fire"></i></div>
-        <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
+        <div class="logo-info">
+          <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
+          <span class="logo-badge">LIVE APP v7.0</span>
+        </div>
       </a>
       <div class="header-right">
-        <div class="live-status-pill">
+        <div class="live-status-pill" onclick="switchTab('girls')">
           <span class="live-dot"></span>
           <span id="live-online-pill">৪০৩+ লাইভ</span>
         </div>
-        <a href="https://t.me/alltimefantasyzone" target="_blank" class="tg-header-btn">
+        <button class="header-btn" id="notif-toggle-btn" onclick="toggleNotifications()">
+          <i class="fa-regular fa-bell"></i>
+          <span class="notif-badge" id="notif-badge">3</span>
+        </button>
+        <a href="https://t.me/alltimefantasyzone" target="_blank" class="header-btn tg-btn">
           <i class="fa-brands fa-telegram"></i>
         </a>
       </div>
     </header>
 
-    <!-- Horizontal Stories Reel -->
-    <div class="stories-reel">
-      <a href="videos.html" class="story-item">
-        <div class="story-ring live">
-          <div class="story-avatar" style="background: linear-gradient(135deg, #ff2a85, #ff7300);"><i class="fa-solid fa-play"></i></div>
+    <!-- Notifications Dropdown Panel -->
+    <div class="notif-dropdown" id="notif-dropdown">
+      <div class="notif-header">
+        <h4><i class="fa-solid fa-bell" style="color:var(--pink);"></i> নোটিফিকেশন</h4>
+        <span style="font-size:11px; color:var(--blue); font-weight:700;">সব পঠিত</span>
+      </div>
+      <div class="notif-list">
+        <div class="notif-item" onclick="openChatSheet('মিতু আক্তার', '২১', 'ঢাকা', 'assets/img/mitu.jpg')">
+          <img src="assets/img/mitu.jpg" class="notif-avatar" alt="Mitu" />
+          <div class="notif-body">
+            <div class="notif-title">মিতু আক্তার</div>
+            <div class="notif-desc">আপনাকে একটা নতুন প্রাইভেট মেসেজ পাঠিয়েছে 💌</div>
+            <div class="notif-time">২ মিনিট আগে</div>
+          </div>
         </div>
-        <span class="story-title">হট ভিডিও</span>
-      </a>
-      <a href="girls.html" class="story-item">
-        <div class="story-ring live">
-          <div class="story-avatar" style="background: linear-gradient(135deg, #00d2ff, #0066ff);"><i class="fa-solid fa-venus"></i></div>
+        <div class="notif-item" onclick="openVideoPlayer('হোস্টেল রুমের এক্সক্লুসিভ লাইভ আড্ডা', '২,৪৫০', 'assets/img/video2.jpg')">
+          <img src="assets/img/riya.jpg" class="notif-avatar" alt="Riya" />
+          <div class="notif-body">
+            <div class="notif-title">রিয়া চৌধুরী</div>
+            <div class="notif-desc">নতুন এইচডি লাইভ ভিডিও সেশন শুরু করেছে 🎥</div>
+            <div class="notif-time">৮ মিনিট আগে</div>
+          </div>
         </div>
-        <span class="story-title">অনলাইন মেয়ে</span>
-      </a>
-      <a href="voice.html" class="story-item">
-        <div class="story-ring live">
-          <div class="story-avatar" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fa-solid fa-microphone-lines"></i></div>
+        <div class="notif-item" onclick="switchTab('wheel')">
+          <img src="assets/img/sadia.jpg" class="notif-avatar" alt="Sadia" />
+          <div class="notif-body">
+            <div class="notif-title">লাকি ম্যাচ নোটিশ</div>
+            <div class="notif-desc">আপনার জন্য ৩টি নতুন স্পেশাল ম্যাচ অপেক্ষা করছে 🎡</div>
+            <div class="notif-time">১৫ মিনিট আগে</div>
+          </div>
         </div>
-        <span class="story-title">ভয়েস নোট</span>
-      </a>
-      <a href="wheel.html" class="story-item">
-        <div class="story-ring">
-          <div class="story-avatar" style="background: linear-gradient(135deg, #fbbf24, #d97706);"><i class="fa-solid fa-dharmachakra"></i></div>
-        </div>
-        <span class="story-title">লাকি হুইল</span>
-      </a>
-      <a href="categories.html" class="story-item">
-        <div class="story-ring">
-          <div class="story-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);"><i class="fa-solid fa-tags"></i></div>
-        </div>
-        <span class="story-title">ক্যাটাগরি</span>
-      </a>
+      </div>
     </div>
 
-    <!-- Main Content Area -->
-    <main class="app-content">
-
-      <!-- Top Sponsored Ad Banner -->
-      <div class="ad-banner-top" onclick="triggerAdRedirect(event)">
-        <span class="ad-label">Sponsored Live</span>
-        <div class="ad-fallback-card">
-          <div class="ad-fallback-badge">
-            <span class="status-dot-mini" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
-            লাইভ স্পেশাল শো
+    <!-- Instagram/Telegram-Style Stories Reel -->
+    <section class="stories-section">
+      <div class="stories-reel">
+        <div class="story-item" onclick="openStory(0)">
+          <div class="story-ring-wrap">
+            <div class="story-ring live-ring">
+              <img src="assets/img/mitu.jpg" alt="মিতু" />
+            </div>
+            <span class="story-live-badge">LIVE</span>
           </div>
-          <h3 class="ad-fallback-title">🔞 ১-ক্লিকে প্রাইভেট চ্যাট ও ভিডিও রুম আনলক করুন</h3>
-          <p class="ad-fallback-desc">সরাসরি অনলাইন মেয়েদের সাথে ১-অন-১ ক্যামেরা আড্ডা শুরু করতে ট্যাপ করুন</p>
-          <button class="ad-fallback-btn"><i class="fa-solid fa-play"></i> সরাসরি যুক্ত হোন</button>
+          <span class="story-title">মিতু</span>
         </div>
-        <div class="adsterra-300x250-container"></div>
+
+        <div class="story-item" onclick="openStory(1)">
+          <div class="story-ring-wrap">
+            <div class="story-ring live-ring">
+              <img src="assets/img/riya.jpg" alt="রিয়া" />
+            </div>
+            <span class="story-live-badge">LIVE</span>
+          </div>
+          <span class="story-title">রিয়া</span>
+        </div>
+
+        <div class="story-item" onclick="openStory(2)">
+          <div class="story-ring-wrap">
+            <div class="story-ring live-ring">
+              <img src="assets/img/sadia.jpg" alt="সাদিয়া" />
+            </div>
+            <span class="story-live-badge">LIVE</span>
+          </div>
+          <span class="story-title">সাদিয়া</span>
+        </div>
+
+        <div class="story-item" onclick="openStory(3)">
+          <div class="story-ring-wrap">
+            <div class="story-ring">
+              <img src="assets/img/nusrat.jpg" alt="নুসরাত" />
+            </div>
+          </div>
+          <span class="story-title">নুসরাত</span>
+        </div>
+
+        <div class="story-item" onclick="openStory(4)">
+          <div class="story-ring-wrap">
+            <div class="story-ring">
+              <img src="assets/img/mim.jpg" alt="মিম" />
+            </div>
+          </div>
+          <span class="story-title">মিম</span>
+        </div>
+
+        <div class="story-item" onclick="openStory(5)">
+          <div class="story-ring-wrap">
+            <div class="story-ring">
+              <img src="assets/img/tania.jpg" alt="তানিয়া" />
+            </div>
+          </div>
+          <span class="story-title">তানিয়া</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Story Viewer Modal -->
+    <div class="story-viewer-overlay" id="story-viewer-overlay">
+      <div class="story-progress-bar">
+        <div class="story-progress-fill" id="story-progress-fill"></div>
+      </div>
+      <div class="story-viewer-header">
+        <div class="story-user-info">
+          <img src="assets/img/mitu.jpg" id="story-viewer-avatar" alt="Avatar" />
+          <div>
+            <div class="story-user-name" id="story-viewer-name">মিতু</div>
+            <div class="story-user-time" id="story-viewer-time">১৫ মিনিট আগে</div>
+          </div>
+        </div>
+        <button class="story-close-btn" onclick="closeStory()"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <!-- Hero Panel with Realtime Fluctuation Counters -->
-      <section class="hero-panel">
-        <h1 class="hero-title">এডাল্ট জোন চ্যাট — সরাসরি পার্টনার খুঁজুন</h1>
-        <p class="hero-subtitle">আমাদের চ্যাট রুমে এই মুহূর্তে দেশ ও দেশের বাইরে থেকে শত শত ছেলে ও মেয়ে লাইভ যুক্ত রয়েছে। নিচের যে কোনো অপশন বেছে নিন।</p>
-        
-        <div class="counter-grid">
-          <a href="girls.html" class="counter-card boys-card" onclick="triggerAdRedirect(event)">
-            <div class="counter-icon"><i class="fa-solid fa-mars"></i></div>
-            <div class="counter-number" id="boys-counter">214</div>
-            <div class="counter-label">ছেলে একটিভ</div>
-            <div class="counter-sub"><span class="status-dot-mini"></span> লাইভ ও অনলাইন</div>
-          </a>
+      <div class="story-media-view" id="story-media-view">
+        <img src="assets/img/mitu.jpg" id="story-viewer-media" alt="Story Media" />
+        <div class="story-caption-badge" id="story-viewer-caption">আজ রাতে লাইভে কে কে থাকবে? কমেন্ট করো 🔥</div>
+      </div>
 
-          <a href="girls.html" class="counter-card girls-card" onclick="triggerAdRedirect(event)">
-            <div class="counter-icon"><i class="fa-solid fa-venus"></i></div>
-            <div class="counter-number" id="girls-counter">189</div>
-            <div class="counter-label">মেয়ে একটিভ</div>
-            <div class="counter-sub"><span class="status-dot-mini"></span> চ্যাটে উপলব্ধ</div>
-          </a>
+      <div class="story-actions-footer">
+        <input type="text" class="story-reply-input" placeholder="মিতু কে মেসেজ পাঠান..." onkeypress="if(event.key==='Enter') sendStoryReaction()" />
+        <button class="story-heart-btn" onclick="sendStoryReaction()"><i class="fa-solid fa-heart"></i></button>
+      </div>
+    </div>
+
+    <!-- Main Content Area with SPA Tabs -->
+    <main class="app-content">
+
+      <!-- ========================================================
+           TAB 1: HOME PANE
+           ======================================================== -->
+      <div class="tab-pane active" id="tab-home">
+
+        <!-- Sponsored Live Banner -->
+        <div class="ad-banner-top" onclick="triggerAdRedirect(event)">
+          <span class="ad-label">Sponsored Live</span>
+          <div class="ad-fallback-card">
+            <div class="ad-fallback-badge">
+              <span class="status-dot-mini" style="background-color: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
+              লাইভ স্পেশাল শো
+            </div>
+            <h3 class="ad-fallback-title">🔞 ১-ক্লিকে প্রাইভেট চ্যাট ও ভিডিও রুম আনলক করুন</h3>
+            <p class="ad-fallback-desc">সরাসরি অনলাইন মেয়েদের সাথে ১-অন-১ ক্যামেরা আড্ডা শুরু করতে ট্যাপ করুন</p>
+            <button class="ad-fallback-btn"><i class="fa-solid fa-play"></i> সরাসরি যুক্ত হোন</button>
+          </div>
+          <div class="adsterra-300x250-container"></div>
         </div>
-      </section>
 
-      <!-- Quick Action Buttons Grid -->
-      <div class="action-grid">
-        <a href="girls.html" class="action-card" onclick="triggerAdRedirect(event)">
-          <div class="action-icon" style="background: rgba(255, 42, 133, 0.15); color: var(--pink);"><i class="fa-solid fa-comments"></i></div>
-          <div class="action-info">
-            <span class="action-title">মেয়েদের সাথে চ্যাট</span>
-            <span class="action-sub">১-অন-১ প্রাইভেট ইনবক্স</span>
-          </div>
-        </a>
+        <!-- Live Fluctuation Counters -->
+        <section class="hero-panel">
+          <h1 class="hero-title">এডাল্ট জোন চ্যাট — সরাসরি পার্টনার খুঁজুন</h1>
+          <p class="hero-subtitle">আমাদের চ্যাট রুমে এই মুহূর্তে দেশ ও দেশের বাইরে থেকে শত শত ছেলে ও মেয়ে লাইভ যুক্ত রয়েছে।</p>
+          
+          <div class="counter-grid">
+            <div class="counter-card boys-card" onclick="switchTab('girls')">
+              <div class="counter-icon"><i class="fa-solid fa-mars"></i></div>
+              <div class="counter-number" id="boys-counter">214</div>
+              <div class="counter-label">ছেলে একটিভ</div>
+              <div class="counter-sub"><span class="status-dot-mini"></span> লাইভ ও অনলাইন</div>
+            </div>
 
-        <a href="videos.html" class="action-card" onclick="triggerAdRedirect(event)">
-          <div class="action-icon" style="background: rgba(0, 210, 255, 0.15); color: var(--blue);"><i class="fa-solid fa-video"></i></div>
-          <div class="action-info">
-            <span class="action-title">লাইভ ভিডিও কল</span>
-            <span class="action-sub">সরাসরি ক্যামেরা রুম</span>
+            <div class="counter-card girls-card" onclick="switchTab('girls')">
+              <div class="counter-icon"><i class="fa-solid fa-venus"></i></div>
+              <div class="counter-number" id="girls-counter">189</div>
+              <div class="counter-label">মেয়ে একটিভ</div>
+              <div class="counter-sub"><span class="status-dot-mini"></span> চ্যাটে উপলব্ধ</div>
+            </div>
           </div>
-        </a>
+        </section>
 
-        <a href="voice.html" class="action-card" onclick="triggerAdRedirect(event)">
-          <div class="action-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--green);"><i class="fa-solid fa-microphone-lines"></i></div>
-          <div class="action-info">
-            <span class="action-title">ভয়েস মেসেজিং</span>
-            <span class="action-sub">গোপন অডিও বার্তা শুনুন</span>
+        <!-- Quick Action Buttons Grid -->
+        <div class="action-grid">
+          <div class="action-card" onclick="switchTab('girls')">
+            <div class="action-icon" style="background: rgba(255, 42, 133, 0.15); color: var(--pink);"><i class="fa-solid fa-comments"></i></div>
+            <div class="action-info">
+              <span class="action-title">মেয়েদের সাথে চ্যাট</span>
+              <span class="action-sub">১-অন-১ প্রাইভেট ইনবক্স</span>
+            </div>
           </div>
-        </a>
 
-        <a href="wheel.html" class="action-card" onclick="triggerAdRedirect(event)">
-          <div class="action-icon" style="background: rgba(251, 191, 36, 0.15); color: var(--yellow);"><i class="fa-solid fa-dharmachakra"></i></div>
-          <div class="action-info">
-            <span class="action-title">ম্যাচিং হুইল</span>
-            <span class="action-sub">২ সেকেন্ডে ম্যাচ খুঁজুন</span>
+          <div class="action-card" onclick="switchTab('videos')">
+            <div class="action-icon" style="background: rgba(0, 210, 255, 0.15); color: var(--blue);"><i class="fa-solid fa-video"></i></div>
+            <div class="action-info">
+              <span class="action-title">লাইভ ভিডিও কল</span>
+              <span class="action-sub">সরাসরি ক্যামেরা রুম</span>
+            </div>
           </div>
-        </a>
+
+          <div class="action-card" onclick="switchTab('voice')">
+            <div class="action-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--green);"><i class="fa-solid fa-microphone-lines"></i></div>
+            <div class="action-info">
+              <span class="action-title">ভয়েস মেসেজিং</span>
+              <span class="action-sub">গোপন অডিও বার্তা</span>
+            </div>
+          </div>
+
+          <div class="action-card" onclick="switchTab('wheel')">
+            <div class="action-icon" style="background: rgba(251, 191, 36, 0.15); color: var(--yellow);"><i class="fa-solid fa-dharmachakra"></i></div>
+            <div class="action-info">
+              <span class="action-title">ম্যাচিং হুইল</span>
+              <span class="action-sub">২ সেকেন্ডে ম্যাচ খুঁজুন</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Online Girls Section -->
+        <div class="section-head">
+          <h2 class="section-title"><i class="fa-solid fa-venus"></i> অনলাইন মেয়েরা (সরাসরি চ্যাট)</h2>
+          <span class="section-see-all" onclick="switchTab('girls')">সব দেখুন <i class="fa-solid fa-arrow-right"></i></span>
+        </div>
+
+        <div class="girls-grid">
+          <!-- Girl Card 1 -->
+          <div class="girl-card" onclick="openChatSheet('মিতু আক্তার', '২১', 'ঢাকা (ধানমন্ডি)', 'assets/img/mitu.jpg')">
+            <div class="girl-avatar-wrap">
+              <img src="assets/img/mitu.jpg" alt="মিতু আক্তার" />
+              <div class="girl-status-badge"><span class="status-dot-mini"></span> অনলাইন</div>
+              <div class="girl-rate-badge"><i class="fa-solid fa-star"></i> 4.9</div>
+            </div>
+            <div class="girl-info">
+              <div class="girl-name">
+                <span>মিতু আক্তার <i class="fa-solid fa-circle-check v-check"></i></span>
+                <span class="girl-age">২১ বছর</span>
+              </div>
+              <div class="girl-location"><i class="fa-solid fa-location-dot" style="color:var(--pink);"></i> ঢাকা (ধানমন্ডি)</div>
+              <div class="girl-bio">"ফ্রি টাইম কথা বলতে পছন্দ করি... ইনবক্স করো 💖"</div>
+              <div class="girl-actions">
+                <button class="girl-chat-btn"><i class="fa-solid fa-comment-dots"></i> চ্যাট করুন</button>
+                <button class="girl-call-icon-btn" onclick="event.stopPropagation(); triggerAdRedirect();"><i class="fa-solid fa-video"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Girl Card 2 -->
+          <div class="girl-card" onclick="openChatSheet('রিয়া চৌধুরী', '২২', 'চট্টগ্রাম (জিইসি)', 'assets/img/riya.jpg')">
+            <div class="girl-avatar-wrap">
+              <img src="assets/img/riya.jpg" alt="রিয়া চৌধুরী" />
+              <div class="girl-status-badge"><span class="status-dot-mini"></span> একটিভ</div>
+              <div class="girl-rate-badge"><i class="fa-solid fa-star"></i> 5.0</div>
+            </div>
+            <div class="girl-info">
+              <div class="girl-name">
+                <span>রিয়া চৌধুরী <i class="fa-solid fa-circle-check v-check"></i></span>
+                <span class="girl-age">২২ বছর</span>
+              </div>
+              <div class="girl-location"><i class="fa-solid fa-location-dot" style="color:var(--blue);"></i> চট্টগ্রাম (জিইসি)</div>
+              <div class="girl-bio">"ভিডিও কলে সরাসরি দেখতে চাইলে নক দাও 🙈"</div>
+              <div class="girl-actions">
+                <button class="girl-chat-btn" style="background: var(--grad-blue);"><i class="fa-solid fa-video"></i> ভিডিও কল</button>
+                <button class="girl-call-icon-btn" onclick="event.stopPropagation(); triggerAdRedirect();"><i class="fa-solid fa-comment"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Video Stream Section -->
+        <div class="section-head">
+          <h2 class="section-title"><i class="fa-solid fa-video"></i> ভিআইপি লাইভ স্ট্রিম</h2>
+          <span class="section-see-all" onclick="switchTab('videos')">সব ভিডিও <i class="fa-solid fa-arrow-right"></i></span>
+        </div>
+
+        <div class="video-card" onclick="openVideoPlayer('গোপন রুমের লাইভ ক্যামেরা আড্ডা — নুসরাত ও রিয়া', '১,৮৯০', 'assets/img/video1.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video1.jpg" alt="Live Video" />
+            <div class="video-tag-live"><span class="pulse-mini"></span> LIVE CAM</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">১২:৪৫ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">গোপন রুমের লাইভ ক্যামেরা আড্ডা — নুসরাত ও রিয়া</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ১,৮৯০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৮% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================================================
+           TAB 2: VIDEOS PANE
+           ======================================================== -->
+      <div class="tab-pane" id="tab-videos">
+        
+        <div class="filter-chips">
+          <div class="chip-item active">সব ভিডিও</div>
+          <div class="chip-item">🔴 লাইভ ক্যাম</div>
+          <div class="chip-item">👑 ভিআইপি স্পেশাল</div>
+          <div class="chip-item">⚡ ট্রেন্ডিং</div>
+          <div class="chip-item">✨ নতুন ক্লিপস</div>
+        </div>
+
+        <div class="video-grid">
+          <!-- Video 1 -->
+          <div class="video-card" onclick="openVideoPlayer('গোপন রুমের লাইভ ক্যামেরা আড্ডা — নুসরাত ও রিয়া', '১,৮৯০', 'assets/img/video1.jpg')">
+            <div class="video-thumb">
+              <img src="assets/img/video1.jpg" alt="Live Video 1" />
+              <div class="video-tag-live"><span class="pulse-mini"></span> LIVE CAM</div>
+              <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+              <div class="video-duration">১২:৪৫ মি.</div>
+            </div>
+            <div class="video-info">
+              <h3 class="video-title">গোপন রুমের লাইভ ক্যামেরা আড্ডা — নুসরাত ও রিয়া</h3>
+              <div class="video-meta">
+                <span><i class="fa-solid fa-eye"></i> ১,৮৯০ জন দেখছেন</span>
+                <span style="color: var(--pink-light);"><i class="fa-solid fa-heart"></i> ৯৮% লাইক</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video 2 -->
+          <div class="video-card" onclick="openVideoPlayer('হোস্টেল রুমের এক্সক্লুসিভ লাইভ আড্ডা (ফুল এইচডি)', '২,৪৫০', 'assets/img/video2.jpg')">
+            <div class="video-thumb">
+              <img src="assets/img/video2.jpg" alt="Live Video 2" />
+              <div class="video-tag-live" style="background: var(--purple);"><i class="fa-solid fa-crown"></i> VIP SPECIAL</div>
+              <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+              <div class="video-duration">০৮:২০ মি.</div>
+            </div>
+            <div class="video-info">
+              <h3 class="video-title">হোস্টেল রুমের এক্সক্লুসিভ লাইভ আড্ডা (ফুল এইচডি)</h3>
+              <div class="video-meta">
+                <span><i class="fa-solid fa-eye"></i> ২,৪৫০ জন দেখছেন</span>
+                <span style="color: var(--blue);"><i class="fa-solid fa-thumbs-up"></i> ৯৯% রেটিং</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video 3 -->
+          <div class="video-card" onclick="openVideoPlayer('ঢাকা ও চট্টগ্রামের মেয়েদের ১-অন-১ গোপন ক্যামেরা লাইভ', '৩,১২০', 'assets/img/video3.jpg')">
+            <div class="video-thumb">
+              <img src="assets/img/video3.jpg" alt="Live Video 3" />
+              <div class="video-tag-live" style="background: var(--green);"><i class="fa-solid fa-bolt"></i> TRENDING</div>
+              <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+              <div class="video-duration">১৫:১০ মি.</div>
+            </div>
+            <div class="video-info">
+              <h3 class="video-title">ঢাকা ও চট্টগ্রামের মেয়েদের ১-অন-১ গোপন ক্যামেরা লাইভ</h3>
+              <div class="video-meta">
+                <span><i class="fa-solid fa-eye"></i> ৩,১২০ জন দেখছেন</span>
+                <span style="color: var(--green);"><i class="fa-solid fa-fire"></i> ভাইরাল</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================================================
+           TAB 3: GIRLS PANE
+           ======================================================== -->
+      <div class="tab-pane" id="tab-girls">
+        
+        <div class="filter-chips">
+          <div class="chip-item active">সকল মেয়ে</div>
+          <div class="chip-item">🔴 অনলাইন এখন</div>
+          <div class="chip-item">📍 ঢাকা</div>
+          <div class="chip-item">📍 চট্টগ্রাম</div>
+          <div class="chip-item">📍 সিলেট</div>
+          <div class="chip-item">📍 রাজশাহী</div>
+        </div>
+
+        <div class="girls-grid">
+          <!-- Girl 1 -->
+          <div class="girl-card" onclick="openChatSheet('মিতু আক্তার', '২১', 'ঢাকা (ধানমন্ডি)', 'assets/img/mitu.jpg')">
+            <div class="girl-avatar-wrap">
+              <img src="assets/img/mitu.jpg" alt="মিতু আক্তার" />
+              <div class="girl-status-badge"><span class="status-dot-mini"></span> অনলাইন</div>
+              <div class="girl-rate-badge"><i class="fa-solid fa-star"></i> 4.9</div>
+            </div>
+            <div class="girl-info">
+              <div class="girl-name">
+                <span>মিতু আক্তার <i class="fa-solid fa-circle-check v-check"></i></span>
+                <span class="girl-age">২১ বছর</span>
+              </div>
+              <div class="girl-location"><i class="fa-solid fa-location-dot" style="color:var(--pink);"></i> ঢাকা (ধানমন্ডি)</div>
+              <div class="girl-bio">"ফ্রি টাইম কথা বলতে পছন্দ করি... ইনবক্স করো 💖"</div>
+              <div class="girl-actions">
+                <button class="girl-chat-btn"><i class="fa-solid fa-comment-dots"></i> চ্যাট করুন</button>
+                <button class="girl-call-icon-btn" onclick="event.stopPropagation(); triggerAdRedirect();"><i class="fa-solid fa-video"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Girl 2 -->
+          <div class="girl-card" onclick="openChatSheet('রিয়া চৌধুরী', '২২', 'চট্টগ্রাম (জিইসি)', 'assets/img/riya.jpg')">
+            <div class="girl-avatar-wrap">
+              <img src="assets/img/riya.jpg" alt="রিয়া চৌধুরী" />
+              <div class="girl-status-badge"><span class="status-dot-mini"></span> একটিভ</div>
+              <div class="girl-rate-badge"><i class="fa-solid fa-star"></i> 5.0</div>
+            </div>
+            <div class="girl-info">
+              <div class="girl-name">
+                <span>রিয়া চৌধুরী <i class="fa-solid fa-circle-check v-check"></i></span>
+                <span class="girl-age">২২ বছর</span>
+              </div>
+              <div class="girl-location"><i class="fa-solid fa-location-dot" style="color:var(--blue);"></i> চট্টগ্রাম (জিইসি)</div>
+              <div class="girl-bio">"ভিডিও কলে সরাসরি দেখতে চাইলে নক দাও 🙈"</div>
+              <div class="girl-actions">
+                <button class="girl-chat-btn" style="background: var(--grad-blue);"><i class="fa-solid fa-video"></i> ভিডিও কল</button>
+                <button class="girl-call-icon-btn" onclick="event.stopPropagation(); triggerAdRedirect();"><i class="fa-solid fa-comment"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Girl 3 -->
+          <div class="girl-card" onclick="openChatSheet('সাদিয়া ইসলাম', '২০', 'সিলেট (উপশহর)', 'assets/img/sadia.jpg')">
+            <div class="girl-avatar-wrap">
+              <img src="assets/img/sadia.jpg" alt="সাদিয়া ইসলাম" />
+              <div class="girl-status-badge"><span class="status-dot-mini"></span> অনলাইন</div>
+              <div class="girl-rate-badge"><i class="fa-solid fa-star"></i> 4.8</div>
+            </div>
+            <div class="girl-info">
+              <div class="girl-name">
+                <span>সাদিয়া ইসলাম <i class="fa-solid fa-circle-check v-check"></i></span>
+                <span class="girl-age">২০ বছর</span>
+              </div>
+              <div class="girl-location"><i class="fa-solid fa-location-dot" style="color:var(--green);"></i> সিলেট (উপশহর)</div>
+              <div class="girl-bio">"সরাসরি সুন্দর আড্ডা দিতে চাইলে মেসেজ দাও ✨"</div>
+              <div class="girl-actions">
+                <button class="girl-chat-btn" style="background: var(--grad-emerald);"><i class="fa-solid fa-comment-dots"></i> চ্যাট করুন</button>
+                <button class="girl-call-icon-btn" onclick="event.stopPropagation(); triggerAdRedirect();"><i class="fa-solid fa-video"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Girl 4 -->
+          <div class="girl-card" onclick="openChatSheet('নুসরাত জাহান', '২৩', 'রাজশাহী (সদর)', 'assets/img/nusrat.jpg')">
+            <div class="girl-avatar-wrap">
+              <img src="assets/img/nusrat.jpg" alt="নুসরাত জাহান" />
+              <div class="girl-status-badge"><span class="status-dot-mini"></span> ফ্রি চ্যাট</div>
+              <div class="girl-rate-badge"><i class="fa-solid fa-star"></i> 4.9</div>
+            </div>
+            <div class="girl-info">
+              <div class="girl-name">
+                <span>নুসরাত জাহান <i class="fa-solid fa-circle-check v-check"></i></span>
+                <span class="girl-age">২৩ বছর</span>
+              </div>
+              <div class="girl-location"><i class="fa-solid fa-location-dot" style="color:var(--purple);"></i> রাজশাহী (সদর)</div>
+              <div class="girl-bio">"গোপন চ্যাট ও ফ্রেন্ডশিপ... ১-অন-১ রুমে আসো 🔥"</div>
+              <div class="girl-actions">
+                <button class="girl-chat-btn" style="background: var(--grad-purple);"><i class="fa-solid fa-comment-dots"></i> চ্যাট করুন</button>
+                <button class="girl-call-icon-btn" onclick="event.stopPropagation(); triggerAdRedirect();"><i class="fa-solid fa-video"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Girl 5 -->
+          <div class="girl-card" onclick="openChatSheet('মিম আক্তার', '২০', 'খুলনা (সোনাডাঙ্গা)', 'assets/img/mim.jpg')">
+            <div class="girl-avatar-wrap">
+              <img src="assets/img/mim.jpg" alt="মিম আক্তার" />
+              <div class="girl-status-badge"><span class="status-dot-mini"></span> অনলাইন</div>
+              <div class="girl-rate-badge"><i class="fa-solid fa-star"></i> 4.9</div>
+            </div>
+            <div class="girl-info">
+              <div class="girl-name">
+                <span>মিম আক্তার <i class="fa-solid fa-circle-check v-check"></i></span>
+                <span class="girl-age">২০ বছর</span>
+              </div>
+              <div class="girl-location"><i class="fa-solid fa-location-dot" style="color:var(--pink);"></i> খুলনা (সোনাডাঙ্গা)</div>
+              <div class="girl-bio">"কলেজ ছুটি... এখন চ্যাটে ফ্রি আছি 😘"</div>
+              <div class="girl-actions">
+                <button class="girl-chat-btn"><i class="fa-solid fa-comment-dots"></i> চ্যাট করুন</button>
+                <button class="girl-call-icon-btn" onclick="event.stopPropagation(); triggerAdRedirect();"><i class="fa-solid fa-video"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Girl 6 -->
+          <div class="girl-card" onclick="openChatSheet('তানিয়া সুলতানা', '২১', 'বরিশাল (সদর)', 'assets/img/tania.jpg')">
+            <div class="girl-avatar-wrap">
+              <img src="assets/img/tania.jpg" alt="তানিয়া সুলতানা" />
+              <div class="girl-status-badge"><span class="status-dot-mini"></span> একটিভ</div>
+              <div class="girl-rate-badge"><i class="fa-solid fa-star"></i> 5.0</div>
+            </div>
+            <div class="girl-info">
+              <div class="girl-name">
+                <span>তানিয়া সুলতানা <i class="fa-solid fa-circle-check v-check"></i></span>
+                <span class="girl-age">২১ বছর</span>
+              </div>
+              <div class="girl-location"><i class="fa-solid fa-location-dot" style="color:var(--yellow);"></i> বরিশাল (সদর)</div>
+              <div class="girl-bio">"মন খুলে কথা বলতে পারো, নো প্রব্লেম 💖"</div>
+              <div class="girl-actions">
+                <button class="girl-chat-btn" style="background: var(--grad-gold);"><i class="fa-solid fa-comment-dots"></i> চ্যাট করুন</button>
+                <button class="girl-call-icon-btn" onclick="event.stopPropagation(); triggerAdRedirect();"><i class="fa-solid fa-video"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================================================
+           TAB 4: VOICE NOTES PANE
+           ======================================================== -->
+      <div class="tab-pane" id="tab-voice">
+        
+        <div class="voice-list">
+          <!-- Voice Item 1 -->
+          <div class="voice-card" onclick="toggleVoiceNote(1)">
+            <img src="assets/img/riya.jpg" class="voice-avatar" alt="Riya" />
+            <div class="voice-player">
+              <div class="voice-header">
+                <span class="voice-name">রিয়া — "তুমি কি এখন একা আছো?"</span>
+                <span class="voice-time">০:২৪</span>
+              </div>
+              <div class="voice-waveform voice-wave-1">
+                <span class="wave-bar" style="height: 6px;"></span>
+                <span class="wave-bar" style="height: 14px;"></span>
+                <span class="wave-bar" style="height: 18px;"></span>
+                <span class="wave-bar" style="height: 10px;"></span>
+                <span class="wave-bar" style="height: 16px;"></span>
+                <span class="wave-bar" style="height: 12px;"></span>
+                <span class="wave-bar" style="height: 8px;"></span>
+                <span class="wave-bar" style="height: 15px;"></span>
+                <span class="wave-bar" style="height: 11px;"></span>
+                <span class="wave-bar" style="height: 5px;"></span>
+              </div>
+            </div>
+            <div class="voice-play-trigger" id="voice-btn-1"><i class="fa-solid fa-play"></i></div>
+          </div>
+
+          <!-- Voice Item 2 -->
+          <div class="voice-card" onclick="toggleVoiceNote(2)">
+            <img src="assets/img/mitu.jpg" class="voice-avatar" alt="Mitu" />
+            <div class="voice-player">
+              <div class="voice-header">
+                <span class="voice-name">মিতু — "ইনবক্সে রিপ্লাই দাও না কেন?"</span>
+                <span class="voice-time">০:৩৯</span>
+              </div>
+              <div class="voice-waveform voice-wave-2">
+                <span class="wave-bar" style="height: 8px;"></span>
+                <span class="wave-bar" style="height: 12px;"></span>
+                <span class="wave-bar" style="height: 16px;"></span>
+                <span class="wave-bar" style="height: 19px;"></span>
+                <span class="wave-bar" style="height: 14px;"></span>
+                <span class="wave-bar" style="height: 9px;"></span>
+                <span class="wave-bar" style="height: 13px;"></span>
+                <span class="wave-bar" style="height: 17px;"></span>
+                <span class="wave-bar" style="height: 10px;"></span>
+                <span class="wave-bar" style="height: 6px;"></span>
+              </div>
+            </div>
+            <div class="voice-play-trigger" id="voice-btn-2"><i class="fa-solid fa-play"></i></div>
+          </div>
+
+          <!-- Voice Item 3 -->
+          <div class="voice-card" onclick="toggleVoiceNote(3)">
+            <img src="assets/img/sadia.jpg" class="voice-avatar" alt="Sadia" />
+            <div class="voice-player">
+              <div class="voice-header">
+                <span class="voice-name">সাদিয়া — "আজ রাতে ফ্রি আছো কি?"</span>
+                <span class="voice-time">০:৫২</span>
+              </div>
+              <div class="voice-waveform voice-wave-3">
+                <span class="wave-bar" style="height: 10px;"></span>
+                <span class="wave-bar" style="height: 15px;"></span>
+                <span class="wave-bar" style="height: 11px;"></span>
+                <span class="wave-bar" style="height: 18px;"></span>
+                <span class="wave-bar" style="height: 13px;"></span>
+                <span class="wave-bar" style="height: 17px;"></span>
+                <span class="wave-bar" style="height: 7px;"></span>
+                <span class="wave-bar" style="height: 14px;"></span>
+                <span class="wave-bar" style="height: 16px;"></span>
+                <span class="wave-bar" style="height: 9px;"></span>
+              </div>
+            </div>
+            <div class="voice-play-trigger" id="voice-btn-3"><i class="fa-solid fa-play"></i></div>
+          </div>
+
+          <!-- Voice Item 4 -->
+          <div class="voice-card" onclick="toggleVoiceNote(4)">
+            <img src="assets/img/nusrat.jpg" class="voice-avatar" alt="Nusrat" />
+            <div class="voice-player">
+              <div class="voice-header">
+                <span class="voice-name">নুসরাত — "তোমাকে একটা সিক্রেট বলবো..."</span>
+                <span class="voice-time">০:৩৪</span>
+              </div>
+              <div class="voice-waveform voice-wave-4">
+                <span class="wave-bar" style="height: 9px;"></span>
+                <span class="wave-bar" style="height: 13px;"></span>
+                <span class="wave-bar" style="height: 17px;"></span>
+                <span class="wave-bar" style="height: 11px;"></span>
+                <span class="wave-bar" style="height: 15px;"></span>
+                <span class="wave-bar" style="height: 19px;"></span>
+                <span class="wave-bar" style="height: 8px;"></span>
+                <span class="wave-bar" style="height: 14px;"></span>
+                <span class="wave-bar" style="height: 12px;"></span>
+                <span class="wave-bar" style="height: 6px;"></span>
+              </div>
+            </div>
+            <div class="voice-play-trigger" id="voice-btn-4"><i class="fa-solid fa-play"></i></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================================================
+           TAB 5: WHEEL PANE
+           ======================================================== -->
+      <div class="tab-pane" id="tab-wheel">
+        
+        <section class="wheel-panel">
+          <h2 style="font-size: 20px; font-weight: 800; color: #fff;">🎡 নিয়ন লাকি ম্যাচিং হুইল</h2>
+          <p style="font-size: 13px; color: var(--text-muted);">হুইল ঘুরিয়ে পছন্দের পার্টনারের সাথে সরাসরি ২ সেকেন্ডে ম্যাচ ও চ্যাট করুন।</p>
+
+          <div class="wheel-wrapper">
+            <div class="wheel-pointer"><i class="fa-solid fa-caret-down"></i></div>
+            <div class="wheel-canvas" id="wheel-canvas">
+              <div class="wheel-segment" style="--i:1; background: #ff2a85;"><span>রিয়া (২২)</span></div>
+              <div class="wheel-segment" style="--i:2; background: #8b5cf6;"><span>মিম (২০)</span></div>
+              <div class="wheel-segment" style="--i:3; background: #00d2ff;"><span>মিতু (২১)</span></div>
+              <div class="wheel-segment" style="--i:4; background: #10b981;"><span>সাদিয়া (২০)</span></div>
+              <div class="wheel-segment" style="--i:5; background: #fbbf24;"><span>তানিয়া (২১)</span></div>
+              <div class="wheel-segment" style="--i:6; background: #ef4444;"><span>নুসরাত (২৩)</span></div>
+            </div>
+            <div class="wheel-center-hub"><i class="fa-solid fa-fire" style="color:var(--pink);"></i></div>
+          </div>
+
+          <button class="wheel-spin-btn" onclick="spinWheel()">
+            <i class="fa-solid fa-dharmachakra fa-spin"></i>
+            <span>হুইল স্পিন করে ম্যাচ করুন</span>
+          </button>
+        </section>
+
+      </div>
+
+      <!-- ========================================================
+           TAB 6: CATEGORIES PANE
+           ======================================================== -->
+      <div class="tab-pane" id="tab-categories">
+        
+        <div class="category-search-box">
+          <i class="fa-solid fa-magnifying-glass category-search-icon"></i>
+          <input type="text" id="category-search-input" class="category-search-input" placeholder="ক্যাটাগরি বা চ্যাট রুম খুঁজুন..." oninput="filterCategories()" />
+        </div>
+
+        <div class="action-grid" id="categories-grid">
+          <div class="action-card category-card" data-title="বউ-শ্বশুর গল্প ও চ্যাট" onclick="triggerAdRedirect(event)">
+            <div class="action-icon" style="background: rgba(255, 42, 133, 0.15); color: var(--pink);"><i class="fa-solid fa-fire"></i></div>
+            <div class="action-info">
+              <span class="action-title">বউ-শ্বশুর গল্প ও চ্যাট</span>
+              <span class="action-sub">৭৪ জন একটিভ</span>
+            </div>
+          </div>
+
+          <div class="action-card category-card" data-title="দেবর-ভাবি আড্ডা" onclick="triggerAdRedirect(event)">
+            <div class="action-icon" style="background: rgba(0, 210, 255, 0.15); color: var(--blue);"><i class="fa-solid fa-heart-pulse"></i></div>
+            <div class="action-info">
+              <span class="action-title">দেবর-ভাবি আড্ডা</span>
+              <span class="action-sub">৮৮ জন একটিভ</span>
+            </div>
+          </div>
+
+          <div class="action-card category-card" data-title="কলেজ ছাত্রী চ্যাট রুম" onclick="triggerAdRedirect(event)">
+            <div class="action-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--green);"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div class="action-info">
+              <span class="action-title">কলেজ ছাত্রী চ্যাট রুম</span>
+              <span class="action-sub">১১২ জন একটিভ</span>
+            </div>
+          </div>
+
+          <div class="action-card category-card" data-title="প্রবাসী ভাবি আড্ডা" onclick="triggerAdRedirect(event)">
+            <div class="action-icon" style="background: rgba(251, 191, 36, 0.15); color: var(--yellow);"><i class="fa-solid fa-ring"></i></div>
+            <div class="action-info">
+              <span class="action-title">প্রবাসী ভাবি আড্ডা</span>
+              <span class="action-sub">৬৫ জন একটিভ</span>
+            </div>
+          </div>
+
+          <div class="action-card category-card" data-title="ডিভোর্সি ভাবি চ্যাট" onclick="triggerAdRedirect(event)">
+            <div class="action-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--purple);"><i class="fa-solid fa-venus"></i></div>
+            <div class="action-info">
+              <span class="action-title">ডিভোর্সি ভাবি চ্যাট</span>
+              <span class="action-sub">৯৩ জন একটিভ</span>
+            </div>
+          </div>
+
+          <div class="action-card category-card" data-title="লাইভ ক্যামেরা শো" onclick="triggerAdRedirect(event)">
+            <div class="action-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--red);"><i class="fa-solid fa-camera-retro"></i></div>
+            <div class="action-info">
+              <span class="action-title">লাইভ ক্যামেরা শো</span>
+              <span class="action-sub">১৪৫ জন একটিভ</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </main>
 
-    <!-- Bottom App Navigation Bar -->
+    <!-- ========================================================
+         LIVE 1-ON-1 CHAT SIMULATOR BOTTOM SHEET MODAL
+         ======================================================== -->
+    <div class="chat-sheet-overlay" id="chat-sheet-overlay">
+      <div class="chat-sheet">
+        <div class="chat-sheet-header">
+          <div class="chat-user-header">
+            <img src="assets/img/mitu.jpg" id="chat-sheet-avatar" class="chat-user-avatar" alt="Avatar" />
+            <div class="chat-user-details">
+              <h4 id="chat-sheet-name">মিতু আক্তার <span class="girl-age">(২১ বছর)</span></h4>
+              <span class="chat-user-status" id="chat-sheet-status"><span class="status-dot-mini"></span> অনলাইন (১-অন-১ চ্যাট)</span>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <button class="chat-action-btn call-trigger" onclick="triggerAdRedirect()"><i class="fa-solid fa-video"></i></button>
+            <button class="chat-action-btn" onclick="closeChatSheet()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <div class="chat-messages-body" id="chat-messages-body">
+          <div class="chat-bubble incoming">
+            হাই! আমি মিতু। তুমি কি এখন কথা বলতে ফ্রি আছো? 💖
+            <div class="chat-bubble-time">এইমাত্র</div>
+          </div>
+          <div class="chat-typing-indicator" id="chat-typing-indicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <div class="chat-quick-replies">
+          <div class="quick-reply-chip" onclick="sendQuickReply('হাই, কেমন আছো? 🥰')">হাই, কেমন আছো? 🥰</div>
+          <div class="quick-reply-chip" onclick="sendQuickReply('চলো লাইভ ভিডিও কলে কথা বলি 🎥')">ভিডিও কলে কথা বলি 🎥</div>
+          <div class="quick-reply-chip" onclick="sendQuickReply('তুমি এখন কোথায় আছো? 📍')">তুমি কোথায় আছো? 📍</div>
+          <div class="quick-reply-chip" onclick="sendQuickReply('তোমার সাথে প্রেম করতে চাই 💖')">প্রেম করতে চাই 💖</div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" id="chat-text-input" class="chat-text-input" placeholder="মেসেজ লিখুন..." onkeypress="if(event.key==='Enter') sendChatMessage()" />
+          <button class="chat-send-btn" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         IN-APP VIDEO PLAYER SHEET MODAL
+         ======================================================== -->
+    <div class="video-player-modal" id="video-player-modal">
+      <div class="video-player-header">
+        <div>
+          <h3 id="video-player-title" style="font-size: 15px; font-weight:800;">লাইভ ভিডিও স্ট্রিম</h3>
+          <span id="video-player-viewers" style="font-size:11.5px; color:var(--pink-light);"><i class="fa-solid fa-eye"></i> ১,৮৯০ জন দেখছেন</span>
+        </div>
+        <button class="story-close-btn" onclick="closeVideoPlayer()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="video-player-screen">
+        <img src="assets/img/video1.jpg" id="video-player-cover" alt="Video Player" />
+        <div class="video-play-btn" onclick="triggerAdRedirect()"><i class="fa-solid fa-play"></i></div>
+        
+        <div class="video-live-overlay-comments" id="video-live-comments"></div>
+        <div class="floating-hearts-container" id="floating-hearts-container"></div>
+      </div>
+
+      <div class="video-player-footer">
+        <input type="text" class="story-reply-input" placeholder="লাইভ কমেন্ট করুন..." onkeypress="if(event.key==='Enter') sendVideoHeart()" />
+        <button class="story-heart-btn" onclick="sendVideoHeart()"><i class="fa-solid fa-heart"></i></button>
+        <button class="header-btn" onclick="triggerAdRedirect()" style="width:44px; height:44px; border-radius:50%; background:var(--grad-blue);"><i class="fa-solid fa-share-nodes"></i></button>
+      </div>
+    </div>
+
+    <!-- Fixed Bottom App Navigation Dock -->
     <nav class="bottom-nav">
-      <a href="index.html" class="bottom-nav-item active"><i class="fa-solid fa-house"></i><span>হোম</span></a>
-      <a href="videos.html" class="bottom-nav-item"><i class="fa-solid fa-video"></i><span>ভিডিও</span></a>
-      <a href="girls.html" class="bottom-nav-item"><i class="fa-solid fa-venus"></i><span>মেয়েরা</span></a>
-      <a href="voice.html" class="bottom-nav-item"><i class="fa-solid fa-microphone-lines"></i><span>ভয়েস</span></a>
-      <a href="wheel.html" class="bottom-nav-item"><i class="fa-solid fa-dharmachakra"></i><span>হুইল</span></a>
-      <a href="categories.html" class="bottom-nav-item"><i class="fa-solid fa-tags"></i><span>ক্যাটাগরি</span></a>
+      <div class="bottom-nav-item active" data-tab="home" onclick="switchTab('home')">
+        <i class="fa-solid fa-house"></i>
+        <span>হোম</span>
+      </div>
+      <div class="bottom-nav-item" data-tab="videos" onclick="switchTab('videos')">
+        <i class="fa-solid fa-video"></i>
+        <span>ভিডিও</span>
+      </div>
+      <div class="bottom-nav-item" data-tab="girls" onclick="switchTab('girls')">
+        <i class="fa-solid fa-venus"></i>
+        <span>মেয়েরা</span>
+      </div>
+      <div class="bottom-nav-item" data-tab="voice" onclick="switchTab('voice')">
+        <i class="fa-solid fa-microphone-lines"></i>
+        <span>ভয়েস</span>
+      </div>
+      <div class="bottom-nav-item" data-tab="wheel" onclick="switchTab('wheel')">
+        <i class="fa-solid fa-dharmachakra"></i>
+        <span>হুইল</span>
+      </div>
+      <div class="bottom-nav-item" data-tab="categories" onclick="switchTab('categories')">
+        <i class="fa-solid fa-tags"></i>
+        <span>ক্যাটাগরি</span>
+      </div>
     </nav>
 
   </div>
 
-  <script src="assets/js/app.js?v=6.0"></script>
+  <script src="assets/js/app.js?v=7.0"></script>
 </body>
 </html>

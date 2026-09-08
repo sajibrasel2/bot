@@ -540,7 +540,7 @@ def api_check_invites():
             "invites": 0,
             "required": 10,
             "remaining": 10,
-            "message": f"❌ টেলিগ্রাম আইডি '{raw_input}' ডাটাবেজে পাওয়া যায়নি। আপনি কি গ্রুপে কাউকে এড করেছেন? টেলিগ্রাম গ্রুপে /myinvites লিখে আপনার সঠিক আইডি দেখে নিন।"
+            "message": f"❌ টেলিগ্রাম আইডি '{raw_input}' পাওয়া যায়নি। আপনি কি গ্রুপে কাউকে এড করেছেন? টেলিগ্রাম গ্রুপে /myinvites লিখে আপনার সঠিক আইডি দেখে নিন।"
         })
 
     # Count actual invites

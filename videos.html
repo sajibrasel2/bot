@@ -9,13 +9,14 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="assets/css/style.css?v=6.0" />
-
-  <meta name="theme-color" content="#090b11" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#07090e" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/style.css?v=7.0" />
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -27,11 +28,11 @@
       <h2 class="tg-title">📢 অফিশিয়াল টেলিগ্রাম গ্রুপ ভেরিফিকেশন</h2>
       <div class="tg-lock-warning">
         <i class="fa-solid fa-lock"></i>
-        <div><strong style="color: #fff;">লক নোটিউট:</strong> টেলিগ্রাম গ্রুপে <b>১০ জন মেম্বার এড</b> না করা পর্যন্ত ভিডিও বা চ্যাট রুম আনলক হবে না!</div>
+        <div><strong style="color: #fff;">লক নোটিশ:</strong> টেলিগ্রাম গ্রুপে <b>১০ জন মেম্বার এড</b> না করা পর্যন্ত ভিডিও বা চ্যাট আনলক হবে না!</div>
       </div>
       <div class="tg-progress-box">
         <div class="tg-progress-text">
-          <span>ডাটাবেজ অগ্রগতি:</span>
+          <span>মেম্বার এড অগ্রগতি:</span>
           <span><strong id="tg-added-counter" style="color: var(--tg-cyan);">০</strong> / ১০ জন (<span id="tg-progress-percent">০%</span>)</span>
         </div>
         <div class="tg-progress-bar-bg"><div class="tg-progress-bar-fill" id="tg-progress-fill"></div></div>
@@ -54,7 +55,7 @@
           <i class="fa-solid fa-paper-plane arrow"></i>
         </button>
       </div>
-      <button class="tg-verify-btn" id="tg-verify-btn" onclick="checkRealDatabaseInvites()"><i class="fa-solid fa-shield-halved"></i><span>ডাটাবেজ ভেরিফাই ও প্রবেশ করুন</span></button>
+      <button class="tg-verify-btn" id="tg-verify-btn" onclick="checkRealDatabaseInvites()"><i class="fa-solid fa-shield-halved"></i><span>ভেরিফাই করে প্রবেশ করুন</span></button>
     </div>
   </div>
 
@@ -63,24 +64,11 @@
     <div class="age-gate-modal">
       <div class="age-gate-badge"><i class="fa-solid fa-triangle-exclamation"></i></div>
       <h2 class="age-gate-title">🔞 ১৮+ প্রাপ্তবয়স্ক ভিডিও সতর্কতা</h2>
-      <p class="age-gate-desc">ভিআইপি লাইভ ভিডিও জোন ও চ্যাট রুমে শুধুমাত্র ১৮+ প্রাপ্তবয়স্কদের প্রবেশাধিকার রয়েছে।</p>
+      <p class="age-gate-desc">ভিআইপি লাইভ ভিডিও জোন ও চ্যাট রুমে প্রবেশের পূর্বে আপনার বয়স নিশ্চিত করুন।</p>
       <div class="age-gate-actions">
         <button class="age-gate-btn-yes" onclick="enterAgeGate(event)"><i class="fa-solid fa-circle-check"></i><span>হ্যাঁ, আমার বয়স ১৮+ (ভিডিও দেখুন)</span></button>
         <button class="age-gate-btn-no" onclick="window.location.href='https://google.com'">না, বের হয়ে যান (Exit)</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Heads-up Incoming Call Simulator -->
-  <div class="incoming-call-box" id="incoming-call-box">
-    <div class="call-avatar" style="background: linear-gradient(135deg, #db2777, #f472b6);"><i class="fa-solid fa-user-dress"></i></div>
-    <div class="call-info">
-      <span class="call-tag">ইনকামিং ভিডিও কল...</span>
-      <h4 id="call-active-name">মিতু (২১)</h4>
-    </div>
-    <div class="call-actions">
-      <button class="call-btn btn-decline" onclick="handleCall(false)"><i class="fa-solid fa-phone-slash"></i></button>
-      <button class="call-btn btn-accept" onclick="handleCall(true)"><i class="fa-solid fa-video"></i></button>
     </div>
   </div>
 
@@ -96,11 +84,14 @@
     <header class="app-header">
       <a href="index.html" class="logo">
         <div class="logo-icon"><i class="fa-solid fa-fire"></i></div>
-        <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
+        <div class="logo-info">
+          <div class="logo-text">ADULT ZONE <i class="fa-solid fa-circle-check"></i></div>
+          <span class="logo-badge">VIP VIDEO ZONE</span>
+        </div>
       </a>
       <div class="header-right">
         <div class="live-status-pill"><span class="live-dot"></span><span id="live-online-pill">৩১২+ ভিডিও</span></div>
-        <a href="https://t.me/alltimefantasyzone" target="_blank" class="tg-header-btn"><i class="fa-brands fa-telegram"></i></a>
+        <a href="https://t.me/alltimefantasyzone" target="_blank" class="header-btn tg-btn"><i class="fa-brands fa-telegram"></i></a>
       </div>
     </header>
 
@@ -119,13 +110,21 @@
         <div class="adsterra-300x250-container"></div>
       </div>
 
-      <!-- Video Feed Grid -->
+      <div class="filter-chips">
+        <div class="chip-item active">সব ভিডিও</div>
+        <div class="chip-item">🔴 লাইভ ক্যাম</div>
+        <div class="chip-item">👑 ভিআইপি স্পেশাল</div>
+        <div class="chip-item">⚡ ট্রেন্ডিং</div>
+      </div>
+
+      <!-- Video Grid -->
       <div class="video-grid">
 
-        <!-- Video Item 1 -->
-        <div class="video-card" onclick="triggerAdRedirect(event)">
+        <!-- Video 1 -->
+        <div class="video-card" onclick="openVideoPlayer('গোপন রুমের লাইভ ক্যামেরা আড্ডা — নুসরাত ও রিয়া', '১,৮৯০', 'assets/img/video1.jpg')">
           <div class="video-thumb">
-            <div class="video-tag-live"><i class="fa-solid fa-circle-dot"></i> LIVE CAM</div>
+            <img src="assets/img/video1.jpg" alt="Video 1" />
+            <div class="video-tag-live"><span class="pulse-mini"></span> LIVE CAM</div>
             <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
             <div class="video-duration">১২:৪৫ মি.</div>
           </div>
@@ -138,10 +137,11 @@
           </div>
         </div>
 
-        <!-- Video Item 2 -->
-        <div class="video-card" onclick="triggerAdRedirect(event)">
+        <!-- Video 2 -->
+        <div class="video-card" onclick="openVideoPlayer('হোস্টেল রুমের এক্সক্লুসিভ লাইভ আড্ডা (ফুল এইচডি)', '২,৪৫০', 'assets/img/video2.jpg')">
           <div class="video-thumb">
-            <div class="video-tag-live" style="background: #8b5cf6;"><i class="fa-solid fa-crown"></i> VIP SPECIAL</div>
+            <img src="assets/img/video2.jpg" alt="Video 2" />
+            <div class="video-tag-live" style="background: var(--purple);"><i class="fa-solid fa-crown"></i> VIP SPECIAL</div>
             <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
             <div class="video-duration">০৮:২০ মি.</div>
           </div>
@@ -154,10 +154,11 @@
           </div>
         </div>
 
-        <!-- Video Item 3 -->
-        <div class="video-card" onclick="triggerAdRedirect(event)">
+        <!-- Video 3 -->
+        <div class="video-card" onclick="openVideoPlayer('ঢাকা ও চট্টগ্রামের মেয়েদের ১-অন-১ গোপন ক্যামেরা লাইভ', '৩,১২০', 'assets/img/video3.jpg')">
           <div class="video-thumb">
-            <div class="video-tag-live" style="background: #10b981;"><i class="fa-solid fa-bolt"></i> TRENDING</div>
+            <img src="assets/img/video3.jpg" alt="Video 3" />
+            <div class="video-tag-live" style="background: var(--green);"><i class="fa-solid fa-bolt"></i> TRENDING</div>
             <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
             <div class="video-duration">১৫:১০ মি.</div>
           </div>
@@ -174,9 +175,34 @@
 
     </main>
 
+    <!-- IN-APP VIDEO PLAYER SHEET MODAL -->
+    <div class="video-player-modal" id="video-player-modal">
+      <div class="video-player-header">
+        <div>
+          <h3 id="video-player-title" style="font-size: 15px; font-weight:800;">লাইভ ভিডিও স্ট্রিম</h3>
+          <span id="video-player-viewers" style="font-size:11.5px; color:var(--pink-light);"><i class="fa-solid fa-eye"></i> ১,৮৯০ জন দেখছেন</span>
+        </div>
+        <button class="story-close-btn" onclick="closeVideoPlayer()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="video-player-screen">
+        <img src="assets/img/video1.jpg" id="video-player-cover" alt="Video Player" />
+        <div class="video-play-btn" onclick="triggerAdRedirect()"><i class="fa-solid fa-play"></i></div>
+        
+        <div class="video-live-overlay-comments" id="video-live-comments"></div>
+        <div class="floating-hearts-container" id="floating-hearts-container"></div>
+      </div>
+
+      <div class="video-player-footer">
+        <input type="text" class="story-reply-input" placeholder="লাইভ কমেন্ট করুন..." onkeypress="if(event.key==='Enter') sendVideoHeart()" />
+        <button class="story-heart-btn" onclick="sendVideoHeart()"><i class="fa-solid fa-heart"></i></button>
+        <button class="header-btn" onclick="triggerAdRedirect()" style="width:44px; height:44px; border-radius:50%; background:var(--grad-blue);"><i class="fa-solid fa-share-nodes"></i></button>
+      </div>
+    </div>
+
     <!-- Bottom App Navigation Bar -->
     <nav class="bottom-nav">
-      <a href="index.html" class="bottom-nav-item"><i class="fa-solid fa-house"></i><span>হোম</span></a>
+      <a href="index.html#home" class="bottom-nav-item"><i class="fa-solid fa-house"></i><span>হোম</span></a>
       <a href="videos.html" class="bottom-nav-item active"><i class="fa-solid fa-video"></i><span>ভিডিও</span></a>
       <a href="girls.html" class="bottom-nav-item"><i class="fa-solid fa-venus"></i><span>মেয়েরা</span></a>
       <a href="voice.html" class="bottom-nav-item"><i class="fa-solid fa-microphone-lines"></i><span>ভয়েস</span></a>
@@ -186,6 +212,6 @@
 
   </div>
 
-  <script src="assets/js/app.js?v=6.0"></script>
+  <script src="assets/js/app.js?v=7.0"></script>
 </body>
 </html>
