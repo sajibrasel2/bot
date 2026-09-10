@@ -123,8 +123,11 @@ def generate_promo_message(users: list) -> tuple:
     return text, keyboard
 
 
-async def _auto_delete(message, delay: int = 90) -> None:
-    """Auto-deletes a message after specified seconds (default 90s / 1.5 mins)."""
+PROMO_LIFETIME_SECONDS = 180  # ৩ মিনিট (180 seconds) স্থায়ী থাকবে
+
+
+async def _auto_delete(message, delay: int = PROMO_LIFETIME_SECONDS) -> None:
+    """Auto-deletes a message after specified seconds (default 180s / 3 mins)."""
     await asyncio.sleep(delay)
     try:
         await message.delete()
@@ -187,7 +190,7 @@ async def promo_loop(app: Application) -> None:
                     if stk_id and stk_id.strip():
                         sent_stk = await app.bot.send_sticker(chat_id=chat_id, sticker=stk_id.strip())
                         if sent_stk:
-                            asyncio.create_task(_auto_delete(sent_stk, delay=90))
+                            asyncio.create_task(_auto_delete(sent_stk, delay=PROMO_LIFETIME_SECONDS))
                 except Exception:
                     pass
 
@@ -198,7 +201,7 @@ async def promo_loop(app: Application) -> None:
                     reply_markup=keyboard
                 )
                 if sent_promo:
-                    asyncio.create_task(_auto_delete(sent_promo, delay=90))
+                    asyncio.create_task(_auto_delete(sent_promo, delay=PROMO_LIFETIME_SECONDS))
             except Exception as e:
                 logger.debug(f"Failed to send promo message to chat {chat_id}: {e}")
 
@@ -324,7 +327,7 @@ async def cmd_sendpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         if stk_id and stk_id.strip():
             sent_stk = await context.bot.send_sticker(chat_id=chat.id, sticker=stk_id.strip())
             if sent_stk:
-                asyncio.create_task(_auto_delete(sent_stk, delay=90))
+                asyncio.create_task(_auto_delete(sent_stk, delay=PROMO_LIFETIME_SECONDS))
     except Exception:
         pass
 
@@ -335,7 +338,7 @@ async def cmd_sendpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         reply_markup=keyboard
     )
     if sent_promo:
-        asyncio.create_task(_auto_delete(sent_promo, delay=90))
+        asyncio.create_task(_auto_delete(sent_promo, delay=PROMO_LIFETIME_SECONDS))
 
 
 def register(app: Application) -> None:
