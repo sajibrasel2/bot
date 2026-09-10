@@ -245,6 +245,7 @@ _VALID_SETTINGS_KEYS = {
     "welcome_button_text", "welcome_button_url",
     "welcome_sticker", "promo_sticker",
     "force_add_enabled", "force_add_count",
+    "antilink_required_invites",
 }
 
 
@@ -278,6 +279,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "welcome_enabled": 1, "welcome_text": "",
         "goodbye_enabled": 0, "goodbye_text": "",
         "antiflood_enabled": 0, "antilink_enabled": 0,
+        "antilink_required_invites": 10,
         "badwords_enabled": 1, "badwords_list": "ছেলে,ও ছেলে,স্কেমার,বাটপার,প্রতারক,chele,o chele,sele,o sele,chala,scammer,skeimer,skemer,scamer,skeimar",
         "rules_text": DEFAULT_RULES, "lock_messages": 0,
         "lock_media": 0, "lock_stickers": 0,
@@ -509,7 +511,7 @@ async def add_invite(chat_id: int, inviter_id: int, invited_id: int) -> int:
 
 
 async def get_user_invite_count(chat_id: int, user_id: int) -> int:
-    """Returns total confirmed invites by a user in a group."""
+    """Returns total confirmed invites by a user in a group (fallback to overall confirmed invites if 0)."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
@@ -518,11 +520,19 @@ async def get_user_invite_count(chat_id: int, user_id: int) -> int:
                 (chat_id, user_id)
             )
             row = await cur.fetchone()
-            if not row:
-                return 0
-            if isinstance(row, dict):
-                return row.get("cnt", 0)
-            return row[0] if len(row) > 0 else 0
+            cnt = 0
+            if row:
+                cnt = row.get("cnt", 0) if isinstance(row, dict) else (row[0] if len(row) > 0 else 0)
+            
+            if cnt == 0:
+                await cur.execute(
+                    "SELECT COUNT(*) as cnt FROM user_invites WHERE inviter_id=%s",
+                    (user_id,)
+                )
+                row2 = await cur.fetchone()
+                if row2:
+                    cnt = row2.get("cnt", 0) if isinstance(row2, dict) else (row2[0] if len(row2) > 0 else 0)
+            return cnt
 
 
 async def get_top_inviters(chat_id: int, limit: int = 10) -> list:

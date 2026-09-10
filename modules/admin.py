@@ -400,7 +400,7 @@ def _settings_text(chat_title, settings):
         f"  • ওয়েলকাম মেসেজ: {'✅ চালু' if settings.get('welcome_enabled') else '❌ বন্ধ'}\n"
         f"  • গুডবাই মেসেজ: {'✅ চালু' if settings.get('goodbye_enabled') else '❌ বন্ধ'}\n\n"
         f"🛡️ <b>স্প্যাম প্রটেকশন:</b>\n"
-        f"  • লিংক ব্লক (Antilink): {'✅ চালু' if settings.get('antilink_enabled') else '❌ বন্ধ'}\n"
+        f"  • লিংক ব্লক (Antilink): {'✅ চালু (১০ জন অ্যাড করলে আনলক)' if settings.get('antilink_enabled') else '❌ বন্ধ'}\n"
         f"  • ফ্লাড প্রটেকশন (Antiflood): {'✅ চালু' if settings.get('antiflood_enabled') else '❌ বন্ধ'}\n"
         f"  • নিষিদ্ধ শব্দ ফিল্টার: {'✅ চালু' if settings.get('badwords_enabled') else '❌ বন্ধ'}\n\n"
         f"🔒 <b>চ্যাট লকিং:</b>\n"

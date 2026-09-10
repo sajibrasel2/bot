@@ -20,13 +20,17 @@ Admin commands:
 import re
 import time
 import asyncio
+import urllib.parse
 from collections import defaultdict
 
-from telegram import Update, ChatPermissions, Message
+from telegram import Update, ChatPermissions, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, MessageHandler, CommandHandler, filters
 from telegram.helpers import mention_html
 
-from database import get_chat_settings, update_chat_setting, upsert_user, update_chat_info
+from database import (
+    get_chat_settings, update_chat_setting, upsert_user, update_chat_info,
+    get_user_invite_count
+)
 from modules.utils import is_admin, admin_only
 from config import MAX_FLOOD_MESSAGES, FLOOD_WINDOW_SECONDS
 
@@ -63,13 +67,13 @@ async def _auto_delete(message: Message, delay: int = BOT_MSG_AUTO_DELETE) -> No
         pass
 
 
-async def _send_and_delete(context, chat_id: int, text: str) -> None:
-    """মেসেজ পাঠাও এবং BOT_MSG_AUTO_DELETE সেকেন্ড পরে ডিলিট করো।"""
+async def _send_and_delete(context, chat_id: int, text: str, reply_markup=None, delay: int = BOT_MSG_AUTO_DELETE) -> None:
+    """মেসেজ পাঠাও এবং নির্দিষ্ট সময় পরে ডিলিট করো।"""
     try:
         sent = await context.bot.send_message(
-            chat_id, text, parse_mode="HTML"
+            chat_id, text, parse_mode="HTML", reply_markup=reply_markup
         )
-        asyncio.create_task(_auto_delete(sent))
+        asyncio.create_task(_auto_delete(sent, delay=delay))
     except Exception:
         pass
 
@@ -127,7 +131,7 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     context, chat.id,
                     f"🚨 <b>ফ্লাড সতর্কতা!</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"👤 {mention_html(user.id, user.first_name)}\n"
+                    f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
                     f"⚡ অতিরিক্ত দ্রুত মেসেজ পাঠাচ্ছেন!\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"🔇 <b>১ মিনিট</b> মিউট করা হয়েছে।"
@@ -136,7 +140,7 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 pass
             return
 
-    # ── Anti-link ────────────────────────────────
+    # ── Anti-link (১০ জন মেম্বার অ্যাড করলে অটোমেটিক লিংক শেয়ার অনুমতি) ───────────
     if settings.get("antilink_enabled", 0):
         content_text = (msg.text or msg.caption or "").strip()
         has_link = False
@@ -153,20 +157,66 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 break
 
         if has_link:
-            try:
-                await msg.delete()
-            except Exception:
+            # Check user confirmed invites from database
+            user_invites = await get_user_invite_count(chat.id, user.id)
+            required_invites = int(settings.get("antilink_required_invites") or 10)
+
+            if user_invites >= required_invites:
+                # User has added 10 or more members -> AUTOMATICALLY PERMITTED!
                 pass
-            await _send_and_delete(
-                context, chat.id,
-                f"🔗 <b>লিংক শেয়ার নিষিদ্ধ!</b>\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"👤 {mention_html(user.id, user.first_name)}\n"
-                f"🚫 এই গ্রুপে যেকোনো প্রকার লিংক বা ইনভাইট শেয়ার করা সম্পূর্ণ নিষিদ্ধ।\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"<i>পুনরায় করলে গ্রুপ থেকে ব্যান/মিউট করা হবে।</i>"
-            )
-            return
+            else:
+                # User has not added 10 members -> Delete link and warn with User ID & progress
+                try:
+                    await msg.delete()
+                except Exception:
+                    pass
+
+                remaining = max(0, required_invites - user_invites)
+
+                # Generate dynamic invite link
+                invite_link = ""
+                try:
+                    if chat.username:
+                        invite_link = f"https://t.me/{chat.username}"
+                    elif chat.invite_link:
+                        invite_link = chat.invite_link
+                    else:
+                        invite_link = await chat.export_invite_link()
+                except Exception:
+                    invite_link = f"https://t.me/{chat.username}" if chat.username else "https://t.me/alltimefantasyzone"
+
+                share_text = urllib.parse.quote(f"🔥 {chat.title or 'আমাদের গ্রুপে'} জয়েন করুন এবং সরাসরি চ্যাট করুন! 💬")
+                share_url = f"https://t.me/share/url?url={invite_link}&text={share_text}"
+
+                buttons = [
+                    [
+                        InlineKeyboardButton(text="👥 মেম্বার অ্যাড / ইনভাইট করুন", url=share_url)
+                    ],
+                    [
+                        InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
+                        InlineKeyboardButton(text="🏆 সেরা ইনভাইটার", callback_data=f"topinv_{chat.id}")
+                    ]
+                ]
+                reply_markup = InlineKeyboardMarkup(buttons)
+
+                alert_text = (
+                    f"🔗 <b>লিংক শেয়ার লক করা আছে!</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
+                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🔒 এই গ্রুপে লিংক শেয়ার করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
+                    f"📊 <b>আপনার বর্তমান অগ্রগতি:</b> <code>{user_invites}/{required_invites}</code> জন\n"
+                    f"👉 <i>আরও <b>{remaining} জন</b> মেম্বার অ্যাড করলে লিংক শেয়ারিং অটোমেটিক আনলক হবে!</i>"
+                )
+
+                await _send_and_delete(
+                    context, chat.id,
+                    alert_text,
+                    reply_markup=reply_markup,
+                    delay=8
+                )
+                return
 
     # ── Bad words (স্ট্রাইক সিস্টেম) ────────────
     check_text = (msg.text or msg.caption or "").strip()
@@ -305,11 +355,26 @@ async def cmd_antiflood(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def cmd_antilink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     args = context.args
     if not args or args[0].lower() not in ("on", "off"):
-        await update.message.reply_text("ব্যবহার: /antilink on অথবা /antilink off")
+        await update.message.reply_text(
+            "📖 <b>ব্যবহার:</b> <code>/antilink on</code> অথবা <code>/antilink off</code>\n"
+            "💡 <i>নোট: Anti-link চালু থাকলে ১০ জন মেম্বার অ্যাড করা ইউজাররা অটোমেটিক লিংক শেয়ারের অনুমতি পাবে।</i>",
+            parse_mode="HTML"
+        )
         return
     val = 1 if args[0].lower() == "on" else 0
     await update_chat_setting(update.effective_chat.id, "antilink_enabled", val)
-    await update.message.reply_text(f"Anti-link {'চালু ✅' if val else 'বন্ধ ❌'}")
+    if len(args) > 1 and args[1].isdigit():
+        custom_req = int(args[1])
+        await update_chat_setting(update.effective_chat.id, "antilink_required_invites", custom_req)
+        await update.message.reply_text(
+            f"🔗 Anti-link <b>চালু ✅</b> (প্রতি মেম্বারকে <b>{custom_req} জন</b> অ্যাড করতে হবে)।",
+            parse_mode="HTML"
+        )
+    else:
+        await update.message.reply_text(
+            f"🔗 Anti-link {'<b>চালু ✅</b> (১০ জন মেম্বার অ্যাড করলে অটো আনলক)' if val else '<b>বন্ধ ❌</b>'}",
+            parse_mode="HTML"
+        )
 
 
 @admin_only
