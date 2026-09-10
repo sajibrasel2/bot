@@ -43,8 +43,16 @@ _flood: dict = defaultdict(lambda: defaultdict(list))
 _badword_strikes: dict = defaultdict(lambda: defaultdict(int))
 _badword_strike_time: dict = defaultdict(lambda: defaultdict(float))
 
-BADWORD_STRIKE_WINDOW = 300    # ৫ মিনিটের মধ্যে strike expiry
-BOT_MSG_AUTO_DELETE   = 180    # বটের সতর্কতা মেসেজ ১৮০ সেকেন্ড (৩ মিনিট) পর ডিলিট হবে
+# Anti-link strike tracker: {chat_id: {user_id: strike_count}}
+# Resets when mute is applied or after ANTILINK_STRIKE_WINDOW seconds
+_antilink_strikes: dict = defaultdict(lambda: defaultdict(int))
+_antilink_strike_time: dict = defaultdict(lambda: defaultdict(float))
+
+BADWORD_STRIKE_WINDOW  = 300     # ৫ মিনিটের মধ্যে strike expiry
+ANTILINK_STRIKE_WINDOW = 3600    # ১ ঘণ্টার মধ্যে strike expiry
+ANTILINK_STRIKE_LIMIT  = 3       # সর্বোচ্চ ৩ বার লিংক দিলে মিউট
+ANTILINK_MUTE_DURATION = 3600    # ১ ঘণ্টা (৩৬০০ সেকেন্ড) মিউট
+BOT_MSG_AUTO_DELETE    = 180    # বটের সতর্কতা মেসেজ ১৮০ সেকেন্ড (৩ মিনিট) পর ডিলিট হবে
 
 URL_PATTERN = re.compile(
     r"(https?://|ftp://|www\.|t\.me/|telegram\.me/|telegram\.dog/|tg://|"
@@ -165,13 +173,22 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 # User has added 10 or more members -> AUTOMATICALLY PERMITTED!
                 pass
             else:
-                # User has not added 10 members -> Delete link and warn with User ID & progress
+                # User has not added 10 members -> Delete link, track strike, warn or mute for 1 hour
                 try:
                     await msg.delete()
                 except Exception:
                     pass
 
-                remaining = max(0, required_invites - user_invites)
+                now = time.time()
+                last_strike = _antilink_strike_time[chat.id][user.id]
+                if now - last_strike > ANTILINK_STRIKE_WINDOW:
+                    _antilink_strikes[chat.id][user.id] = 0
+
+                _antilink_strikes[chat.id][user.id] += 1
+                _antilink_strike_time[chat.id][user.id] = now
+                strike_count = _antilink_strikes[chat.id][user.id]
+
+                remaining_invites = max(0, required_invites - user_invites)
 
                 # Generate dynamic invite link
                 invite_link = ""
@@ -199,23 +216,52 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 ]
                 reply_markup = InlineKeyboardMarkup(buttons)
 
-                alert_text = (
-                    f"🔗 <b>লিংক শেয়ার লক করা আছে!</b>\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
-                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"🔒 এই গ্রুপে লিংক শেয়ার করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
-                    f"📊 <b>আপনার বর্তমান অগ্রগতি:</b> <code>{user_invites}/{required_invites}</code> জন\n"
-                    f"👉 <i>আরও <b>{remaining} জন</b> মেম্বার অ্যাড করলে লিংক শেয়ারিং অটোমেটিক আনলক হবে!</i>"
-                )
+                if strike_count >= ANTILINK_STRIKE_LIMIT:
+                    # Strike limit reached (3 times) -> Mute user for 1 hour (3600s)
+                    _antilink_strikes[chat.id][user.id] = 0
+                    try:
+                        await _mute_user(context, chat.id, user, duration=ANTILINK_MUTE_DURATION)
+                    except Exception:
+                        pass
 
-                await _send_and_delete(
-                    context, chat.id,
-                    alert_text,
-                    reply_markup=reply_markup,
-                    delay=BOT_MSG_AUTO_DELETE
-                )
+                    mute_alert = (
+                        f"🚨 <b>মিউট করা হয়েছে! (১ ঘণ্টা)</b>\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
+                        f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
+                        f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"⚠️ <i>শর্ত ({required_invites} জন মেম্বার এড) পূরণ না করে বারবার <b>৩ বার লিংক শেয়ার</b> করার কারণে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
+                        f"👉 <i>আনমিউট হওয়ার পর লিংক দিতে চাইলে আগে অবশ্যই ১০ জন মেম্বার এড করবেন।</i>"
+                    )
+
+                    await _send_and_delete(
+                        context, chat.id,
+                        mute_alert,
+                        reply_markup=reply_markup,
+                        delay=BOT_MSG_AUTO_DELETE
+                    )
+                else:
+                    strikes_left = ANTILINK_STRIKE_LIMIT - strike_count
+                    alert_text = (
+                        f"🔗 <b>লিংক শেয়ার লক করা আছে!</b>\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
+                        f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
+                        f"⚠️ <b>সতর্কতা / স্ট্রাইক:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code>\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"🔒 এই গ্রুপে লিংক শেয়ার করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
+                        f"📊 <b>আপনার বর্তমান অগ্রগতি:</b> <code>{user_invites}/{required_invites}</code> জন\n"
+                        f"👉 <i>আরও <b>{remaining_invites} জন</b> মেম্বার অ্যাড করলে লিংক শেয়ারিং অটোমেটিক আনলক হবে!</i>\n\n"
+                        f"⚠️ <i>সতর্কতা: ৩ বার লিংক দিলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
+                    )
+
+                    await _send_and_delete(
+                        context, chat.id,
+                        alert_text,
+                        reply_markup=reply_markup,
+                        delay=BOT_MSG_AUTO_DELETE
+                    )
                 return
 
     # ── Bad words (স্ট্রাইক সিস্টেম) ────────────
