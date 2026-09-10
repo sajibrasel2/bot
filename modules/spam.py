@@ -1,7 +1,7 @@
 """
 Spam protection module.
 Features:
-  - Auto-delete  : বটের নিজস্ব সতর্কতা মেসেজ ৫ সেকেন্ড পর অটো ডিলিট
+  - Auto-delete  : বটের নিজস্ব সতর্কতা মেসেজ ৩ মিনিট (১৮০ সেকেন্ড) পর অটো ডিলিট
   - Anti-flood   : rate limit — অতিরিক্ত মেসেজে ১ মিনিট মিউট
   - Anti-link    : URL/invite লিংক ডিলিট
   - Bad words    : নিষিদ্ধ শব্দ ডিলিট + ৩বার ব্যবহারে ১ মিনিট মিউট
@@ -44,7 +44,7 @@ _badword_strikes: dict = defaultdict(lambda: defaultdict(int))
 _badword_strike_time: dict = defaultdict(lambda: defaultdict(float))
 
 BADWORD_STRIKE_WINDOW = 300    # ৫ মিনিটের মধ্যে strike expiry
-BOT_MSG_AUTO_DELETE   = 5      # বটের মেসেজ কত সেকেন্ড পর ডিলিট হবে
+BOT_MSG_AUTO_DELETE   = 180    # বটের সতর্কতা মেসেজ ১৮০ সেকেন্ড (৩ মিনিট) পর ডিলিট হবে
 
 URL_PATTERN = re.compile(
     r"(https?://|ftp://|www\.|t\.me/|telegram\.me/|telegram\.dog/|tg://|"
@@ -214,7 +214,7 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     context, chat.id,
                     alert_text,
                     reply_markup=reply_markup,
-                    delay=8
+                    delay=BOT_MSG_AUTO_DELETE
                 )
                 return
 
