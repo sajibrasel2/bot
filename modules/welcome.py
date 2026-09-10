@@ -117,19 +117,18 @@ VIRAL_BUTTON_SETS = {
 }
 
 
-def _build_button(settings: dict):
-    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় ডায়নামিক ও পরিবর্তনশীল ভাইরাল বাটন তৈরি করে।"""
-    custom_btn = (settings.get("welcome_button_text") or "").strip()
-    custom_url = (settings.get("welcome_button_url") or "").strip()
-    
-    # If admin explicitly set a single custom button in dashboard
-    if custom_btn and custom_url:
-        return InlineKeyboardMarkup([[
-            InlineKeyboardButton(text=custom_btn, url=custom_url)
-        ]])
+import urllib.parse
 
-    # Dynamic Rotating Buttons for Maximum CTR & Engagement
-    base_url = custom_url.rstrip("/") if custom_url else "https://techandclick.site/bot"
+# Viral Telegram share URL (Prompts user to forward/share the group link to 5 friends/groups)
+SHARE_GROUP_URL = "https://t.me/alltimefantasyzone"
+SHARE_TEXT_ENCODED = urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + SHARE_GROUP_URL)
+FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_ENCODED}"
+
+
+def _build_button(settings: dict):
+    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় ডায়নামিক ও পরিবর্তনশীল ভাইরাল বাটন তৈরি করে (প্রোমো মেসেজের মতো)।"""
+    custom_url = (settings.get("welcome_button_url") or "").strip()
+    base_url = custom_url.rstrip("/") if (custom_url and "techandclick.site" in custom_url) else "https://techandclick.site/bot"
     
     btn_vid = random.choice(VIRAL_BUTTON_SETS["videos"])
     btn_cat = random.choice(VIRAL_BUTTON_SETS["categories"])
@@ -137,6 +136,7 @@ def _build_button(settings: dict):
     extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
 
     return InlineKeyboardMarkup([
+        [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
         [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
         [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],
         [InlineKeyboardButton(text=btn_girl, url=f"{base_url}/girls.html")],
