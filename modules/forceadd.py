@@ -87,6 +87,10 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
     if chat.type == "private":
         return
 
+    # Ignore service status messages (e.g. member joins, leaves, pins) so welcome and tracking always run
+    if bool(msg.new_chat_members or msg.left_chat_member or msg.pinned_message or msg.group_chat_created or msg.supergroup_chat_created):
+        return
+
     # Check if user is an admin or owner
     is_adm = (user.id == OWNER_ID) or await is_admin(update, user_id=user.id)
     if is_adm:
@@ -346,10 +350,10 @@ def register(app: Application) -> None:
     # Handler for members adding friends
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_member_invites), group=1)
 
-    # Handler for checking message lock (Runs at top priority group -1 before any other group)
+    # Handler for checking message lock (Runs at top priority group -1 for user messages)
     app.add_handler(
         MessageHandler(
-            filters.ALL & ~filters.COMMAND & filters.ChatType.GROUPS,
+            (filters.TEXT | filters.ATTACHMENT) & ~filters.COMMAND & filters.ChatType.GROUPS,
             check_force_add_lock
         ),
         group=-1
