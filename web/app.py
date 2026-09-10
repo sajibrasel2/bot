@@ -15,13 +15,20 @@ import pymysql.cursors
 from functools import wraps
 from flask import (
     Flask, render_template, request, redirect,
-    url_for, session, jsonify, flash
+    url_for, session, jsonify, flash, make_response
 )
 from config import MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB
 
 app = Flask(__name__)
 # Fix #38: secret key from env, fallback to random bytes
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(24)
+
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 # Fix #15: credentials from .env
 ADMIN_USERNAME = os.environ.get("PANEL_USER", "admin")
@@ -291,8 +298,22 @@ def dashboard():
     index_path = os.path.join(root_dir, "index.html")
     if os.path.exists(index_path):
         with open(index_path, "r", encoding="utf-8") as f:
-            return f.read()
+            resp = make_response(f.read())
+            resp.headers["Content-Type"] = "text/html; charset=utf-8"
+            return resp
     return "Landing page not found", 404
+
+
+@app.route("/<string:page_name>.html")
+def serve_html_page(page_name):
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    page_path = os.path.join(root_dir, f"{page_name}.html")
+    if os.path.exists(page_path) and os.path.isfile(page_path):
+        with open(page_path, "r", encoding="utf-8") as f:
+            resp = make_response(f.read())
+            resp.headers["Content-Type"] = "text/html; charset=utf-8"
+            return resp
+    return "Page not found", 404
 
 
 @app.route("/group/<string:chat_id>")

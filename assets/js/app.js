@@ -202,7 +202,13 @@ async function checkRealDatabaseInvites(isAutoCheck = false) {
 
   try {
     const cleanVal = encodeURIComponent(val.replace(/^@/, ''));
-    const res = await fetch(`api/check_invites.php?user_id=${cleanVal}&t=${Date.now()}`);
+    const res = await fetch(`api/check_invites.php?user_id=${cleanVal}&_nocache=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     const data = await res.json();
 
     if (btnEl) {
