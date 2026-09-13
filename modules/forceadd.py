@@ -86,7 +86,7 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
     chat = update.effective_chat
     user = update.effective_user
 
-    if not msg or not chat or not user or user.is_bot:
+    if not msg or not chat or not user:
         return
     if chat.type == "private":
         return
@@ -95,9 +95,19 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
     if bool(msg.new_chat_members or msg.left_chat_member or msg.pinned_message or msg.group_chat_created or msg.supergroup_chat_created):
         return
 
-    # Check if user is an admin or owner
+    # Check if user is our own bot, owner, or chat admin
+    if user.id == context.bot.id:
+        return
     is_adm = (user.id == OWNER_ID) or await is_admin(update, user_id=user.id)
     if is_adm:
+        return
+
+    # Delete messages from unauthorized non-admin external bots immediately
+    if user.is_bot:
+        try:
+            await msg.delete()
+        except Exception:
+            pass
         return
 
     # Exempt public allowed commands

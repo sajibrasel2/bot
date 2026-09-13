@@ -67,7 +67,7 @@ BOT_MSG_AUTO_DELETE        = 180    # বটের সতর্কতা মে�
 URL_PATTERN = re.compile(
     r"(https?://|ftp://|www\.|t\.me/|telegram\.me/|telegram\.dog/|tg://|"
     r"wa\.me/|discord\.gg/|bit\.ly/|tinyurl\.com/|cutt\.ly/|rb\.gy/|is\.gd/|"
-    r"\b[a-zA-Z0-9.-]+\.(com|net|org|io|me|info|xyz|site|top|online|club|live|vip|link|app|co|bd|in|gg|ly|be|cc|ru|biz|tech|store|shop|pro|win|fun|icu|page)\b(/[^\s]*)?)",
+    r"@[a-zA-Z0-9_]{3,}|\b[a-zA-Z0-9.-]+\.(com|net|org|io|me|info|xyz|site|top|online|club|live|vip|link|app|co|bd|in|gg|ly|be|cc|ru|biz|tech|store|shop|pro|win|fun|icu|page)\b(/[^\s]*)?)",
     re.IGNORECASE
 )
 
@@ -179,21 +179,38 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 pass
             return
 
-    # ── Anti-link (১০ জন মেম্বার অ্যাড করলে অটোমেটিক লিংক শেয়ার অনুমতি) ───────────
+    # ── Anti-link / Anti-Promo (১০ জন মেম্বার অ্যাড করলে অটোমেটিক লিংক ও প্রমোশন অনুমতি) ───────────
     if settings.get("antilink_enabled", 0):
         content_text = (msg.text or msg.caption or "").strip()
         has_link = False
+        bot_uname = (context.bot.username or "").lower()
 
-        # 1. Regex check on text or caption
-        if content_text and URL_PATTERN.search(content_text):
-            has_link = True
-
-        # 2. Check Telegram entities (for text or media captions)
-        entities = list(msg.entities or []) + list(msg.caption_entities or [])
-        for ent in entities:
-            if ent.type in ("url", "text_link"):
+        # 1. Regex check on text or caption (URLs, t.me links, @mentions)
+        if content_text:
+            for match in URL_PATTERN.finditer(content_text):
+                matched_str = match.group(0).lower().lstrip("@")
+                if bot_uname and matched_str == bot_uname:
+                    continue
                 has_link = True
                 break
+
+        # 2. Check Telegram entities (for text or media captions)
+        if not has_link:
+            entities = list(msg.entities or []) + list(msg.caption_entities or [])
+            for ent in entities:
+                if ent.type in ("url", "text_link", "text_mention"):
+                    has_link = True
+                    break
+                elif ent.type == "mention":
+                    try:
+                        mention_str = content_text[ent.offset : ent.offset + ent.length].lstrip("@").lower()
+                        if bot_uname and mention_str == bot_uname:
+                            continue
+                        has_link = True
+                        break
+                    except Exception:
+                        has_link = True
+                        break
 
         if has_link:
             # Check user confirmed invites from database
@@ -204,7 +221,7 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 # User has added 10 or more members -> AUTOMATICALLY PERMITTED!
                 pass
             else:
-                # User has not added 10 members -> Delete link, track strike, warn or mute for 1 hour
+                # User has not added 10 members -> Delete link/promo, track strike, warn or mute for 1 hour
                 try:
                     await msg.delete()
                 except Exception:
@@ -238,10 +255,10 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                         f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
                         f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        f"⚠️ <i>শর্ত ({required_invites} জন মেম্বার এড) পূরণ না করে বারবার <b>৩ বার লিংক শেয়ার</b> করার কারণে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
+                        f"⚠️ <i>শর্ত ({required_invites} জন মেম্বার এড) পূরণ না করে বারবার <b>৩ বার লিংক বা চ্যানেল/বট প্রমোশন</b> করার কারণে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
                         f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করুন:</b>\n"
                         f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>\n\n"
-                        f"👉 <i>আনমিউট হওয়ার পর লিংক দিতে চাইলে আগে অবশ্যই ১০ জন মেম্বার এড করবেন।</i>"
+                        f"👉 <i>আনমিউট হওয়ার পর লিংক বা প্রমোশন দিতে চাইলে আগে অবশ্যই ১০ জন মেম্বার এড করবেন।</i>"
                     )
 
                     await _send_and_delete(
@@ -253,18 +270,18 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 else:
                     strikes_left = ANTILINK_STRIKE_LIMIT - strike_count
                     alert_text = (
-                        f"🔗 <b>লিংক শেয়ার লক করা আছে!</b>\n"
+                        f"🔗 <b>লিংক ও চ্যানেল/বট প্রমোশন লক!</b>\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                         f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
                         f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
                         f"⚠️ <b>সতর্কতা / স্ট্রাইক:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code>\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        f"🔒 এই গ্রুপে লিংক শেয়ার করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
+                        f"🔒 এই গ্রুপে লিংক, চ্যানেল বা বট ইউজারনেম শেয়ার করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
                         f"📊 <b>আপনার বর্তমান অগ্রগতি:</b> <code>{user_invites}/{required_invites}</code> জন\n"
-                        f"👉 <i>আরও <b>{remaining_invites} জন</b> মেম্বার অ্যাড করলে লিংক শেয়ারিং অটোমেটিক আনলক হবে!</i>\n\n"
+                        f"👉 <i>আরও <b>{remaining_invites} জন</b> মেম্বার অ্যাড করলে সুবিধাটি অটোমেটিক আনলক হবে!</i>\n\n"
                         f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
                         f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>\n\n"
-                        f"⚠️ <i>সতর্কতা: ৩ বার লিংক দিলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
+                        f"⚠️ <i>সতর্কতা: ৩ বার লিংক বা প্রমোশন দিলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
                     )
 
                     await _send_and_delete(
@@ -275,12 +292,15 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     )
                 return
 
-    # ── Bad words (স্ট্রাইক সিস্টেম) ────────────
+    # ── Bad words / Spam keywords (স্ট্রাইক সিস্টেম) ────────────
     check_text = (msg.text or msg.caption or "").strip()
     if settings.get("badwords_enabled", 1) and check_text:
         bw_raw = settings.get("badwords_list")
         if not bw_raw or not bw_raw.strip():
-            bw_raw = "ছেলে,ও ছেলে,স্কেমার,বাটপার,প্রতারক,chele,o chele,sele,o sele,chala,scammer,skeimer,skemer,scamer,skeimar"
+            bw_raw = (
+                "ছেলে,ও ছেলে,স্কেমার,বাটপার,প্রতারক,chele,o chele,sele,o sele,chala,scammer,skeimer,skemer,scamer,skeimar,"
+                "গ্রুপ লাগলে,ইনবক্স করো,ইনবক্সে আসো,ইনবক্স নক,ভিডিও সেল,সেল হবে,চ্যানেল সাবস্ক্রাইব,dm me,pm me,contact me,paid group,ভিডিও গ্রুপ"
+            )
         bad_words = [w.strip().lower() for w in bw_raw.split(",") if w.strip()]
         text_lower = check_text.lower()
 
