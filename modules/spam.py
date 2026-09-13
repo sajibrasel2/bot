@@ -48,11 +48,21 @@ _badword_strike_time: dict = defaultdict(lambda: defaultdict(float))
 _antilink_strikes: dict = defaultdict(lambda: defaultdict(int))
 _antilink_strike_time: dict = defaultdict(lambda: defaultdict(float))
 
-BADWORD_STRIKE_WINDOW  = 300     # ৫ মিনিটের মধ্যে strike expiry
-ANTILINK_STRIKE_WINDOW = 3600    # ১ ঘণ্টার মধ্যে strike expiry
-ANTILINK_STRIKE_LIMIT  = 3       # সর্বোচ্চ ৩ বার লিংক দিলে মিউট
-ANTILINK_MUTE_DURATION = 3600    # ১ ঘণ্টা (৩৬০০ সেকেন্ড) মিউট
-BOT_MSG_AUTO_DELETE    = 180    # বটের সতর্কতা মেসেজ ১৮০ সেকেন্ড (৩ মিনিট) পর ডিলিট হবে
+# Anti-forward strike tracker: {chat_id: {user_id: strike_count}}
+# Resets when mute is applied or after ANTIFORWARD_STRIKE_WINDOW seconds
+_antiforward_strikes: dict = defaultdict(lambda: defaultdict(int))
+_antiforward_strike_time: dict = defaultdict(lambda: defaultdict(float))
+
+BADWORD_STRIKE_WINDOW      = 300     # ৫ মিনিটের মধ্যে strike expiry
+ANTILINK_STRIKE_WINDOW     = 3600    # ১ ঘণ্টার মধ্যে strike expiry
+ANTILINK_STRIKE_LIMIT      = 3       # সর্বোচ্চ ৩ বার লিংক দিলে মিউট
+ANTILINK_MUTE_DURATION     = 3600    # ১ ঘণ্টা (৩৬০০ সেকেন্ড) মিউট
+
+ANTIFORWARD_STRIKE_WINDOW  = 3600    # ১ ঘণ্টার মধ্যে strike expiry
+ANTIFORWARD_STRIKE_LIMIT   = 3       # সর্বোচ্চ ৩ বার ফরোয়ার্ড দিলে মিউট
+ANTIFORWARD_MUTE_DURATION  = 3600    # ১ ঘণ্টা (৩৬০০ সেকেন্ড) মিউট
+
+BOT_MSG_AUTO_DELETE        = 180    # বটের সতর্কতা মেসেজ ১৮০ সেকেন্ড (৩ মিনিট) পর ডিলিট হবে
 
 URL_PATTERN = re.compile(
     r"(https?://|ftp://|www\.|t\.me/|telegram\.me/|telegram\.dog/|tg://|"
@@ -344,24 +354,118 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 )
             return
 
-    # ── Anti-forward (DB-driven) ──────────────────
-    forward_blocked = (
+    # ── Anti-forward (১০ জন মেম্বার অ্যাড করলে অটোমেটিক ফরোয়ার্ড অনুমতি) ─────────
+    forward_blocked = bool(
         settings.get("antiforward_enabled", 0) or
         settings.get("lock_messages", 0)
     )
-    if forward_blocked and msg.forward_origin is not None:
-        try:
-            await msg.delete()
-        except Exception:
+    is_forwarded = bool(
+        getattr(msg, "forward_origin", None) is not None or
+        getattr(msg, "forward_date", None) is not None or
+        getattr(msg, "forward_from", None) is not None or
+        getattr(msg, "forward_from_chat", None) is not None or
+        getattr(msg, "forward_sender_name", None) is not None
+    )
+
+    if forward_blocked and is_forwarded:
+        # Check user confirmed invites from database
+        user_invites = await get_user_invite_count(chat.id, user.id)
+        required_invites = int(settings.get("antiforward_required_invites") or settings.get("antilink_required_invites") or 10)
+
+        if user_invites >= required_invites:
+            # User has added 10 or more members -> AUTOMATICALLY PERMITTED!
             pass
-        await _send_and_delete(
-            context, chat.id,
-            f"📵 <b>ফরোয়ার্ড নিষিদ্ধ!</b>\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"👤 {mention_html(user.id, user.first_name)}\n"
-            f"🚫 এই গ্রুপে ফরোয়ার্ড করা যাবে না।"
-        )
-        return
+        else:
+            # User has not added 10 members -> Delete forwarded msg, track strike, warn or mute for 1 hour
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+
+            now = time.time()
+            last_strike = _antiforward_strike_time[chat.id][user.id]
+            if now - last_strike > ANTIFORWARD_STRIKE_WINDOW:
+                _antiforward_strikes[chat.id][user.id] = 0
+
+            _antiforward_strikes[chat.id][user.id] += 1
+            _antiforward_strike_time[chat.id][user.id] = now
+            strike_count = _antiforward_strikes[chat.id][user.id]
+
+            remaining_invites = max(0, required_invites - user_invites)
+
+            # Generate dynamic invite link
+            invite_link = ""
+            try:
+                if chat.username:
+                    invite_link = f"https://t.me/{chat.username}"
+                elif chat.invite_link:
+                    invite_link = chat.invite_link
+                else:
+                    invite_link = await chat.export_invite_link()
+            except Exception:
+                invite_link = f"https://t.me/{chat.username}" if chat.username else "https://t.me/alltimefantasyzone"
+
+            share_text = urllib.parse.quote(f"🔥 {chat.title or 'আমাদের গ্রুপে'} জয়েন করুন এবং সরাসরি চ্যাট করুন! 💬")
+            share_url = f"https://t.me/share/url?url={invite_link}&text={share_text}"
+
+            buttons = [
+                [
+                    InlineKeyboardButton(text="👥 মেম্বার অ্যাড / ইনভাইট করুন", url=share_url)
+                ],
+                [
+                    InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
+                    InlineKeyboardButton(text="🏆 সেরা ইনভাইটার", callback_data=f"topinv_{chat.id}")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(buttons)
+
+            if strike_count >= ANTIFORWARD_STRIKE_LIMIT:
+                # Strike limit reached (3 times) -> Mute user for 1 hour (3600s)
+                _antiforward_strikes[chat.id][user.id] = 0
+                try:
+                    await _mute_user(context, chat.id, user, duration=ANTIFORWARD_MUTE_DURATION)
+                except Exception:
+                    pass
+
+                mute_alert = (
+                    f"🚨 <b>মিউট করা হয়েছে! (১ ঘণ্টা)</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
+                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
+                    f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"⚠️ <i>শর্ত ({required_invites} জন মেম্বার এড) পূরণ না করে বারবার <b>৩ বার মেসেজ ফরোয়ার্ড</b> করার কারণে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
+                    f"👉 <i>আনমিউট হওয়ার পর ফরোয়ার্ড করতে চাইলে আগে অবশ্যই ১০ জন মেম্বার এড করবেন।</i>"
+                )
+
+                await _send_and_delete(
+                    context, chat.id,
+                    mute_alert,
+                    reply_markup=reply_markup,
+                    delay=BOT_MSG_AUTO_DELETE
+                )
+            else:
+                strikes_left = ANTIFORWARD_STRIKE_LIMIT - strike_count
+                alert_text = (
+                    f"📵 <b>ফরোয়ার্ড মেসেজ লক করা আছে!</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
+                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
+                    f"⚠️ <b>সতর্কতা / স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🔒 এই গ্রুপে মেসেজ বা মিডিয়া ফরোয়ার্ড করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
+                    f"📊 <b>আপনার বর্তমান অগ্রগতি:</b> <code>{user_invites}/{required_invites}</code> জন\n"
+                    f"👉 <i>আরও <b>{remaining_invites} জন</b> মেম্বার অ্যাড করলে ফরোয়ার্ড সুবিধা অটোমেটিক আনলক হবে!</i>\n\n"
+                    f"⚠️ <i>সতর্কতা: ৩ বার ফরোয়ার্ড করলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
+                )
+
+                await _send_and_delete(
+                    context, chat.id,
+                    alert_text,
+                    reply_markup=reply_markup,
+                    delay=BOT_MSG_AUTO_DELETE
+                )
+            return
 
     # ── Media lock (DB-driven: lock_media_msg) ────
     if settings.get("lock_media_msg", 0):
@@ -427,11 +531,27 @@ async def cmd_antilink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def cmd_antiforward(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     args = context.args
     if not args or args[0].lower() not in ("on", "off"):
-        await update.message.reply_text("ব্যবহার: /antiforward on অথবা /antiforward off")
+        await update.message.reply_text(
+            "ব্যবহার: <code>/antiforward on</code> অথবা <code>/antiforward off</code>\n"
+            "নির্দিষ্ট মেম্বার সংখ্যা সেট করতে: <code>/antiforward on 10</code>\n\n"
+            "💡 <i>নোট: Anti-forward চালু থাকলে ১০ জন মেম্বার অ্যাড করা ইউজাররা স্বয়ংক্রিয়ভাবে ফরোয়ার্ড করার অনুমতি পাবে।</i>",
+            parse_mode="HTML"
+        )
         return
     val = 1 if args[0].lower() == "on" else 0
     await update_chat_setting(update.effective_chat.id, "antiforward_enabled", val)
-    await update.message.reply_text(f"Anti-forward {'চালু ✅' if val else 'বন্ধ ❌'}")
+    if val and len(args) > 1 and args[1].isdigit():
+        custom_req = max(1, int(args[1]))
+        await update_chat_setting(update.effective_chat.id, "antiforward_required_invites", custom_req)
+        await update.message.reply_text(
+            f"📵 Anti-forward <b>চালু ✅</b> (প্রতি মেম্বারকে <b>{custom_req} জন</b> অ্যাড করতে হবে)।",
+            parse_mode="HTML"
+        )
+    else:
+        await update.message.reply_text(
+            f"📵 Anti-forward {'<b>চালু ✅</b> (১০ জন মেম্বার অ্যাড করলে অটো আনলক)' if val else '<b>বন্ধ ❌</b>'}",
+            parse_mode="HTML"
+        )
 
 
 @admin_only

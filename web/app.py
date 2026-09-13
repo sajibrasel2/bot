@@ -46,6 +46,7 @@ _SAFE_KEYS = {
     "chat_title", "member_count",
     "welcome_sticker", "promo_sticker",
     "force_add_enabled", "force_add_count",
+    "antilink_required_invites", "antiforward_required_invites",
 }
 
 # ── Jinja2 filters ────────────────────────────────
@@ -136,7 +137,9 @@ def ensure_db_schema():
                     ("welcome_sticker", "VARCHAR(255) DEFAULT ''"),
                     ("promo_sticker", "VARCHAR(255) DEFAULT ''"),
                     ("force_add_enabled", "TINYINT DEFAULT 0"),
-                    ("force_add_count", "INT DEFAULT 5")
+                    ("force_add_count", "INT DEFAULT 5"),
+                    ("antilink_required_invites", "INT DEFAULT 10"),
+                    ("antiforward_required_invites", "INT DEFAULT 10")
                 ]
                 for col_name, col_type in columns_to_add:
                     cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
@@ -354,14 +357,16 @@ def group_spam(chat_id):
     if request.method == "POST":
         save_settings(chat_id, {
             "antiflood_enabled":     1 if request.form.get("antiflood_enabled") else 0,
-            "antilink_enabled":      1 if request.form.get("antilink_enabled")  else 0,
-            "badwords_enabled":      1 if request.form.get("badwords_enabled")  else 0,
-            "badwords_list":         request.form.get("badwords_list", "")[:2000],
-            "antiforward_enabled":   1 if request.form.get("antiforward_enabled") else 0,
-            "lock_media_msg":        1 if request.form.get("lock_media_msg") else 0,
-            "lock_stickers":         1 if request.form.get("lock_stickers") else 0,
-            "badword_strike_limit":  max(1, min(5, int(request.form.get("badword_strike_limit",  3) or 3))),
-            "badword_mute_duration": max(60, int(request.form.get("badword_mute_duration", 60) or 60)),
+            "antilink_enabled":             1 if request.form.get("antilink_enabled")  else 0,
+            "antilink_required_invites":    max(1, int(request.form.get("antilink_required_invites", 10) or 10)),
+            "badwords_enabled":             1 if request.form.get("badwords_enabled")  else 0,
+            "badwords_list":                request.form.get("badwords_list", "")[:2000],
+            "antiforward_enabled":          1 if request.form.get("antiforward_enabled") else 0,
+            "antiforward_required_invites": max(1, int(request.form.get("antiforward_required_invites", 10) or 10)),
+            "lock_media_msg":               1 if request.form.get("lock_media_msg") else 0,
+            "lock_stickers":                1 if request.form.get("lock_stickers") else 0,
+            "badword_strike_limit":         max(1, min(5, int(request.form.get("badword_strike_limit",  3) or 3))),
+            "badword_mute_duration":        max(60, int(request.form.get("badword_mute_duration", 60) or 60)),
         })
         flash("✅ স্প্যাম সেটিংস সেভ হয়েছে!", "success")
         return redirect(url_for("group_spam", chat_id=chat_id))

@@ -87,7 +87,9 @@ async def init_db() -> None:
                 ("welcome_sticker", "VARCHAR(255) DEFAULT ''"),
                 ("promo_sticker", "VARCHAR(255) DEFAULT ''"),
                 ("force_add_enabled", "TINYINT DEFAULT 0"),
-                ("force_add_count", "INT DEFAULT 5")
+                ("force_add_count", "INT DEFAULT 5"),
+                ("antilink_required_invites", "INT DEFAULT 10"),
+                ("antiforward_required_invites", "INT DEFAULT 10")
             ]
             for col_name, col_type in columns_to_add:
                 await cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
@@ -245,7 +247,7 @@ _VALID_SETTINGS_KEYS = {
     "welcome_button_text", "welcome_button_url",
     "welcome_sticker", "promo_sticker",
     "force_add_enabled", "force_add_count",
-    "antilink_required_invites",
+    "antilink_required_invites", "antiforward_required_invites",
 }
 
 
@@ -285,7 +287,8 @@ async def get_chat_settings(chat_id: int) -> dict:
         "lock_media": 0, "lock_stickers": 0,
         "max_warns": 3, "warn_action": "ban",
         "badword_strike_limit": 3, "badword_mute_duration": 60,
-        "antiforward_enabled": 0, "lock_media_msg": 0,
+        "antiforward_enabled": 0, "antiforward_required_invites": 10,
+        "lock_media_msg": 0,
         "welcome_button_text": "🔞 সরাসরি চ্যাট করুন (Live)", "welcome_button_url": "https://techandclick.site/bot/",
         "welcome_sticker": DEFAULT_WELCOME_STICKER, "promo_sticker": DEFAULT_PROMO_STICKER,
         "force_add_enabled": 0, "force_add_count": 5,
