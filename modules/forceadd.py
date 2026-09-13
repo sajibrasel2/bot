@@ -21,6 +21,8 @@ from config import OWNER_ID
 
 logger = logging.getLogger(__name__)
 
+MAIN_DARK_ROMANCE_GROUP = "https://t.me/alltimefantasyzone"
+
 
 async def _auto_delete(message, delay: int = 7) -> None:
     """Auto-deletes a message after specified seconds."""
@@ -67,7 +69,9 @@ async def handle_member_invites(update: Update, context: ContextTypes.DEFAULT_TY
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"✅ আপনি সফলভাবে <b>{total_invites} জন</b> বন্ধুকে গ্রুপে অ্যাড করেছেন।\n"
                     f"🔓 আপনার চ্যাট ও মেসেজ লক <b>সম্পূর্ণ আনলক</b> করা হয়েছে!\n"
-                    f"💬 এখন আপনি গ্রুপে যেকোনো মেসেজ ও চ্যাট করতে পারবেন।"
+                    f"💬 এখন আপনি গ্রুপে যেকোনো মেসেজ ও চ্যাট করতে পারবেন।\n\n"
+                    f"🔞 <b>আমাদের মূল Dark Romance গ্রুপে জয়েন করুন:</b>\n"
+                    f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>"
                 )
                 asyncio.create_task(_auto_delete(congrats, 15))
             except Exception:
@@ -127,24 +131,18 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
             f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
             f"🔒 গ্রুপে মেসেজ লিখতে ও চ্যাট করতে হলে আপনাকে অবশ্যই <b>{req_count} জন বন্ধুকে</b> অ্যাড করতে হবে।\n\n"
             f"📊 <b>আপনার অগ্রগতি:</b> <code>{user_invites}/{req_count}</code> জন\n"
-            f"👉 <i>দয়া করে আরও <b>{remaining} জন</b> বন্ধুকে গ্রুপে অ্যাড করে চ্যাট আনলক করুন!</i>"
+            f"👉 <i>দয়া করে আরও <b>{remaining} জন</b> বন্ধুকে গ্রুপে অ্যাড করে চ্যাট আনলক করুন!</i>\n\n"
+            f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
+            f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>"
         )
 
-        invite_link = ""
-        try:
-            if chat.username:
-                invite_link = f"https://t.me/{chat.username}"
-            elif chat.invite_link:
-                invite_link = chat.invite_link
-            else:
-                invite_link = await chat.export_invite_link()
-        except Exception:
-            invite_link = f"https://t.me/{chat.username}" if chat.username else "https://techandclick.site/bot/"
-
-        share_text = urllib.parse.quote(f"🔥 {chat.title or 'আমাদের গ্রুপে'} জয়েন করুন এবং সরাসরি আড্ডা দিন! 💬")
-        share_url = f"https://t.me/share/url?url={invite_link}&text={share_text}"
+        share_text = urllib.parse.quote(f"🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
+        share_url = f"https://t.me/share/url?url={MAIN_DARK_ROMANCE_GROUP}&text={share_text}"
 
         buttons = [
+            [
+                InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=MAIN_DARK_ROMANCE_GROUP)
+            ],
             [
                 InlineKeyboardButton(text="👥 বন্ধুদের ইনভাইট পাঠান (Invite/Share)", url=share_url),
             ],

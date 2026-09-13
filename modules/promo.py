@@ -113,6 +113,7 @@ def generate_promo_message(users: list) -> tuple:
     extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
 
     keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url="https://t.me/alltimefantasyzone")],
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
         [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
         [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],
