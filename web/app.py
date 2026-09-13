@@ -514,6 +514,38 @@ def group_banlist(chat_id):
                            error=error, active="groups")
 
 
+def _get_global_settings():
+    _execute("""
+        CREATE TABLE IF NOT EXISTS global_settings (
+            setting_key VARCHAR(100) PRIMARY KEY,
+            setting_val TEXT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+    rows = _query("SELECT setting_key, setting_val FROM global_settings", fetchall=True) or []
+    settings = {
+        "site_gate_enabled": "1",
+        "site_gate_required_invites": "10",
+        "site_gate_custom_link": "https://t.me/alltimefantasyzone"
+    }
+    for r in rows:
+        settings[r["setting_key"]] = r["setting_val"]
+    return settings
+
+
+def _set_global_setting(key, val):
+    _execute("""
+        CREATE TABLE IF NOT EXISTS global_settings (
+            setting_key VARCHAR(100) PRIMARY KEY,
+            setting_val TEXT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+    _execute(
+        "INSERT INTO global_settings (setting_key, setting_val) VALUES (%s, %s) "
+        "ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)",
+        (key, str(val))
+    )
+
+
 # ── API ───────────────────────────────────────────
 
 @app.route("/api/stats")
@@ -524,6 +556,32 @@ def api_stats():
 
 @app.route("/api/check_invites", methods=["GET", "POST"])
 def api_check_invites():
+    settings = _get_global_settings()
+    gate_enabled = (settings.get("site_gate_enabled", "1") == "1")
+    required = int(settings.get("site_gate_required_invites", "10") or 10)
+    custom_link = settings.get("site_gate_custom_link", "https://t.me/alltimefantasyzone")
+
+    action = request.args.get("action") or (request.get_json(silent=True) or {}).get("action") or ""
+    if action == "gate_status":
+        return jsonify({
+            "success": True,
+            "gate_enabled": gate_enabled,
+            "site_gate_enabled": 1 if gate_enabled else 0,
+            "required": required,
+            "custom_link": custom_link
+        })
+
+    if not gate_enabled:
+        return jsonify({
+            "success": True,
+            "unlocked": True,
+            "gate_enabled": False,
+            "invites": 0,
+            "required": 0,
+            "remaining": 0,
+            "message": "টেলিগ্রাম ভেরিফিকেশন গেট বন্ধ রয়েছে, সরাসরি আনলক করা হয়েছে।"
+        })
+
     raw_input = request.args.get("user_id") or request.args.get("username") or ""
     if not raw_input and request.is_json:
         data = request.get_json(silent=True) or {}
@@ -537,7 +595,7 @@ def api_check_invites():
             "success": False,
             "unlocked": False,
             "invites": 0,
-            "required": 10,
+            "required": required,
             "message": "অনুগ্রহ করে আপনার টেলিগ্রাম ইউজার আইডি বা @ইউজারনেম লিখুন।"
         })
 
@@ -564,15 +622,14 @@ def api_check_invites():
             "success": False,
             "unlocked": False,
             "invites": 0,
-            "required": 10,
-            "remaining": 10,
+            "required": required,
+            "remaining": required,
             "message": f"❌ টেলিগ্রাম আইডি '{raw_input}' পাওয়া যায়নি। আপনি কি গ্রুপে কাউকে এড করেছেন? টেলিগ্রাম গ্রুপে /myinvites লিখে আপনার সঠিক আইডি দেখে নিন।"
         })
 
     # Count actual invites
     row = _query("SELECT COUNT(*) as cnt FROM user_invites WHERE inviter_id=%s", (user_id,), fetchone=True)
     invite_count = int(row.get("cnt") or 0) if row else 0
-    required = 10
     unlocked = (invite_count >= required)
     remaining = max(0, required - invite_count)
 
@@ -587,6 +644,33 @@ def api_check_invites():
         "unlocked": unlocked,
         "message": f"✅ অভিনন্দন! আপনি সফলভাবে {invite_count} জন মেম্বার এড করেছেন।" if unlocked else f"❌ আপনি মাত্র {invite_count} জন মেম্বার এড করেছেন! সাইটের কন্টেন্ট আনলক করতে আরও {remaining} জন বন্ধুকে টেলিগ্রাম গ্রুপে এড করতে হবে।"
     })
+
+
+@app.route("/site_settings", methods=["GET", "POST"])
+@login_required
+def site_settings():
+    if request.method == "POST":
+        gate_en = "1" if request.form.get("site_gate_enabled") == "1" else "0"
+        req_inv = request.form.get("site_gate_required_invites", "10").strip()
+        custom_link = request.form.get("site_gate_custom_link", "https://t.me/alltimefantasyzone").strip()
+
+        try:
+            req_inv_int = max(1, int(req_inv))
+        except Exception:
+            req_inv_int = 10
+
+        try:
+            _set_global_setting("site_gate_enabled", gate_en)
+            _set_global_setting("site_gate_required_invites", str(req_inv_int))
+            _set_global_setting("site_gate_custom_link", custom_link)
+            flash("✅ ওয়েবসাইট গেট সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে।", "success")
+        except Exception as e:
+            flash(f"❌ সেটিংস আপডেট ব্যর্থ: {e}", "error")
+
+        return redirect(url_for("site_settings"))
+
+    settings = _get_global_settings()
+    return render_template("site_settings.html", settings=settings, active="site_settings")
 
 
 @app.route("/bot_admins", methods=["GET", "POST"])
@@ -627,5 +711,6 @@ def bot_admins():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
+
 
 

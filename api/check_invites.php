@@ -90,6 +90,51 @@ if (!$pdo) {
     exit;
 }
 
+// Fetch Global Settings
+$site_gate_enabled = 1;
+$required = 10;
+$custom_link = 'https://t.me/alltimefantasyzone';
+
+try {
+    $stmt = $pdo->query("SELECT setting_key, setting_val FROM global_settings");
+    if ($stmt) {
+        $rows = $stmt->fetchAll();
+        foreach ($rows as $r) {
+            if ($r['setting_key'] === 'site_gate_enabled') $site_gate_enabled = (int)$r['setting_val'];
+            if ($r['setting_key'] === 'site_gate_required_invites') $required = max(1, (int)$r['setting_val']);
+            if ($r['setting_key'] === 'site_gate_custom_link') $custom_link = trim($r['setting_val']);
+        }
+    }
+} catch (Exception $e) {}
+
+// Check action parameter for gate_status
+$action = trim($_GET['action'] ?? $_POST['action'] ?? '');
+if ($action === 'gate_status') {
+    echo json_encode([
+        'success' => true,
+        'gate_enabled' => ($site_gate_enabled === 1),
+        'site_gate_enabled' => $site_gate_enabled,
+        'required' => $required,
+        'custom_link' => $custom_link
+    ]);
+    exit;
+}
+
+// If gate is disabled globally by Admin, bypass/unlock immediately
+if ($site_gate_enabled === 0) {
+    echo json_encode([
+        'success' => true,
+        'unlocked' => true,
+        'gate_enabled' => false,
+        'site_gate_enabled' => 0,
+        'invites' => 0,
+        'required' => 0,
+        'remaining' => 0,
+        'message' => 'টেলিগ্রাম ভেরিফিকেশন গেট বর্তমানে বন্ধ রয়েছে, সরাসরি আনলক করা হয়েছে।'
+    ]);
+    exit;
+}
+
 // Read input parameter: user_id or username
 $raw_input = trim($_GET['user_id'] ?? $_GET['username'] ?? $_POST['user_id'] ?? $_POST['username'] ?? '');
 
@@ -98,7 +143,7 @@ if (empty($raw_input)) {
         'success' => false,
         'unlocked' => false,
         'invites' => 0,
-        'required' => 10,
+        'required' => $required,
         'message' => 'অনুগ্রহ করে আপনার টেলিগ্রাম ইউজার আইডি বা @ইউজারনেম লিখুন।'
     ]);
     exit;
@@ -141,8 +186,8 @@ if (!$user_id) {
         'success' => false,
         'unlocked' => false,
         'invites' => 0,
-        'required' => 10,
-        'remaining' => 10,
+        'required' => $required,
+        'remaining' => $required,
         'message' => "❌ টেলিগ্রাম ইউজার '{$raw_input}' পাওয়া যায়নি। আপনি কি টেলিগ্রাম গ্রুপে জয়েন বা মেম্বার এড করেছেন? সঠিক আইডি জানতে টেলিগ্রাম গ্রুপে /myinvites লিখুন।"
     ]);
     exit;
@@ -159,7 +204,6 @@ try {
     $invite_count = 0;
 }
 
-$required = 10;
 $unlocked = ($invite_count >= $required);
 $remaining = max(0, $required - $invite_count);
 

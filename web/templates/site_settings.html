@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}ওয়েবসাইট সেটিংস{% endblock %}
+{% block page_title %}<i class="fa-solid fa-globe" style="color:#5b8dee"></i> ওয়েবসাইট ও টেলিগ্রাম গেট সেটিংস{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <span>ওয়েবসাইট সেটিংস</span>
+</div>
+
+<div style="max-width:850px;margin-bottom:24px;">
+
+  <!-- Main Settings Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-sliders"></i> ওয়েবসাইট টেলিগ্রাম ইনভাইট গেট কন্ট্রোল
+      </div>
+      <div>
+        {% if settings.site_gate_enabled == '1' %}
+        <span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> গেট চালু (ON)</span>
+        {% else %}
+        <span class="badge badge-red"><i class="fa-solid fa-circle-xmark"></i> গেট বন্ধ (OFF)</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="POST">
+      
+      <!-- Gate Switch -->
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <strong style="font-size:15px;display:block;margin-bottom:4px;color:#fff;">
+            টেলিগ্রাম মেম্বার এড ভেরিফিকেশন গেট (10-Member Gate)
+          </strong>
+          <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">
+            এটি চালু থাকলে সাইটে ঢোকার পর ব্যবহারকারীকে টেলিগ্রাম গ্রুপে নির্ধারিত মেম্বার এড করতে হবে। বন্ধ থাকলে সরাসরি সাইট আনলক থাকবে।
+          </span>
+        </div>
+        <div style="margin-left:20px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:#0d1117;padding:8px 16px;border-radius:8px;border:1px solid var(--border);">
+            <input type="checkbox" name="site_gate_enabled" value="1" {% if settings.site_gate_enabled == '1' %}checked{% endif %} style="width:18px;height:18px;accent-color:#22c55e;cursor:pointer;">
+            <span style="font-size:14px;font-weight:600;color:{% if settings.site_gate_enabled == '1' %}#22c55e{% else %}#ef4444{% endif %};">
+              {% if settings.site_gate_enabled == '1' %}চালু (ON){% else %}বন্ধ (OFF){% endif %}
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Required Invites Count -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fa-solid fa-users" style="color:#5b8dee;"></i> প্রয়োজনীয় মেম্বার সংখ্যা (Required Invites)
+        </label>
+        <input type="number" name="site_gate_required_invites" class="form-control" value="{{ settings.site_gate_required_invites or '10' }}" min="1" max="100" required>
+        <div class="form-hint">ইউজারকে সাইট সম্পূর্ণ আনলক করতে কতজন মেম্বার এড করতে হবে (ডিফল্ট: ১০ জন)।</div>
+      </div>
+
+      <!-- Telegram Group / Invite URL -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fa-solid fa-link" style="color:#a78bfa;"></i> টেলিগ্রাম গ্রুপ লিংক (Target Group Link)
+        </label>
+        <input type="url" name="site_gate_custom_link" class="form-control" value="{{ settings.site_gate_custom_link or 'https://t.me/alltimefantasyzone' }}" required>
+        <div class="form-hint">সাইটের পপআপ ও ভেরিফিকেশনে যে টেলিগ্রাম গ্রুপে মেম্বার জয়েন ও ইনভাইট পাঠানো হবে।</div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+        <button type="submit" class="btn btn-primary" style="padding:12px 28px;font-size:14px;">
+          <i class="fa-solid fa-floppy-disk"></i> সেটিংস সংরক্ষণ করুন
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Guide Card -->
+  <div class="card" style="border-left:4px solid #5b8dee;">
+    <div style="display:flex;gap:14px;align-items:flex-start;">
+      <i class="fa-solid fa-circle-info" style="font-size:22px;color:#5b8dee;margin-top:2px;"></i>
+      <div style="font-size:13px;line-height:1.6;color:var(--muted);">
+        <strong style="color:#e2e8f0;font-size:14px;display:block;margin-bottom:4px;">সিস্টেম কিভাবে কাজ করে:</strong>
+        <p style="margin-bottom:6px;">• <b>গেট চালু (ON) থাকলে:</b> সাইটে আসা ভিজিটররা প্রথমে ১০ জন (বা আপনার সেট করা সংখ্যা) বন্ধুকে টেলিগ্রাম গ্রুপে এড করবে। বটের ডেটাবেজে ভেরিফাই হওয়ার পর সাইটের সব কন্টেন্ট ও ভিডিও প্লে হবে।</p>
+        <p>• <b>গেট বন্ধ (OFF) থাকলে:</b> ভিজিটরদের কোনো টেলিগ্রাম ভেরিফিকেশন লাগবে না, ১৮+ কনফার্ম করলেই সাথে সাথে ফুল সাইট আনলক হয়ে যাবে এবং অ্যাডস্টারার ডিরেক্ট লিংক ও বিজ্ঞাপন চালু থাকবে।</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

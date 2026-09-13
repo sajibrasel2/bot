@@ -156,6 +156,15 @@ async def init_db() -> None:
                     UNIQUE KEY uniq_ban (chat_id, user_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS global_settings (
+                    setting_key VARCHAR(100) PRIMARY KEY,
+                    setting_val TEXT
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_enabled', '1')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_required_invites', '10')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/alltimefantasyzone')")
             await cur.execute(
                 "UPDATE chat_settings SET rules_text=%s WHERE rules_text IS NULL",
                 (DEFAULT_RULES,)
@@ -553,3 +562,44 @@ async def get_top_inviters(chat_id: int, limit: int = 10) -> list:
                 (chat_id, limit)
             )
             return await cur.fetchall() or []
+
+
+async def get_global_setting(key: str, default: Optional[str] = None) -> Optional[str]:
+    """Get a global system setting value."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT setting_val FROM global_settings WHERE setting_key=%s LIMIT 1", (key,))
+            row = await cur.fetchone()
+            return row[0] if row else default
+
+
+async def set_global_setting(key: str, val: str) -> None:
+    """Set or update a global system setting value."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO global_settings (setting_key, setting_val) VALUES (%s, %s) "
+                "ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)",
+                (key, str(val))
+            )
+
+
+async def get_all_global_settings() -> dict:
+    """Get all global system settings with defaults."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT setting_key, setting_val FROM global_settings")
+            rows = await cur.fetchall()
+            res = {
+                "site_gate_enabled": "1",
+                "site_gate_required_invites": "10",
+                "site_gate_custom_link": "https://t.me/alltimefantasyzone"
+            }
+            if rows:
+                for k, v in rows:
+                    res[k] = v
+            return res
+

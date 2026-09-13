@@ -239,6 +239,9 @@
     <a href="{{ url_for('dashboard') }}" class="nav-item {% if active=='dashboard' %}active{% endif %}">
       <i class="fa-solid fa-gauge-high"></i><span>ড্যাশবোর্ড</span>
     </a>
+    <a href="{{ url_for('site_settings') }}" class="nav-item {% if active=='site_settings' %}active{% endif %}">
+      <i class="fa-solid fa-globe"></i><span>ওয়েবসাইট সেটিংস</span>
+    </a>
     <a href="{{ url_for('bot_admins') }}" class="nav-item {% if active=='bot_admins' %}active{% endif %}">
       <i class="fa-solid fa-user-shield"></i><span>বট অ্যাডমিন</span>
     </a>

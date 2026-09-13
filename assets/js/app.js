@@ -837,12 +837,59 @@ function filterCategories() {
 }
 
 // ========================================================
-// 14. Startup DOM Router & Auto Verification Trigger
+// 14. Global Gate Config & Startup DOM Router
 // ========================================================
+let siteGateConfig = {
+  enabled: true,
+  required: 10,
+  link: TG_GROUP_LINK
+};
+
+async function checkGlobalSiteGateStatus() {
+  try {
+    const res = await fetch(`api/check_invites.php?action=gate_status&_nocache=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+    });
+    const data = await res.json();
+    if (data && data.success) {
+      siteGateConfig.enabled = (data.gate_enabled !== false && data.site_gate_enabled !== 0);
+      siteGateConfig.required = data.required || 10;
+      if (data.custom_link) siteGateConfig.link = data.custom_link;
+
+      if (!siteGateConfig.enabled) {
+        // Gate is turned OFF by Admin from Dashboard!
+        isTgVerified = true;
+        localStorage.setItem('tg10Added', 'true');
+        const tgOverlay = document.getElementById('tg-forceadd-overlay');
+        if (tgOverlay) tgOverlay.style.display = 'none';
+
+        if (!isAgeVerified) {
+          const ageOverlay = document.getElementById('age-gate-overlay');
+          if (ageOverlay) {
+            ageOverlay.style.display = 'block';
+            ageOverlay.style.opacity = '1';
+          }
+        } else {
+          unlockAllAndStart();
+        }
+        return false;
+      }
+    }
+  } catch(e) {}
+  return true;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
   const inputEl = document.getElementById('tg-user-id-input');
+
+  // Check if Admin turned OFF the Telegram Gate in Dashboard
+  const isGateOn = await checkGlobalSiteGateStatus();
+  if (!isGateOn) {
+    return;
+  }
 
   // 1. If running inside Telegram with user profile, pre-fill and verify immediately
   if (tgUser && (tgUser.id || tgUser.username)) {
