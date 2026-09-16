@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <form method="POST">
+    <form method="POST" id="service-alert-form">
       
       <!-- Toggle ON/OFF Switch -->
       <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;">
@@ -67,48 +67,70 @@
         </div>
       </div>
 
-      <!-- Section: Service Girl Details -->
-      <div style="margin-top:24px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
-        <strong style="color:#ec4899;font-size:14px;display:flex;align-items:center;gap:8px;">
-          <i class="fa-solid fa-user-heart"></i> সার্ভিস গার্ল প্রোফাইল সেটিংস
-        </strong>
+      <!-- Section: Dynamic Service Girls Box System -->
+      <div style="margin-top:28px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div>
+          <strong style="color:#ec4899;font-size:15px;display:flex;align-items:center;gap:8px;">
+            <i class="fa-solid fa-user-heart"></i> সার্ভিস গার্লস তালিকা (Service Girls Box System)
+          </strong>
+          <span style="font-size:12px;color:var(--muted);">এখানে আপনি যতখুশি সার্ভিস গার্লের নাম ও টেলিগ্রাম আইডি বক্স আকারে যোগ বা ডিলিট করতে পারেন।</span>
+        </div>
+        <button type="button" class="btn btn-sm" onclick="addGirlBox()" style="background:linear-gradient(135deg,#ec4899,#db2777);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(236,72,153,0.3);">
+          <i class="fa-solid fa-plus-circle"></i> + নতুন সার্ভিস গার্ল যোগ করুন
+        </button>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;">
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">
-            <i class="fa-solid fa-user-tag" style="color:#ec4899;"></i> সার্ভিস গার্লের নাম (Display Name)
-          </label>
-          <input type="text" name="service_girl_name" class="form-control" value="{{ settings.service_girl_name or 'জেরিন (Zerin)' }}" placeholder="যেমন: জেরিন (Zerin)" required>
-          <div class="form-hint">গ্রুপে যে নামটি প্রদর্শিত হবে।</div>
+      <!-- Girls Boxes Container -->
+      <div id="girls-container" style="margin-bottom:16px;">
+        {% for g in girls_list %}
+        <div class="girl-box" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;transition:0.2s;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span class="girl-badge" style="font-size:13px;font-weight:700;color:#ec4899;display:flex;align-items:center;gap:6px;">
+              <i class="fa-solid fa-user-tag"></i> সার্ভিস গার্ল #<span class="girl-num">{{ loop.index }}</span>
+            </span>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeGirlBox(this)" style="padding:4px 10px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+              <i class="fa-solid fa-trash-can"></i> রিমুভ করুন
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:12px;">
+            <div>
+              <label class="form-label" style="font-size:12px;margin-bottom:5px;">
+                <i class="fa-solid fa-user" style="color:#ec4899;"></i> নাম (Display Name)
+              </label>
+              <input type="text" name="girl_name[]" class="form-control" value="{{ g.name }}" placeholder="যেমন: জেরিন (Zerin)" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:12px;margin-bottom:5px;">
+                <i class="fa-brands fa-telegram" style="color:#38bdf8;"></i> টেলিগ্রাম ইউজারনেম (Username)
+              </label>
+              <input type="text" name="girl_username[]" class="form-control girl-username-input" oninput="autoFillLink(this)" value="{{ g.username }}" placeholder="যেমন: zerin627" required>
+            </div>
+          </div>
+          <div>
+            <label class="form-label" style="font-size:12px;margin-bottom:5px;">
+              <i class="fa-solid fa-link" style="color:#a78bfa;"></i> সরাসরি টেলিগ্রাম লিংক (Direct Link)
+            </label>
+            <input type="url" name="girl_link[]" class="form-control girl-link-input" value="{{ g.link }}" placeholder="https://t.me/zerin627" required>
+          </div>
         </div>
-
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">
-            <i class="fa-brands fa-telegram" style="color:#38bdf8;"></i> টেলিগ্রাম ইউজারনেম (Username)
-          </label>
-          <input type="text" name="service_girl_username" class="form-control" value="{{ settings.service_girl_username or 'zerin627' }}" placeholder="যেমন: zerin627" required>
-          <div class="form-hint">@ ছাড়া বা @ সহ লিখতে পারেন (ডিফল্ট: zerin627)।</div>
-        </div>
+        {% endfor %}
       </div>
 
-      <!-- Service Girl Link -->
-      <div class="form-group">
-        <label class="form-label">
-          <i class="fa-solid fa-link" style="color:#a78bfa;"></i> সার্ভিস গার্লের সরাসরি টেলিগ্রাম লিংক (Direct Telegram Link)
-        </label>
-        <input type="url" name="service_girl_link" class="form-control" value="{{ settings.service_girl_link or 'https://t.me/zerin627' }}" placeholder="https://t.me/zerin627" required>
-        <div class="form-hint">ক্লিক করলে সরাসরি সার্ভিস গার্লের ইনবক্সে চ্যাট ওপেন হবে।</div>
+      <!-- Add Girl Secondary Button -->
+      <div style="margin-bottom:28px;">
+        <button type="button" class="btn btn-sm" onclick="addGirlBox()" style="background:rgba(236,72,153,0.12);color:#ec4899;border:1px dashed #ec4899;padding:9px 18px;border-radius:8px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:8px;">
+          <i class="fa-solid fa-circle-plus" style="font-size:15px;"></i> ➕ আরও সার্ভিস গার্ল যোগ করুন (Add Another Girl)
+        </button>
       </div>
 
       <!-- Section: Admin Details -->
       <div style="margin-top:24px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
-        <strong style="color:#eab308;font-size:14px;display:flex;align-items:center;gap:8px;">
+        <strong style="color:#eab308;font-size:15px;display:flex;align-items:center;gap:8px;">
           <i class="fa-solid fa-user-shield"></i> ভেরিফিকেশন এডমিন প্রোফাইল সেটিংস
         </strong>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:20px;">
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">
             <i class="fa-solid fa-crown" style="color:#eab308;"></i> এডমিন ইউজারনেম (Admin Username)
@@ -135,7 +157,7 @@
           <span style="font-size:11px;color:var(--muted);">HTML Formatting সমর্থিত</span>
         </div>
         <textarea name="service_alert_text" class="form-control" style="min-height:220px;font-family:monospace;font-size:13px;line-height:1.6;" required>{{ settings.service_alert_text }}</textarea>
-        <div class="form-hint">আপনি সম্পূর্ণ মেসেজটি ইচ্ছামত সাজিয়ে পরিবর্তন করতে পারবেন।</div>
+        <div class="form-hint">টেমপ্লেটে <code>{service_girls_block}</code> কোডটি থাকলে আপনার উপরের সব সার্ভিস গার্লের তালিকা স্বয়ংক্রিয়ভাবে সাজিয়ে বসিয়ে দেওয়া হবে।</div>
       </div>
 
       <!-- Placeholders Box -->
@@ -145,13 +167,7 @@
         </strong>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;font-size:12px;">
           <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
-            <code style="color:#38bdf8;">{service_girl_name}</code> : সার্ভিস গার্লের নাম
-          </div>
-          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
-            <code style="color:#38bdf8;">{service_girl_username}</code> : ইউজারনেম
-          </div>
-          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
-            <code style="color:#38bdf8;">{service_girl_link}</code> : ইনবক্স লিংক
+            <code style="color:#38bdf8;">{service_girls_block}</code> : সকল সার্ভিস গার্লের সম্পূর্ণ তালিকা
           </div>
           <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
             <code style="color:#eab308;">{admin_username}</code> : এডমিন ইউজারনেম
@@ -169,7 +185,7 @@
       </div>
 
       <div style="display:flex;justify-content:flex-end;gap:12px;">
-        <button type="submit" class="btn btn-primary" style="padding:12px 30px;font-size:14px;">
+        <button type="submit" class="btn btn-primary" style="padding:12px 32px;font-size:14px;">
           <i class="fa-solid fa-floppy-disk"></i> সেটিংস সংরক্ষণ করুন
         </button>
       </div>
@@ -183,9 +199,9 @@
       <i class="fa-solid fa-shield-halved" style="font-size:24px;color:#22c55e;margin-top:2px;"></i>
       <div style="font-size:13px;line-height:1.6;color:var(--muted);">
         <strong style="color:#e2e8f0;font-size:14px;display:block;margin-bottom:6px;">
-          🛡️ অ্যান্টি-স্ক্যাম ও ভাইরাল প্রমোশন সিস্টেমের বৈশিষ্ট্য:
+          🛡️ অ্যান্টি-স্ক্যাম ও সার্ভিস গার্ল সিস্টেমের বৈশিষ্ট্য:
         </strong>
-        <p style="margin-bottom:6px;">• <b>সরাসরি সার্ভিস গার্ল মেসেজ:</b> যেকোনো মেম্বার এক ক্লিকে সরাসরি জেরিন (<code>@zerin627</code>) এর ইনবক্সে চ্যাট শুরু করতে পারবে।</p>
+        <p style="margin-bottom:6px;">• <b>বক্স সিস্টেমে একাধিক সার্ভিস গার্ল:</b> আপনি যতজন খুশি সার্ভিস গার্ল বক্স যোগ করতে পারবেন। ১ জন থাকলে সিঙ্গেল ফরম্যাটে এবং একাধিক থাকলে ১, ২, ৩ নম্বর দিয়ে তালিকা আকারে মেসেজে চলে যাবে।</p>
         <p style="margin-bottom:6px;">• <b>নতুন মেয়েদের ভেরিফিকেশন:</b> কোনো মেয়ে গ্রুপে ভেরিফাইড হতে চাইলে সরাসরি এডমিন (<code>@rafi0002</code>) এর সাথে যোগাযোগ করতে পারবে।</p>
         <p style="margin-bottom:6px;">• <b>অটো-ট্যাগ (Smart Tagging):</b> প্রতিবার ব্রডকাস্ট হওয়ার সময় গ্রুপ থেকে ১৫-২০ জন একটিভ মেম্বারকে স্বয়ংক্রিয়ভাবে ট্যাগ করা হবে।</p>
         <p style="margin-bottom:6px;">• <b>অটো-ডিলিট (Auto Cleaner):</b> ব্রডকাস্ট পোস্টটি ৩০ সেকেন্ড পর নিজে থেকেই ডিলিট হয়ে যাবে, যাতে গ্রুপ পরিষ্কার থাকে।</p>
@@ -196,4 +212,102 @@
   </div>
 
 </div>
+
+<!-- JavaScript for Dynamic Service Girl Boxes -->
+<script>
+function updateGirlNumbers() {
+  const boxes = document.querySelectorAll('#girls-container .girl-box');
+  boxes.forEach((box, index) => {
+    const numSpan = box.querySelector('.girl-num');
+    if (numSpan) {
+      numSpan.textContent = index + 1;
+    }
+  });
+}
+
+function autoFillLink(input) {
+  const box = input.closest('.girl-box');
+  if (!box) return;
+  const linkInput = box.querySelector('.girl-link-input');
+  if (!linkInput) return;
+  
+  let val = input.value.trim().replace(/^@+/, '');
+  if (val && (!linkInput.value || linkInput.value.startsWith('https://t.me/'))) {
+    linkInput.value = 'https://t.me/' + val;
+  }
+}
+
+function addGirlBox() {
+  const container = document.getElementById('girls-container');
+  const count = container.querySelectorAll('.girl-box').length + 1;
+  
+  const div = document.createElement('div');
+  div.className = 'girl-box';
+  div.style = 'background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px;transition:0.2s;animation:fadeIn 0.3s ease;';
+  
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06);">
+      <span class="girl-badge" style="font-size:13px;font-weight:700;color:#ec4899;display:flex;align-items:center;gap:6px;">
+        <i class="fa-solid fa-user-tag"></i> সার্ভিস গার্ল #<span class="girl-num">${count}</span>
+      </span>
+      <button type="button" class="btn btn-sm btn-danger" onclick="removeGirlBox(this)" style="padding:4px 10px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+        <i class="fa-solid fa-trash-can"></i> রিমুভ করুন
+      </button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:12px;">
+      <div>
+        <label class="form-label" style="font-size:12px;margin-bottom:5px;">
+          <i class="fa-solid fa-user" style="color:#ec4899;"></i> নাম (Display Name)
+        </label>
+        <input type="text" name="girl_name[]" class="form-control" placeholder="যেমন: সাদিয়া (Sadia)" required>
+      </div>
+      <div>
+        <label class="form-label" style="font-size:12px;margin-bottom:5px;">
+          <i class="fa-brands fa-telegram" style="color:#38bdf8;"></i> টেলিগ্রাম ইউজারনেম (Username)
+        </label>
+        <input type="text" name="girl_username[]" class="form-control girl-username-input" oninput="autoFillLink(this)" placeholder="যেমন: sadia4392" required>
+      </div>
+    </div>
+    <div>
+      <label class="form-label" style="font-size:12px;margin-bottom:5px;">
+        <i class="fa-solid fa-link" style="color:#a78bfa;"></i> সরাসরি টেলিগ্রাম লিংক (Direct Link)
+      </label>
+      <input type="url" name="girl_link[]" class="form-control girl-link-input" placeholder="https://t.me/sadia4392" required>
+    </div>
+  `;
+  
+  container.appendChild(div);
+  updateGirlNumbers();
+  
+  // Focus on new name input
+  const nameInput = div.querySelector('input[name="girl_name[]"]');
+  if (nameInput) nameInput.focus();
+}
+
+function removeGirlBox(btn) {
+  const container = document.getElementById('girls-container');
+  const boxes = container.querySelectorAll('.girl-box');
+  
+  if (boxes.length <= 1) {
+    alert('⚠️ কমপক্ষে একজন সার্ভিস গার্লের তথ্য থাকতে হবে!');
+    return;
+  }
+  
+  const box = btn.closest('.girl-box');
+  if (box) {
+    box.remove();
+    updateGirlNumbers();
+  }
+}
+</script>
+
+<style>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.girl-box:hover {
+  border-color: rgba(236,72,153,0.4) !important;
+}
+</style>
 {% endblock %}

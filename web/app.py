@@ -7,6 +7,7 @@ Login: admin / (PANEL_PASSWORD from .env)
 
 import sys
 import os
+import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import datetime as dt
@@ -544,11 +545,10 @@ def _get_global_settings():
         "site_gate_custom_link": "https://t.me/alltimefantasyzone",
         "service_alert_enabled": "1",
         "service_alert_interval": "15",
+        "service_girls_json": json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False),
         "service_girl_name": "জেরিন (Zerin)",
         "service_girl_username": "zerin627",
         "service_girl_link": "https://t.me/zerin627",
-        "service_alert_btn_text": "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜",
-        "service_alert_btn_url": "https://t.me/zerin627",
         "service_admin_username": "rafi0002",
         "service_admin_link": "https://t.me/rafi0002",
         "service_alert_text": DEFAULT_SERVICE_ALERT_TEXT
@@ -705,12 +705,37 @@ def service_alert():
     if request.method == "POST":
         alert_en = "1" if request.form.get("service_alert_enabled") == "1" else "0"
         interval_val = request.form.get("service_alert_interval", "15").strip()
-        girl_name = request.form.get("service_girl_name", "জেরিন (Zerin)").strip()
-        girl_user = request.form.get("service_girl_username", "zerin627").strip().lstrip("@")
-        girl_link = request.form.get("service_girl_link", "").strip() or f"https://t.me/{girl_user}"
         admin_user = request.form.get("service_admin_username", "rafi0002").strip().lstrip("@")
         admin_link = request.form.get("service_admin_link", "").strip() or f"https://t.me/{admin_user}"
         alert_text = request.form.get("service_alert_text", "").strip()
+
+        # Collect multiple service girls from dynamic form lists
+        girl_names = request.form.getlist("girl_name[]")
+        girl_usernames = request.form.getlist("girl_username[]")
+        girl_links = request.form.getlist("girl_link[]")
+
+        girls_list = []
+        for n, u, l in zip(girl_names, girl_usernames, girl_links):
+            n_str = str(n or "").strip()
+            u_str = str(u or "").strip().lstrip("@")
+            l_str = str(l or "").strip()
+            if u_str or n_str:
+                if not l_str and u_str:
+                    l_str = f"https://t.me/{u_str}"
+                if not n_str:
+                    n_str = u_str
+                girls_list.append({
+                    "name": n_str,
+                    "username": u_str,
+                    "link": l_str
+                })
+
+        if not girls_list:
+            # Fallback if submitted as single inputs
+            g_name = request.form.get("service_girl_name", "জেরিন (Zerin)").strip()
+            g_user = request.form.get("service_girl_username", "zerin627").strip().lstrip("@")
+            g_link = request.form.get("service_girl_link", "").strip() or f"https://t.me/{g_user}"
+            girls_list = [{"name": g_name or "জেরিন (Zerin)", "username": g_user or "zerin627", "link": g_link or "https://t.me/zerin627"}]
 
         try:
             interval_int = max(1, min(1440, int(interval_val)))
@@ -720,22 +745,35 @@ def service_alert():
         try:
             _set_global_setting("service_alert_enabled", alert_en)
             _set_global_setting("service_alert_interval", str(interval_int))
-            _set_global_setting("service_girl_name", girl_name)
-            _set_global_setting("service_girl_username", girl_user)
-            _set_global_setting("service_girl_link", girl_link)
+            _set_global_setting("service_girls_json", json.dumps(girls_list, ensure_ascii=False))
+            if girls_list:
+                _set_global_setting("service_girl_name", girls_list[0]["name"])
+                _set_global_setting("service_girl_username", girls_list[0]["username"])
+                _set_global_setting("service_girl_link", girls_list[0]["link"])
             _set_global_setting("service_admin_username", admin_user)
             _set_global_setting("service_admin_link", admin_link)
             if alert_text:
                 _set_global_setting("service_alert_text", alert_text)
 
-            flash("✅ সার্ভিস গার্ল ও অ্যান্টি-স্ক্যাম নোটিশ সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে।", "success")
+            flash("✅ সার্ভিস গার্লস ও অ্যান্টি-স্ক্যাম নোটিশ সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে।", "success")
         except Exception as e:
             flash(f"❌ সেটিংস আপডেট ব্যর্থ: {e}", "error")
 
         return redirect(url_for("service_alert"))
 
     settings = _get_global_settings()
-    return render_template("service_alert.html", settings=settings, active="service_alert")
+    raw_girls = settings.get("service_girls_json", "[]")
+    try:
+        girls_list = json.loads(raw_girls) if raw_girls else []
+    except Exception:
+        girls_list = []
+    if not isinstance(girls_list, list) or not girls_list:
+        girls_list = [{
+            "name": settings.get("service_girl_name", "জেরিন (Zerin)") or "জেরিন (Zerin)",
+            "username": (settings.get("service_girl_username", "zerin627") or "zerin627").lstrip("@"),
+            "link": settings.get("service_girl_link", "https://t.me/zerin627") or "https://t.me/zerin627"
+        }]
+    return render_template("service_alert.html", settings=settings, girls_list=girls_list, active="service_alert")
 
 
 @app.route("/bot_admins", methods=["GET", "POST"])

@@ -4,6 +4,7 @@ Tables: warns, chat_settings, notes, users
 """
 
 import time
+import json
 from typing import Optional
 import aiomysql
 from config import (
@@ -177,11 +178,11 @@ async def init_db() -> None:
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/alltimefantasyzone')")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_enabled', '1')")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_alert_interval', '15') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
+            default_girls_json = json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False)
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_girls_json', %s)", (default_girls_json,))
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_girl_name', 'জেরিন (Zerin)') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_girl_username', 'zerin627') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_girl_link', 'https://t.me/zerin627') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
-            await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_alert_btn_text', '💬 সরাসরি জেরিনকে ইনবক্স করুন ➜') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
-            await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_alert_btn_url', 'https://t.me/zerin627') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_admin_username', 'rafi0002') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_admin_link', 'https://t.me/rafi0002') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_alert_text', %s) ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)", (DEFAULT_SERVICE_ALERT_TEXT,))
@@ -305,9 +306,8 @@ DEFAULT_PROMO_STICKER   = ""
 DEFAULT_SERVICE_ALERT_TEXT = (
     "🌸 <b>আমাদের গ্রুপের অফিসিয়াল ভেরিফায়েড সার্ভিস গার্ল</b> 🌸\n"
     "━━━━━━━━━━━━━━━━━━━━━━━\n"
-    "⚠️ <b>সতর্কবার্তা:</b> আমাদের গ্রুপে আমাদের নিজস্ব সার্ভিস গার্ল আছে, দয়া করে প্রতারিত না হয়ে সরাসরি উনাকে নক দিন।\n\n"
-    "👉 <b>সার্ভিস গার্ল:</b> <b>{service_girl_name}</b> (👉 <a href=\"{service_girl_link}\">@{service_girl_username}</a>)\n"
-    "💬 <b>ইনবক্স মেসেজ লিংক:</b> <a href=\"{service_girl_link}\">উনাকে সরাসরি মেসেজ দিতে এখানে চাপ দিন ➜</a>\n\n"
+    "⚠️ <b>সতর্কবার্তা:</b> আমাদের গ্রুপে আমাদের নিজস্ব সার্ভিস গার্ল আছে, দয়া করে প্রতারিত না হয়ে সরাসরি তাদের নক দিন।\n\n"
+    "{service_girls_block}\n\n"
     "👑 <b>এডমিন আইডি:</b> <a href=\"{admin_link}\">@{admin_username}</a>\n"
     "📢 <i>কোনো মেয়ে গ্রুপের ভেরিফাইড হতে চাইলে এডমিনকে মেসেজ করুন। ধন্যবাদ।</i>\n\n"
     "👉 <b>অনলাইন সদস্যরা:</b> {mentions_text}\n"
@@ -711,11 +711,10 @@ async def get_all_global_settings() -> dict:
                 "site_gate_custom_link": "https://t.me/alltimefantasyzone",
                 "service_alert_enabled": "1",
                 "service_alert_interval": "15",
+                "service_girls_json": json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False),
                 "service_girl_name": "জেরিন (Zerin)",
                 "service_girl_username": "zerin627",
                 "service_girl_link": "https://t.me/zerin627",
-                "service_alert_btn_text": "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜",
-                "service_alert_btn_url": "https://t.me/zerin627",
                 "service_admin_username": "rafi0002",
                 "service_admin_link": "https://t.me/rafi0002",
                 "service_alert_text": DEFAULT_SERVICE_ALERT_TEXT
