@@ -157,6 +157,16 @@ async def init_db() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             await cur.execute("""
+                CREATE TABLE IF NOT EXISTS user_name_history (
+                    id          INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id     BIGINT NOT NULL,
+                    first_name  VARCHAR(200),
+                    username    VARCHAR(100),
+                    recorded_at INT NOT NULL,
+                    INDEX idx_user_id (user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            await cur.execute("""
                 CREATE TABLE IF NOT EXISTS global_settings (
                     setting_key VARCHAR(100) PRIMARY KEY,
                     setting_val TEXT
@@ -388,17 +398,95 @@ async def list_notes(chat_id: int) -> list:
             return [r[0] for r in rows]
 
 
-# ── USER tracking ─────────────────────────────────
+# ── USER tracking & Name Change History ────────────
 
-async def upsert_user(user_id: int, chat_id: int, username: str, first_name: str) -> None:
+async def check_and_track_user_name(user_id: int, chat_id: int, username: str, first_name: str) -> dict:
+    """
+    Checks if a user has changed their Name or Username compared to previously recorded history.
+    Records any changes in user_name_history table.
+    """
+    pool = await get_pool()
+    current_fn = (first_name or "").strip()
+    current_un = (username or "").strip().lstrip("@")
+
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            # 1. Fetch the latest recorded name for this user from user_name_history
+            await cur.execute(
+                "SELECT first_name, username, recorded_at FROM user_name_history WHERE user_id=%s ORDER BY id DESC LIMIT 1",
+                (user_id,)
+            )
+            latest_hist = await cur.fetchone()
+
+            if not latest_hist:
+                # Check users table if history table doesn't have it yet
+                await cur.execute(
+                    "SELECT first_name, username FROM users WHERE user_id=%s LIMIT 1",
+                    (user_id,)
+                )
+                latest_hist = await cur.fetchone()
+
+            has_changed = False
+            prev_fn = ""
+            prev_un = ""
+
+            if latest_hist:
+                prev_fn = (latest_hist.get("first_name") or "").strip()
+                prev_un = (latest_hist.get("username") or "").strip().lstrip("@")
+
+                # Compare names and usernames
+                if prev_fn and current_fn and (prev_fn != current_fn or prev_un.lower() != current_un.lower()):
+                    has_changed = True
+                    # Insert the new name record into history
+                    await cur.execute(
+                        "INSERT INTO user_name_history (user_id, first_name, username, recorded_at) VALUES (%s, %s, %s, %s)",
+                        (user_id, current_fn, current_un, int(time.time()))
+                    )
+            else:
+                # First time seeing this user -> record initial entry
+                await cur.execute(
+                    "INSERT INTO user_name_history (user_id, first_name, username, recorded_at) VALUES (%s, %s, %s, %s)",
+                    (user_id, current_fn, current_un, int(time.time()))
+                )
+
+            # Update users table
+            await cur.execute(
+                "INSERT INTO users (user_id, chat_id, username, first_name) VALUES (%s, %s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
+                (user_id, chat_id, current_un, current_fn)
+            )
+
+            # Fetch all past name history
+            await cur.execute(
+                "SELECT DISTINCT first_name, username, recorded_at FROM user_name_history WHERE user_id=%s ORDER BY id ASC",
+                (user_id,)
+            )
+            all_history = await cur.fetchall() or []
+
+            return {
+                "has_changed": has_changed,
+                "prev_first_name": prev_fn,
+                "prev_username": prev_un,
+                "current_first_name": current_fn,
+                "current_username": current_un,
+                "history": all_history
+            }
+
+
+async def get_user_name_history(user_id: int) -> list:
+    """Returns all recorded name and username changes for a user."""
     pool = await get_pool()
     async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute(
-                "INSERT INTO users (user_id,chat_id,username,first_name) VALUES (%s,%s,%s,%s) "
-                "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
-                (user_id, chat_id, username, first_name)
+                "SELECT first_name, username, recorded_at FROM user_name_history WHERE user_id=%s ORDER BY id ASC",
+                (user_id,)
             )
+            return await cur.fetchall() or []
+
+
+async def upsert_user(user_id: int, chat_id: int, username: str, first_name: str) -> None:
+    await check_and_track_user_name(user_id, chat_id, username, first_name)
 
 
 async def get_users_for_chat(chat_id: int) -> list:

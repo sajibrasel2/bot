@@ -53,16 +53,17 @@ DEFAULT_BUTTON_TEXT = "🔥 🔞 🔴 𝗟𝗜𝗩𝗘 𝗖𝗛𝗔𝗧 • স�
 DEFAULT_BUTTON_URL  = "https://techandclick.site/bot/"
 
 
-def _format(text: str, user, chat, count) -> str:
+def _format(text: str, user, chat, count, name_history: str = "") -> str:
     uname = f"@{user.username}" if user.username else user.full_name
     return text.format(
-        first    = user.first_name or "",
-        last     = user.last_name  or "",
-        full     = user.full_name,
-        username = uname,
-        mention  = mention_html(user.id, user.first_name or user.full_name),
-        count    = count,
-        chatname = chat.title or "",
+        first        = user.first_name or "",
+        last         = user.last_name  or "",
+        full         = user.full_name,
+        username     = uname,
+        mention      = mention_html(user.id, user.first_name or user.full_name),
+        count        = count,
+        chatname     = chat.title or "",
+        name_history = name_history,
     )
 
 
@@ -172,7 +173,9 @@ async def _send_welcome(chat, user, context: ContextTypes.DEFAULT_TYPE) -> None:
         if now - _recent_welcomes[k] > 60:
             del _recent_welcomes[k]
 
-    asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
+    # Track user and detect previous name/username changes
+    from database import check_and_track_user_name
+    name_info = await check_and_track_user_name(user.id, chat.id, user.username or "", user.first_name or "")
 
     settings = await get_chat_settings(chat.id)
     if not settings.get("welcome_enabled", 1):
@@ -184,11 +187,32 @@ async def _send_welcome(chat, user, context: ContextTypes.DEFAULT_TYPE) -> None:
     except Exception:
         count = "?"
 
+    # Check if user has changed their name/username previously
+    name_history_block = ""
+    if name_info.get("has_changed"):
+        import html
+        old_fn = html.escape(name_info.get("prev_first_name") or "অজানা")
+        old_un = f"@{name_info.get('prev_username')}" if name_info.get("prev_username") else "নেই"
+        curr_fn = html.escape(user.first_name or "মেম্বার")
+        curr_un = f"@{user.username}" if user.username else "নেই"
+
+        name_history_block = (
+            f"\n\n━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🚨 <b>সতর্কবার্তা: নাম পরিবর্তনকারী ইউজার!</b>\n"
+            f"⚠️ <i>এই ইউজার পূর্বে অন্য নাম/ইউজারনেম ব্যবহার করেছিলেন:</i>\n"
+            f"🏷️ <b>পূর্বের নাম:</b> <s>{old_fn}</s> (<code>{old_un}</code>)\n"
+            f"🆕 <b>বর্তমান নাম:</b> <b>{curr_fn}</b> (<code>{curr_un}</code>)\n"
+            f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
+            f"🛡️ <i>(স্ক্যাম ও ছদ্মবেশ রোধে মেম্বারদের সতর্কতার জন্য প্রদর্শিত)</i>"
+        )
+
     text = settings.get("welcome_text") or DEFAULT_WELCOME
     try:
-        formatted = _format(text, user, chat, count)
+        formatted = _format(text, user, chat, count, name_history=name_history_block)
+        if name_history_block and "{name_history}" not in text:
+            formatted += name_history_block
     except (KeyError, ValueError):
-        formatted = text
+        formatted = text + (name_history_block if name_history_block else "")
 
     # Send animated sticker if set
     stk_id = settings.get("welcome_sticker")
@@ -451,6 +475,78 @@ async def del_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE
         logger.warning(f"Error sending del_welcome_sticker confirmation: {e}")
 
 
+async def cmd_name_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Shows historical name changes for a user to expose fake profiles/scammers."""
+    chat = update.effective_chat
+    msg = update.effective_message
+    if not chat or not msg:
+        return
+
+    from database import get_user_name_history
+    import html
+    import datetime
+
+    target_user_id = None
+    target_name = ""
+
+    # 1. Check if replied to a message
+    if msg.reply_to_message and msg.reply_to_message.from_user:
+        target_user_id = msg.reply_to_message.from_user.id
+        target_name = msg.reply_to_message.from_user.first_name or "Member"
+    # 2. Check if user_id or username is passed as argument
+    elif context.args and len(context.args) > 0:
+        arg = context.args[0].strip().lstrip("@")
+        if arg.isdigit():
+            target_user_id = int(arg)
+            target_name = f"User {target_user_id}"
+        else:
+            # Look up by username in database
+            from database import get_pool
+            import aiomysql
+            pool = await get_pool()
+            async with pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute(
+                        "SELECT user_id, first_name FROM users WHERE LOWER(username)=LOWER(%s) LIMIT 1",
+                        (arg,)
+                    )
+                    u = await cur.fetchone()
+                    if u:
+                        target_user_id = u["user_id"]
+                        target_name = u["first_name"] or "Member"
+
+    if not target_user_id:
+        target_user_id = update.effective_user.id
+        target_name = update.effective_user.first_name or "Member"
+
+    history = await get_user_name_history(target_user_id)
+    if not history:
+        sent = await msg.reply_html(f"ℹ️ <b>ইউজার আইডি <code>{target_user_id}</code> এর কোনো পূর্বের নাম পরিবর্তনের রেকর্ড পাওয়া যায়নি।</b>")
+        asyncio.create_task(_auto_delete(sent, delay=15))
+        return
+
+    lines = []
+    for i, h in enumerate(history, 1):
+        fn = html.escape(h.get("first_name") or "অজানা")
+        un = f"@{h.get('username')}" if h.get("username") else "ইউজারনেম নেই"
+        ts = h.get("recorded_at") or 0
+        date_str = datetime.datetime.fromtimestamp(ts).strftime("%d %b %Y, %I:%M %p") if ts else "প্রথম রেকর্ড"
+        lines.append(f"<b>{i}. {fn}</b> (<code>{un}</code>)\n   📅 <i>{date_str}</i>")
+
+    history_text = (
+        f"📜 <b>ইউজার নাম পরিবর্তনের ইতিহাস / Name History</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"👤 <b>টার্গেট:</b> {html.escape(target_name)} (<code>{target_user_id}</code>)\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        + "\n\n".join(lines) +
+        f"\n━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🛡️ <i>(স্ক্যাম ও ছদ্মবেশ রোধে সংরক্ষিত তথ্য)</i>"
+    )
+
+    sent = await msg.reply_html(history_text)
+    asyncio.create_task(_auto_delete(sent, delay=60))
+
+
 def register(app) -> None:
     app.add_handler(ChatMemberHandler(handle_chat_member, ChatMemberHandler.CHAT_MEMBER))
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_chat_members))
@@ -463,3 +559,5 @@ def register(app) -> None:
     app.add_handler(CommandHandler("resetgoodbye",reset_goodbye))
     app.add_handler(CommandHandler(["setwelcomesticker", "setsticker"], set_welcome_sticker))
     app.add_handler(CommandHandler(["delwelcomesticker", "delsticker"], del_welcome_sticker))
+    app.add_handler(CommandHandler(["names", "namehistory", "userhistory", "whois"], cmd_name_history))
+
