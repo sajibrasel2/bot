@@ -176,7 +176,7 @@ async def init_db() -> None:
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_required_invites', '10')")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/alltimefantasyzone')")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_enabled', '1')")
-            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_interval', '30')")
+            await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_alert_interval', '15') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_girl_name', 'জেরিন (Zerin)') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_girl_username', 'zerin627') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_girl_link', 'https://t.me/zerin627') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
@@ -710,7 +710,7 @@ async def get_all_global_settings() -> dict:
                 "site_gate_required_invites": "10",
                 "site_gate_custom_link": "https://t.me/alltimefantasyzone",
                 "service_alert_enabled": "1",
-                "service_alert_interval": "30",
+                "service_alert_interval": "15",
                 "service_girl_name": "জেরিন (Zerin)",
                 "service_girl_username": "zerin627",
                 "service_girl_link": "https://t.me/zerin627",

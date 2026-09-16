@@ -543,7 +543,7 @@ def _get_global_settings():
         "site_gate_required_invites": "10",
         "site_gate_custom_link": "https://t.me/alltimefantasyzone",
         "service_alert_enabled": "1",
-        "service_alert_interval": "30",
+        "service_alert_interval": "15",
         "service_girl_name": "জেরিন (Zerin)",
         "service_girl_username": "zerin627",
         "service_girl_link": "https://t.me/zerin627",
@@ -704,20 +704,18 @@ def site_settings():
 def service_alert():
     if request.method == "POST":
         alert_en = "1" if request.form.get("service_alert_enabled") == "1" else "0"
-        interval_val = request.form.get("service_alert_interval", "30").strip()
+        interval_val = request.form.get("service_alert_interval", "15").strip()
         girl_name = request.form.get("service_girl_name", "জেরিন (Zerin)").strip()
         girl_user = request.form.get("service_girl_username", "zerin627").strip().lstrip("@")
         girl_link = request.form.get("service_girl_link", "").strip() or f"https://t.me/{girl_user}"
         admin_user = request.form.get("service_admin_username", "rafi0002").strip().lstrip("@")
         admin_link = request.form.get("service_admin_link", "").strip() or f"https://t.me/{admin_user}"
-        btn_text = request.form.get("service_alert_btn_text", "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜").strip()
-        btn_url = request.form.get("service_alert_btn_url", "").strip() or girl_link
         alert_text = request.form.get("service_alert_text", "").strip()
 
         try:
             interval_int = max(1, min(1440, int(interval_val)))
         except Exception:
-            interval_int = 30
+            interval_int = 15
 
         try:
             _set_global_setting("service_alert_enabled", alert_en)
@@ -727,8 +725,6 @@ def service_alert():
             _set_global_setting("service_girl_link", girl_link)
             _set_global_setting("service_admin_username", admin_user)
             _set_global_setting("service_admin_link", admin_link)
-            _set_global_setting("service_alert_btn_text", btn_text)
-            _set_global_setting("service_alert_btn_url", btn_url)
             if alert_text:
                 _set_global_setting("service_alert_text", alert_text)
 

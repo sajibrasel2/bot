@@ -21,7 +21,7 @@ from modules.utils import admin_only, auto_delete_message
 
 logger = logging.getLogger(__name__)
 
-ALERT_LIFETIME_SECONDS = 180  # Messages auto-delete after 3 minutes (180s) to keep chats clean
+ALERT_LIFETIME_SECONDS = 30  # Messages auto-delete after 30 seconds to keep chats clean
 
 
 def generate_service_alert_message(users: list, g_settings: dict) -> str:
@@ -69,7 +69,7 @@ def generate_service_alert_message(users: list, g_settings: dict) -> str:
 
 
 async def _auto_delete(message, delay: int = ALERT_LIFETIME_SECONDS) -> None:
-    """Auto-deletes a broadcast message after delay (default 180s)."""
+    """Auto-deletes a broadcast message after delay (default 30s)."""
     await asyncio.sleep(delay)
     try:
         await message.delete()
@@ -83,7 +83,7 @@ _service_alert_running = False
 async def service_alert_loop(app: Application) -> None:
     """
     Background loop that broadcasts the official service girl alert notice
-    to all groups periodically based on admin dashboard settings (default 30 mins).
+    to all groups periodically based on admin dashboard settings (default 15 mins).
     """
     global _service_alert_running
     if _service_alert_running:
@@ -104,9 +104,9 @@ async def service_alert_loop(app: Application) -> None:
 
         enabled = (g_settings.get("service_alert_enabled", "1") == "1")
         try:
-            interval_mins = max(1, int(g_settings.get("service_alert_interval", "30") or 30))
+            interval_mins = max(1, int(g_settings.get("service_alert_interval", "15") or 15))
         except (ValueError, TypeError):
-            interval_mins = 30
+            interval_mins = 15
 
         if not enabled:
             # Check back in 30 seconds if feature is re-enabled from dashboard

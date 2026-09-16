@@ -54,11 +54,11 @@
           <i class="fa-solid fa-clock" style="color:#f59e0b;"></i> ব্রডকাস্টের সময় ব্যবধান (Interval in Minutes)
         </label>
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-          <select name="service_alert_interval" class="form-control" style="max-width:240px;cursor:pointer;font-weight:600;">
+          <select name="service_alert_interval" class="form-control" style="max-width:260px;cursor:pointer;font-weight:600;">
             <option value="10" {% if settings.service_alert_interval == '10' %}selected{% endif %}>⚡ প্রতি ১০ মিনিট পর পর</option>
-            <option value="15" {% if settings.service_alert_interval == '15' %}selected{% endif %}>⚡ প্রতি ১৫ মিনিট পর পর</option>
+            <option value="15" {% if settings.service_alert_interval == '15' or not settings.service_alert_interval %}selected{% endif %}>⭐ প্রতি ১৫ মিনিট পর পর (ডিফল্ট)</option>
             <option value="20" {% if settings.service_alert_interval == '20' %}selected{% endif %}>⚡ প্রতি ২০ মিনিট পর পর</option>
-            <option value="30" {% if settings.service_alert_interval == '30' or not settings.service_alert_interval %}selected{% endif %}>⭐ প্রতি ৩০ মিনিট পর পর (ডিফল্ট)</option>
+            <option value="30" {% if settings.service_alert_interval == '30' %}selected{% endif %}>⏰ প্রতি ৩০ মিনিট পর পর</option>
             <option value="45" {% if settings.service_alert_interval == '45' %}selected{% endif %}>⏰ প্রতি ৪৫ মিনিট পর পর</option>
             <option value="60" {% if settings.service_alert_interval == '60' %}selected{% endif %}>⏰ প্রতি ১ ঘণ্টা (৬০ মিনিট) পর পর</option>
             <option value="120" {% if settings.service_alert_interval == '120' %}selected{% endif %}>⏰ প্রতি ২ ঘণ্টা পর পর</option>
@@ -188,8 +188,8 @@
         <p style="margin-bottom:6px;">• <b>সরাসরি সার্ভিস গার্ল মেসেজ:</b> যেকোনো মেম্বার এক ক্লিকে সরাসরি জেরিন (<code>@zerin627</code>) এর ইনবক্সে চ্যাট শুরু করতে পারবে।</p>
         <p style="margin-bottom:6px;">• <b>নতুন মেয়েদের ভেরিফিকেশন:</b> কোনো মেয়ে গ্রুপে ভেরিফাইড হতে চাইলে সরাসরি এডমিন (<code>@rafi0002</code>) এর সাথে যোগাযোগ করতে পারবে।</p>
         <p style="margin-bottom:6px;">• <b>অটো-ট্যাগ (Smart Tagging):</b> প্রতিবার ব্রডকাস্ট হওয়ার সময় গ্রুপ থেকে ১৫-২০ জন একটিভ মেম্বারকে স্বয়ংক্রিয়ভাবে ট্যাগ করা হবে।</p>
-        <p style="margin-bottom:6px;">• <b>অটো-ডিলিট (Auto Cleaner):</b> ব্রডকাস্ট পোস্টটি ৩ মিনিট (১৮০ সেকেন্ড) পর নিজে থেকেই ডিলিট হয়ে যাবে, যাতে গ্রুপ পরিষ্কার থাকে।</p>
-        <p style="margin-bottom:6px;">• <b>মূল গ্রুপ প্রচার (Dark Romance):</b> প্রতিটি নোটিশে Dark Romance গ্রুপের সরাসরি জয়েন বাটন এবং ভাইরাল শেয়ার লিংক থাকবে।</p>
+        <p style="margin-bottom:6px;">• <b>অটো-ডিলিট (Auto Cleaner):</b> ব্রডকাস্ট পোস্টটি ৩০ সেকেন্ড পর নিজে থেকেই ডিলিট হয়ে যাবে, যাতে গ্রুপ পরিষ্কার থাকে।</p>
+        <p style="margin-bottom:6px;">• <b>সময় ব্যবধান:</b> প্রতি ১৫ মিনিট পর পর স্বয়ংক্রিয়ভাবে গ্রুপগুলোতে এই নোটিশ পাঠানো হবে।</p>
         <p>• <b>তাৎক্ষণিক পরীক্ষা (Instant Test):</b> যেকোনো গ্রুপে <code>/servicealert</code> বা <code>/sendalert</code> কম্যান্ড লিখে সাথে সাথে নোটিশটি টেস্ট করতে পারেন।</p>
       </div>
     </div>
