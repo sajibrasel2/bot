@@ -29,10 +29,12 @@ def generate_service_alert_message(users: list, g_settings: dict) -> tuple:
     Generates a personalized Service Girl & Anti-Scam notification message,
     tags active chat members for high visibility, and returns (text, keyboard).
     """
-    girl_name = g_settings.get("service_girl_name", "Sadia Jahan") or "Sadia Jahan"
-    girl_username = (g_settings.get("service_girl_username", "sadia4392") or "sadia4392").lstrip("@")
+    girl_name = g_settings.get("service_girl_name", "জেরিন (Zerin)") or "জেরিন (Zerin)"
+    girl_username = (g_settings.get("service_girl_username", "zerin627") or "zerin627").lstrip("@")
     girl_link = g_settings.get("service_girl_link") or f"https://t.me/{girl_username}"
-    btn_text = g_settings.get("service_alert_btn_text", "💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜") or "💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜"
+    admin_username = (g_settings.get("service_admin_username", "rafi0002") or "rafi0002").lstrip("@")
+    admin_link = g_settings.get("service_admin_link") or f"https://t.me/{admin_username}"
+    btn_text = g_settings.get("service_alert_btn_text", "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜") or "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜"
     btn_url = g_settings.get("service_alert_btn_url") or girl_link
     main_group_link = g_settings.get("site_gate_custom_link", "https://t.me/alltimefantasyzone") or "https://t.me/alltimefantasyzone"
     raw_template = g_settings.get("service_alert_text") or DEFAULT_SERVICE_ALERT_TEXT
@@ -56,6 +58,8 @@ def generate_service_alert_message(users: list, g_settings: dict) -> tuple:
         .replace("{service_girl_name}", html.escape(girl_name))
         .replace("{service_girl_username}", html.escape(girl_username))
         .replace("{service_girl_link}", girl_link)
+        .replace("{admin_username}", html.escape(admin_username))
+        .replace("{admin_link}", admin_link)
         .replace("{mentions_text}", mentions_text)
         .replace("{main_group_link}", main_group_link)
     )
@@ -68,9 +72,9 @@ def generate_service_alert_message(users: list, g_settings: dict) -> tuple:
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text=btn_text, url=btn_url)],
+        [InlineKeyboardButton(text="👑 ভেরিফাইড হতে এডমিনকে মেসেজ দিন ➜", url=admin_link)],
         [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=main_group_link)],
-        [InlineKeyboardButton(text="📤 বন্ধুদের শেয়ার করুন (Share) 🔓", url=forward_link)],
-        [InlineKeyboardButton(text="🔞 হট ভিডিও গ্যালারি (Web)", url="https://techandclick.site/bot/videos.html")],
+        [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার করুন (Share) 🔓", url=forward_link)],
     ])
 
     return formatted_text, keyboard

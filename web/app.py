@@ -528,10 +528,11 @@ def _get_global_settings():
         DEFAULT_SERVICE_ALERT_TEXT = (
             "🌸 <b>আমাদের গ্রুপের অফিসিয়াল ভেরিফায়েড সার্ভিস গার্ল</b> 🌸\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⚠️ <b>সতর্কবার্তা:</b> আমাদের গ্রুপে আমাদের নিজস্ব সার্ভিস গার্ল আছে। দয়া করে প্রতারিত না হয়ে সরাসরি উনাকে নক দিন!\n\n"
-            "👉 যেকোনো রিয়েল সার্ভিস, লাইভ ভিডিও চ্যাট বা স্পেশাল আড্ডার জন্য সরাসরি যুক্ত হোন:\n"
-            "👑 <b>সার্ভিস গার্ল:</b> <b>{service_girl_name}</b> (<code>@{service_girl_username}</code>)\n"
-            "💬 <b>ইনবক্স লিংক:</b> <a href=\"{service_girl_link}\">উনাকে ইনবক্সে মেসেজ দিতে এখানে চাপ দিন ➜</a>\n\n"
+            "⚠️ <b>সতর্কবার্তা:</b> আমাদের গ্রুপে আমাদের নিজস্ব সার্ভিস গার্ল আছে, দয়া করে প্রতারিত না হয়ে সরাসরি উনাকে নক দিন।\n\n"
+            "👉 <b>সার্ভিস গার্ল:</b> <b>{service_girl_name}</b> (👉 <a href=\"{service_girl_link}\">@{service_girl_username}</a>)\n"
+            "💬 <b>ইনবক্স মেসেজ লিংক:</b> <a href=\"{service_girl_link}\">উনাকে সরাসরি মেসেজ দিতে এখানে চাপ দিন ➜</a>\n\n"
+            "👑 <b>এডমিন আইডি:</b> <a href=\"{admin_link}\">@{admin_username}</a>\n"
+            "📢 <i>কোনো মেয়ে গ্রুপের ভেরিফাইড হতে চাইলে এডমিনকে মেসেজ করুন। ধন্যবাদ।</i>\n\n"
             "👉 <b>অনলাইন সদস্যরা:</b> {mentions_text}\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
             "🔞 <b>আমাদের মূল গ্রুপে জয়েন থাকুন:</b>\n"
@@ -543,11 +544,13 @@ def _get_global_settings():
         "site_gate_custom_link": "https://t.me/alltimefantasyzone",
         "service_alert_enabled": "1",
         "service_alert_interval": "30",
-        "service_girl_name": "Sadia Jahan",
-        "service_girl_username": "sadia4392",
-        "service_girl_link": "https://t.me/sadia4392",
-        "service_alert_btn_text": "💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜",
-        "service_alert_btn_url": "https://t.me/sadia4392",
+        "service_girl_name": "জেরিন (Zerin)",
+        "service_girl_username": "zerin627",
+        "service_girl_link": "https://t.me/zerin627",
+        "service_alert_btn_text": "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜",
+        "service_alert_btn_url": "https://t.me/zerin627",
+        "service_admin_username": "rafi0002",
+        "service_admin_link": "https://t.me/rafi0002",
         "service_alert_text": DEFAULT_SERVICE_ALERT_TEXT
     }
     for r in rows:
@@ -702,10 +705,12 @@ def service_alert():
     if request.method == "POST":
         alert_en = "1" if request.form.get("service_alert_enabled") == "1" else "0"
         interval_val = request.form.get("service_alert_interval", "30").strip()
-        girl_name = request.form.get("service_girl_name", "Sadia Jahan").strip()
-        girl_user = request.form.get("service_girl_username", "sadia4392").strip().lstrip("@")
+        girl_name = request.form.get("service_girl_name", "জেরিন (Zerin)").strip()
+        girl_user = request.form.get("service_girl_username", "zerin627").strip().lstrip("@")
         girl_link = request.form.get("service_girl_link", "").strip() or f"https://t.me/{girl_user}"
-        btn_text = request.form.get("service_alert_btn_text", "💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜").strip()
+        admin_user = request.form.get("service_admin_username", "rafi0002").strip().lstrip("@")
+        admin_link = request.form.get("service_admin_link", "").strip() or f"https://t.me/{admin_user}"
+        btn_text = request.form.get("service_alert_btn_text", "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜").strip()
         btn_url = request.form.get("service_alert_btn_url", "").strip() or girl_link
         alert_text = request.form.get("service_alert_text", "").strip()
 
@@ -720,6 +725,8 @@ def service_alert():
             _set_global_setting("service_girl_name", girl_name)
             _set_global_setting("service_girl_username", girl_user)
             _set_global_setting("service_girl_link", girl_link)
+            _set_global_setting("service_admin_username", admin_user)
+            _set_global_setting("service_admin_link", admin_link)
             _set_global_setting("service_alert_btn_text", btn_text)
             _set_global_setting("service_alert_btn_url", btn_url)
             if alert_text:

@@ -67,13 +67,19 @@
         </div>
       </div>
 
-      <!-- Service Girl Details Grid (নাম, ইউজারনেম, লিংক) -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px;margin-bottom:18px;">
+      <!-- Section: Service Girl Details -->
+      <div style="margin-top:24px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        <strong style="color:#ec4899;font-size:14px;display:flex;align-items:center;gap:8px;">
+          <i class="fa-solid fa-user-heart"></i> সার্ভিস গার্ল প্রোফাইল সেটিংস
+        </strong>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;">
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">
             <i class="fa-solid fa-user-tag" style="color:#ec4899;"></i> সার্ভিস গার্লের নাম (Display Name)
           </label>
-          <input type="text" name="service_girl_name" class="form-control" value="{{ settings.service_girl_name or 'Sadia Jahan' }}" placeholder="যেমন: Sadia Jahan" required>
+          <input type="text" name="service_girl_name" class="form-control" value="{{ settings.service_girl_name or 'জেরিন (Zerin)' }}" placeholder="যেমন: জেরিন (Zerin)" required>
           <div class="form-hint">গ্রুপে যে নামটি প্রদর্শিত হবে।</div>
         </div>
 
@@ -81,27 +87,58 @@
           <label class="form-label">
             <i class="fa-brands fa-telegram" style="color:#38bdf8;"></i> টেলিগ্রাম ইউজারনেম (Username)
           </label>
-          <input type="text" name="service_girl_username" class="form-control" value="{{ settings.service_girl_username or 'sadia4392' }}" placeholder="যেমন: sadia4392" required>
-          <div class="form-hint">@ ছাড়া বা @ সহ লিখতে পারেন।</div>
+          <input type="text" name="service_girl_username" class="form-control" value="{{ settings.service_girl_username or 'zerin627' }}" placeholder="যেমন: zerin627" required>
+          <div class="form-hint">@ ছাড়া বা @ সহ লিখতে পারেন (ডিফল্ট: zerin627)।</div>
         </div>
       </div>
 
       <!-- Service Girl Link -->
       <div class="form-group">
         <label class="form-label">
-          <i class="fa-solid fa-link" style="color:#a78bfa;"></i> সার্ভিস গার্লের টেলিগ্রাম লিংক (Direct Telegram Link)
+          <i class="fa-solid fa-link" style="color:#a78bfa;"></i> সার্ভিস গার্লের সরাসরি টেলিগ্রাম লিংক (Direct Telegram Link)
         </label>
-        <input type="url" name="service_girl_link" class="form-control" value="{{ settings.service_girl_link or 'https://t.me/sadia4392' }}" placeholder="https://t.me/sadia4392" required>
-        <div class="form-hint">সরাসরি ইনবক্স করার লিংক।</div>
+        <input type="url" name="service_girl_link" class="form-control" value="{{ settings.service_girl_link or 'https://t.me/zerin627' }}" placeholder="https://t.me/zerin627" required>
+        <div class="form-hint">ক্লিক করলে সরাসরি সার্ভিস গার্লের ইনবক্সে চ্যাট ওপেন হবে।</div>
+      </div>
+
+      <!-- Section: Admin Details -->
+      <div style="margin-top:24px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        <strong style="color:#eab308;font-size:14px;display:flex;align-items:center;gap:8px;">
+          <i class="fa-solid fa-user-shield"></i> ভেরিফিকেশন এডমিন প্রোফাইল সেটিংস
+        </strong>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">
+            <i class="fa-solid fa-crown" style="color:#eab308;"></i> এডমিন ইউজারনেম (Admin Username)
+          </label>
+          <input type="text" name="service_admin_username" class="form-control" value="{{ settings.service_admin_username or 'rafi0002' }}" placeholder="যেমন: rafi0002" required>
+          <div class="form-hint">নতুন মেয়েরা ভেরিফাইড হতে এই এডমিনকে নক দিবে (ডিফল্ট: rafi0002)।</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">
+            <i class="fa-solid fa-link" style="color:#5b8dee;"></i> এডমিন লিংক (Admin Contact URL)
+          </label>
+          <input type="url" name="service_admin_link" class="form-control" value="{{ settings.service_admin_link or 'https://t.me/rafi0002' }}" placeholder="https://t.me/rafi0002" required>
+          <div class="form-hint">এডমিনকে সরাসরি মেসেজ করার লিংক।</div>
+        </div>
       </div>
 
       <!-- Button Settings -->
+      <div style="margin-top:24px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        <strong style="color:#22c55e;font-size:14px;display:flex;align-items:center;gap:8px;">
+          <i class="fa-solid fa-square-arrow-up-right"></i> প্রধান বাটন সেটিংস
+        </strong>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:20px;">
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">
             <i class="fa-solid fa-hand-pointer" style="color:#22c55e;"></i> ইনবক্স বাটন টেক্সট (Button Label)
           </label>
-          <input type="text" name="service_alert_btn_text" class="form-control" value="{{ settings.service_alert_btn_text or '💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜' }}" placeholder="বাটনের লেখা" required>
+          <input type="text" name="service_alert_btn_text" class="form-control" value="{{ settings.service_alert_btn_text or '💬 সরাসরি জেরিনকে ইনবক্স করুন ➜' }}" placeholder="বাটনের লেখা" required>
           <div class="form-hint">মেসেজের নিচে প্রধান বাটনে যে টেক্সট থাকবে।</div>
         </div>
 
@@ -109,13 +146,13 @@
           <label class="form-label">
             <i class="fa-solid fa-up-right-from-square" style="color:#5b8dee;"></i> বাটন ইউআরএল (Button URL)
           </label>
-          <input type="url" name="service_alert_btn_url" class="form-control" value="{{ settings.service_alert_btn_url or 'https://t.me/sadia4392' }}" placeholder="https://t.me/sadia4392" required>
+          <input type="url" name="service_alert_btn_url" class="form-control" value="{{ settings.service_alert_btn_url or 'https://t.me/zerin627' }}" placeholder="https://t.me/zerin627" required>
           <div class="form-hint">বাটনে ক্লিক করলে যে লিংকে যাবে।</div>
         </div>
       </div>
 
       <!-- Message Template (মেসেজ পরিবর্তন) -->
-      <div class="form-group">
+      <div class="form-group" style="margin-top:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
           <label class="form-label" style="margin-bottom:0;">
             <i class="fa-solid fa-comment-dots" style="color:#eab308;"></i> ব্রডকাস্ট মেসেজ টেমপ্লেট (Message Template)
@@ -140,6 +177,12 @@
           </div>
           <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
             <code style="color:#38bdf8;">{service_girl_link}</code> : ইনবক্স লিংক
+          </div>
+          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <code style="color:#eab308;">{admin_username}</code> : এডমিন ইউজারনেম
+          </div>
+          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <code style="color:#eab308;">{admin_link}</code> : এডমিন লিংক
           </div>
           <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
             <code style="color:#38bdf8;">{mentions_text}</code> : মেম্বারদের মেনশন
@@ -167,10 +210,12 @@
         <strong style="color:#e2e8f0;font-size:14px;display:block;margin-bottom:6px;">
           🛡️ অ্যান্টি-স্ক্যাম ও ভাইরাল প্রমোশন সিস্টেমের বৈশিষ্ট্য:
         </strong>
-        <p style="margin-bottom:6px;">• <b>অটো-ট্যাগ (Smart Tagging):</b> প্রতিবার ব্রডকাস্ট হওয়ার সময় গ্রুপ থেকে ১৫-২০ জন একটিভ মেম্বারকে স্বয়ংক্রিয়ভাবে ট্যাগ করা হবে, ফলে সবার কাছে টেলিগ্রাম নোটিফিকেশন পৌঁছে যাবে।</p>
-        <p style="margin-bottom:6px;">• <b>অটো-ডিলিট (Auto Cleaner):</b> ব্রডকাস্ট পোস্টটি ৩ মিনিট (১৮০ সেকেন্ড) পর নিজে থেকেই ডিলিট হয়ে যাবে, যাতে গ্রুপে কোনো অপ্রয়োজনীয় মেসেজের ভিড় বা স্প্যাম না থাকে।</p>
-        <p style="margin-bottom:6px;">• <b>মূল গ্রুপ প্রচার (Dark Romance):</b> প্রতিটি নোটিশের সাথে আপনার মূল Dark Romance গ্রুপের সরাসরি জয়েন বাটন এবং বন্ধুদের ফরোয়ার্ড করার ভাইরাল শেয়ার লিংক থাকবে।</p>
-        <p>• <b>তাৎক্ষণিক পরীক্ষা (Instant Test):</b> যেকোনো গ্রুপে অ্যাডমিন হিসেবে <code>/servicealert</code> বা <code>/sendalert</code> কম্যান্ড লিখে সাথে সাথে এই নোটিশটি পাঠিয়ে টেস্ট করতে পারেন।</p>
+        <p style="margin-bottom:6px;">• <b>সরাসরি সার্ভিস গার্ল মেসেজ:</b> যেকোনো মেম্বার এক ক্লিকে সরাসরি জেরিন (<code>@zerin627</code>) এর ইনবক্সে চ্যাট শুরু করতে পারবে।</p>
+        <p style="margin-bottom:6px;">• <b>নতুন মেয়েদের ভেরিফিকেশন:</b> কোনো মেয়ে গ্রুপে ভেরিফাইড হতে চাইলে সরাসরি এডমিন (<code>@rafi0002</code>) এর সাথে যোগাযোগ করতে পারবে।</p>
+        <p style="margin-bottom:6px;">• <b>অটো-ট্যাগ (Smart Tagging):</b> প্রতিবার ব্রডকাস্ট হওয়ার সময় গ্রুপ থেকে ১৫-২০ জন একটিভ মেম্বারকে স্বয়ংক্রিয়ভাবে ট্যাগ করা হবে।</p>
+        <p style="margin-bottom:6px;">• <b>অটো-ডিলিট (Auto Cleaner):</b> ব্রডকাস্ট পোস্টটি ৩ মিনিট (১৮০ সেকেন্ড) পর নিজে থেকেই ডিলিট হয়ে যাবে, যাতে গ্রুপ পরিষ্কার থাকে।</p>
+        <p style="margin-bottom:6px;">• <b>মূল গ্রুপ প্রচার (Dark Romance):</b> প্রতিটি নোটিশে Dark Romance গ্রুপের সরাসরি জয়েন বাটন এবং ভাইরাল শেয়ার লিংক থাকবে।</p>
+        <p>• <b>তাৎক্ষণিক পরীক্ষা (Instant Test):</b> যেকোনো গ্রুপে <code>/servicealert</code> বা <code>/sendalert</code> কম্যান্ড লিখে সাথে সাথে নোটিশটি টেস্ট করতে পারেন।</p>
       </div>
     </div>
   </div>
