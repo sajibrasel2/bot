@@ -124,11 +124,11 @@ def generate_promo_message(users: list) -> tuple:
     return text, keyboard
 
 
-PROMO_LIFETIME_SECONDS = 180  # ৩ মিনিট (180 seconds) স্থায়ী থাকবে
+PROMO_LIFETIME_SECONDS = 30  # ৩০ সেকেন্ড (30 seconds) স্থায়ী থাকবে
 
 
 async def _auto_delete(message, delay: int = PROMO_LIFETIME_SECONDS) -> None:
-    """Auto-deletes a message after specified seconds (default 180s / 3 mins)."""
+    """Auto-deletes a message after specified seconds (default 30s)."""
     await asyncio.sleep(delay)
     try:
         await message.delete()
