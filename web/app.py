@@ -522,10 +522,33 @@ def _get_global_settings():
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     """)
     rows = _query("SELECT setting_key, setting_val FROM global_settings", fetchall=True) or []
+    try:
+        from database import DEFAULT_SERVICE_ALERT_TEXT
+    except Exception:
+        DEFAULT_SERVICE_ALERT_TEXT = (
+            "🌸 <b>আমাদের গ্রুপের অফিসিয়াল ভেরিফায়েড সার্ভিস গার্ল</b> 🌸\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "⚠️ <b>সতর্কবার্তা:</b> আমাদের গ্রুপে আমাদের নিজস্ব সার্ভিস গার্ল আছে। দয়া করে প্রতারিত না হয়ে সরাসরি উনাকে নক দিন!\n\n"
+            "👉 যেকোনো রিয়েল সার্ভিস, লাইভ ভিডিও চ্যাট বা স্পেশাল আড্ডার জন্য সরাসরি যুক্ত হোন:\n"
+            "👑 <b>সার্ভিস গার্ল:</b> <b>{service_girl_name}</b> (<code>@{service_girl_username}</code>)\n"
+            "💬 <b>ইনবক্স লিংক:</b> <a href=\"{service_girl_link}\">উনাকে ইনবক্সে মেসেজ দিতে এখানে চাপ দিন ➜</a>\n\n"
+            "👉 <b>অনলাইন সদস্যরা:</b> {mentions_text}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🔞 <b>আমাদের মূল গ্রুপে জয়েন থাকুন:</b>\n"
+            "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা</a>"
+        )
     settings = {
         "site_gate_enabled": "1",
         "site_gate_required_invites": "10",
-        "site_gate_custom_link": "https://t.me/alltimefantasyzone"
+        "site_gate_custom_link": "https://t.me/alltimefantasyzone",
+        "service_alert_enabled": "1",
+        "service_alert_interval": "30",
+        "service_girl_name": "Sadia Jahan",
+        "service_girl_username": "sadia4392",
+        "service_girl_link": "https://t.me/sadia4392",
+        "service_alert_btn_text": "💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜",
+        "service_alert_btn_url": "https://t.me/sadia4392",
+        "service_alert_text": DEFAULT_SERVICE_ALERT_TEXT
     }
     for r in rows:
         settings[r["setting_key"]] = r["setting_val"]
@@ -671,6 +694,45 @@ def site_settings():
 
     settings = _get_global_settings()
     return render_template("site_settings.html", settings=settings, active="site_settings")
+
+
+@app.route("/service_alert", methods=["GET", "POST"])
+@login_required
+def service_alert():
+    if request.method == "POST":
+        alert_en = "1" if request.form.get("service_alert_enabled") == "1" else "0"
+        interval_val = request.form.get("service_alert_interval", "30").strip()
+        girl_name = request.form.get("service_girl_name", "Sadia Jahan").strip()
+        girl_user = request.form.get("service_girl_username", "sadia4392").strip().lstrip("@")
+        girl_link = request.form.get("service_girl_link", "").strip() or f"https://t.me/{girl_user}"
+        btn_text = request.form.get("service_alert_btn_text", "💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜").strip()
+        btn_url = request.form.get("service_alert_btn_url", "").strip() or girl_link
+        alert_text = request.form.get("service_alert_text", "").strip()
+
+        try:
+            interval_int = max(1, min(1440, int(interval_val)))
+        except Exception:
+            interval_int = 30
+
+        try:
+            _set_global_setting("service_alert_enabled", alert_en)
+            _set_global_setting("service_alert_interval", str(interval_int))
+            _set_global_setting("service_girl_name", girl_name)
+            _set_global_setting("service_girl_username", girl_user)
+            _set_global_setting("service_girl_link", girl_link)
+            _set_global_setting("service_alert_btn_text", btn_text)
+            _set_global_setting("service_alert_btn_url", btn_url)
+            if alert_text:
+                _set_global_setting("service_alert_text", alert_text)
+
+            flash("✅ সার্ভিস গার্ল ও অ্যান্টি-স্ক্যাম নোটিশ সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে।", "success")
+        except Exception as e:
+            flash(f"❌ সেটিংস আপডেট ব্যর্থ: {e}", "error")
+
+        return redirect(url_for("service_alert"))
+
+    settings = _get_global_settings()
+    return render_template("service_alert.html", settings=settings, active="service_alert")
 
 
 @app.route("/bot_admins", methods=["GET", "POST"])

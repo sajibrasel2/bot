@@ -19,7 +19,7 @@ from config import BOT_TOKEN
 from database import init_db
 
 # ── Modules ──────────────────────────────────────
-from modules import help, welcome, spam, moderation, admin, notes, promo, tagall, forceadd
+from modules import help, welcome, spam, moderation, admin, notes, promo, tagall, forceadd, service_alert
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -70,6 +70,7 @@ async def post_init(app: Application) -> None:
         BotCommand("setwelcomesticker", "ওয়েলকাম স্টিকার সেট করুন"),
         BotCommand("delwelcomesticker", "ওয়েলকাম স্টিকার মুছুন"),
         BotCommand("promo",             "লাইভ পার্টনার বিজ্ঞাপন পাঠান"),
+        BotCommand("servicealert",      "সার্ভিস গার্ল নোটিশ পাঠান"),
         BotCommand("rules",             "গ্রুপের নিয়ম দেখুন"),
         BotCommand("notes",             "নোট তালিকা"),
         BotCommand("top",               "সেরা ইনভাইটার লিডারবোর্ড"),
@@ -81,6 +82,10 @@ async def post_init(app: Application) -> None:
     from modules import promo
     asyncio.create_task(promo.promo_loop(app))
     logger.info("✅ Repeating promotional broadcast task registered in active event loop")
+
+    # Start the service alert loop task
+    asyncio.create_task(service_alert.service_alert_loop(app))
+    logger.info("✅ Repeating service alert broadcast task registered in active event loop")
 
     # Start the group title and member count synchronization task
     asyncio.create_task(sync_group_info(app))
@@ -145,6 +150,7 @@ def main() -> None:
     notes.register(app)       # save/get/notes
     tagall.register(app)      # /tagall /all /cancel
     promo.register(app)       # /setpromosticker /delpromosticker
+    service_alert.register(app) # /servicealert /sendalert /girlnotice
     forceadd.register(app)    # /forceadd /myinvites /top + chat unlock enforcement
     spam.register(app)        # message filter (last — catches all text)
 

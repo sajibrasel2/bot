@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}সার্ভিস গার্ল নোটিশ{% endblock %}
+{% block page_title %}<i class="fa-solid fa-bullhorn" style="color:#5b8dee"></i> সার্ভিস গার্ল ও অ্যান্টি-স্ক্যাম নোটিশ কন্ট্রোল{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-house"></i> ড্যাশবোর্ড</a>
+  <i class="fa-solid fa-chevron-right" style="font-size:10px"></i>
+  <span>সার্ভিস গার্ল নোটিশ সেটিংস</span>
+</div>
+
+<div style="max-width:900px;margin-bottom:30px;">
+
+  <!-- Main Settings Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-sliders"></i> অটোমেটিক সার্ভিস গার্ল অ্যালার্ট ও গ্রুপ প্রচার সেটিংস
+      </div>
+      <div>
+        {% if settings.service_alert_enabled == '1' %}
+        <span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> ব্রডকাস্ট চালু (ON)</span>
+        {% else %}
+        <span class="badge badge-red"><i class="fa-solid fa-circle-xmark"></i> ব্রডকাস্ট বন্ধ (OFF)</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="POST">
+      
+      <!-- Toggle ON/OFF Switch -->
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;">
+        <div style="flex:1;min-width:260px;">
+          <strong style="font-size:15px;display:block;margin-bottom:4px;color:#fff;">
+            🤖 অটোমেটিক সার্ভিস নোটিশ ব্রডকাস্ট (Auto Broadcast)
+          </strong>
+          <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">
+            চালু থাকলে বট নির্দিষ্ট সময় পর পর সকল গ্রুপে নিজস্ব সার্ভিস গার্লের ভেরিফায়েড মেসেজ পাঠাবে এবং ভুয়া আইডি থেকে সতর্ক করবে।
+          </span>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:#0d1117;padding:8px 16px;border-radius:8px;border:1px solid var(--border);">
+            <input type="checkbox" name="service_alert_enabled" value="1" {% if settings.service_alert_enabled == '1' %}checked{% endif %} style="width:18px;height:18px;accent-color:#22c55e;cursor:pointer;">
+            <span style="font-size:14px;font-weight:600;color:{% if settings.service_alert_enabled == '1' %}#22c55e{% else %}#ef4444{% endif %};">
+              {% if settings.service_alert_enabled == '1' %}চালু (ON){% else %}বন্ধ (OFF){% endif %}
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Time Interval (সময় পরিবর্তন) -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fa-solid fa-clock" style="color:#f59e0b;"></i> ব্রডকাস্টের সময় ব্যবধান (Interval in Minutes)
+        </label>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <select name="service_alert_interval" class="form-control" style="max-width:240px;cursor:pointer;font-weight:600;">
+            <option value="10" {% if settings.service_alert_interval == '10' %}selected{% endif %}>⚡ প্রতি ১০ মিনিট পর পর</option>
+            <option value="15" {% if settings.service_alert_interval == '15' %}selected{% endif %}>⚡ প্রতি ১৫ মিনিট পর পর</option>
+            <option value="20" {% if settings.service_alert_interval == '20' %}selected{% endif %}>⚡ প্রতি ২০ মিনিট পর পর</option>
+            <option value="30" {% if settings.service_alert_interval == '30' or not settings.service_alert_interval %}selected{% endif %}>⭐ প্রতি ৩০ মিনিট পর পর (ডিফল্ট)</option>
+            <option value="45" {% if settings.service_alert_interval == '45' %}selected{% endif %}>⏰ প্রতি ৪৫ মিনিট পর পর</option>
+            <option value="60" {% if settings.service_alert_interval == '60' %}selected{% endif %}>⏰ প্রতি ১ ঘণ্টা (৬০ মিনিট) পর পর</option>
+            <option value="120" {% if settings.service_alert_interval == '120' %}selected{% endif %}>⏰ প্রতি ২ ঘণ্টা পর পর</option>
+          </select>
+          <span style="font-size:12px;color:var(--muted);">বট কত সময় পর পর স্বয়ংক্রিয়ভাবে গ্রুপগুলোতে নোটিশ পোস্ট করবে।</span>
+        </div>
+      </div>
+
+      <!-- Service Girl Details Grid (নাম, ইউজারনেম, লিংক) -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px;margin-bottom:18px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">
+            <i class="fa-solid fa-user-tag" style="color:#ec4899;"></i> সার্ভিস গার্লের নাম (Display Name)
+          </label>
+          <input type="text" name="service_girl_name" class="form-control" value="{{ settings.service_girl_name or 'Sadia Jahan' }}" placeholder="যেমন: Sadia Jahan" required>
+          <div class="form-hint">গ্রুপে যে নামটি প্রদর্শিত হবে।</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">
+            <i class="fa-brands fa-telegram" style="color:#38bdf8;"></i> টেলিগ্রাম ইউজারনেম (Username)
+          </label>
+          <input type="text" name="service_girl_username" class="form-control" value="{{ settings.service_girl_username or 'sadia4392' }}" placeholder="যেমন: sadia4392" required>
+          <div class="form-hint">@ ছাড়া বা @ সহ লিখতে পারেন।</div>
+        </div>
+      </div>
+
+      <!-- Service Girl Link -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fa-solid fa-link" style="color:#a78bfa;"></i> সার্ভিস গার্লের টেলিগ্রাম লিংক (Direct Telegram Link)
+        </label>
+        <input type="url" name="service_girl_link" class="form-control" value="{{ settings.service_girl_link or 'https://t.me/sadia4392' }}" placeholder="https://t.me/sadia4392" required>
+        <div class="form-hint">সরাসরি ইনবক্স করার লিংক।</div>
+      </div>
+
+      <!-- Button Settings -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:20px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">
+            <i class="fa-solid fa-hand-pointer" style="color:#22c55e;"></i> ইনবক্স বাটন টেক্সট (Button Label)
+          </label>
+          <input type="text" name="service_alert_btn_text" class="form-control" value="{{ settings.service_alert_btn_text or '💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜' }}" placeholder="বাটনের লেখা" required>
+          <div class="form-hint">মেসেজের নিচে প্রধান বাটনে যে টেক্সট থাকবে।</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">
+            <i class="fa-solid fa-up-right-from-square" style="color:#5b8dee;"></i> বাটন ইউআরএল (Button URL)
+          </label>
+          <input type="url" name="service_alert_btn_url" class="form-control" value="{{ settings.service_alert_btn_url or 'https://t.me/sadia4392' }}" placeholder="https://t.me/sadia4392" required>
+          <div class="form-hint">বাটনে ক্লিক করলে যে লিংকে যাবে।</div>
+        </div>
+      </div>
+
+      <!-- Message Template (মেসেজ পরিবর্তন) -->
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+          <label class="form-label" style="margin-bottom:0;">
+            <i class="fa-solid fa-comment-dots" style="color:#eab308;"></i> ব্রডকাস্ট মেসেজ টেমপ্লেট (Message Template)
+          </label>
+          <span style="font-size:11px;color:var(--muted);">HTML Formatting সমর্থিত</span>
+        </div>
+        <textarea name="service_alert_text" class="form-control" style="min-height:220px;font-family:monospace;font-size:13px;line-height:1.6;" required>{{ settings.service_alert_text }}</textarea>
+        <div class="form-hint">আপনি সম্পূর্ণ মেসেজটি ইচ্ছামত সাজিয়ে পরিবর্তন করতে পারবেন।</div>
+      </div>
+
+      <!-- Placeholders Box -->
+      <div style="background:rgba(91,141,238,0.06);border:1px dashed var(--accent);border-radius:10px;padding:14px;margin-bottom:24px;">
+        <strong style="font-size:13px;color:var(--accent);display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <i class="fa-solid fa-code"></i> মেসেজ টেমপ্লেটে ব্যবহারের জন্য প্লেসহোল্ডার কোডসমূহ:
+        </strong>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;font-size:12px;">
+          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <code style="color:#38bdf8;">{service_girl_name}</code> : সার্ভিস গার্লের নাম
+          </div>
+          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <code style="color:#38bdf8;">{service_girl_username}</code> : ইউজারনেম
+          </div>
+          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <code style="color:#38bdf8;">{service_girl_link}</code> : ইনবক্স লিংক
+          </div>
+          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <code style="color:#38bdf8;">{mentions_text}</code> : মেম্বারদের মেনশন
+          </div>
+          <div style="background:var(--card2);padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+            <code style="color:#38bdf8;">{main_group_link}</code> : মূল গ্রুপ লিংক
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:12px;">
+        <button type="submit" class="btn btn-primary" style="padding:12px 30px;font-size:14px;">
+          <i class="fa-solid fa-floppy-disk"></i> সেটিংস সংরক্ষণ করুন
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Feature Explanation & Testing Guide -->
+  <div class="card" style="border-left:4px solid #22c55e;">
+    <div style="display:flex;gap:14px;align-items:flex-start;">
+      <i class="fa-solid fa-shield-halved" style="font-size:24px;color:#22c55e;margin-top:2px;"></i>
+      <div style="font-size:13px;line-height:1.6;color:var(--muted);">
+        <strong style="color:#e2e8f0;font-size:14px;display:block;margin-bottom:6px;">
+          🛡️ অ্যান্টি-স্ক্যাম ও ভাইরাল প্রমোশন সিস্টেমের বৈশিষ্ট্য:
+        </strong>
+        <p style="margin-bottom:6px;">• <b>অটো-ট্যাগ (Smart Tagging):</b> প্রতিবার ব্রডকাস্ট হওয়ার সময় গ্রুপ থেকে ১৫-২০ জন একটিভ মেম্বারকে স্বয়ংক্রিয়ভাবে ট্যাগ করা হবে, ফলে সবার কাছে টেলিগ্রাম নোটিফিকেশন পৌঁছে যাবে।</p>
+        <p style="margin-bottom:6px;">• <b>অটো-ডিলিট (Auto Cleaner):</b> ব্রডকাস্ট পোস্টটি ৩ মিনিট (১৮০ সেকেন্ড) পর নিজে থেকেই ডিলিট হয়ে যাবে, যাতে গ্রুপে কোনো অপ্রয়োজনীয় মেসেজের ভিড় বা স্প্যাম না থাকে।</p>
+        <p style="margin-bottom:6px;">• <b>মূল গ্রুপ প্রচার (Dark Romance):</b> প্রতিটি নোটিশের সাথে আপনার মূল Dark Romance গ্রুপের সরাসরি জয়েন বাটন এবং বন্ধুদের ফরোয়ার্ড করার ভাইরাল শেয়ার লিংক থাকবে।</p>
+        <p>• <b>তাৎক্ষণিক পরীক্ষা (Instant Test):</b> যেকোনো গ্রুপে অ্যাডমিন হিসেবে <code>/servicealert</code> বা <code>/sendalert</code> কম্যান্ড লিখে সাথে সাথে এই নোটিশটি পাঠিয়ে টেস্ট করতে পারেন।</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

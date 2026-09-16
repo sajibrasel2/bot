@@ -175,6 +175,14 @@ async def init_db() -> None:
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_enabled', '1')")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_required_invites', '10')")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/alltimefantasyzone')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_enabled', '1')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_interval', '30')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_girl_name', 'Sadia Jahan')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_girl_username', 'sadia4392')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_girl_link', 'https://t.me/sadia4392')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_btn_text', '💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_btn_url', 'https://t.me/sadia4392')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_text', %s)", (DEFAULT_SERVICE_ALERT_TEXT,))
             await cur.execute(
                 "UPDATE chat_settings SET rules_text=%s WHERE rules_text IS NULL",
                 (DEFAULT_RULES,)
@@ -291,6 +299,19 @@ DEFAULT_RULES = (
 
 DEFAULT_WELCOME_STICKER = ""
 DEFAULT_PROMO_STICKER   = ""
+
+DEFAULT_SERVICE_ALERT_TEXT = (
+    "🌸 <b>আমাদের গ্রুপের অফিসিয়াল ভেরিফায়েড সার্ভিস গার্ল</b> 🌸\n"
+    "━━━━━━━━━━━━━━━━━━━━━━━\n"
+    "⚠️ <b>সতর্কবার্তা:</b> আমাদের গ্রুপে আমাদের নিজস্ব সার্ভিস গার্ল আছে। দয়া করে প্রতারিত না হয়ে সরাসরি উনাকে নক দিন!\n\n"
+    "👉 যেকোনো রিয়েল সার্ভিস, লাইভ ভিডিও চ্যাট বা স্পেশাল আড্ডার জন্য সরাসরি যুক্ত হোন:\n"
+    "👑 <b>সার্ভিস গার্ল:</b> <b>{service_girl_name}</b> (<code>@{service_girl_username}</code>)\n"
+    "💬 <b>ইনবক্স লিংক:</b> <a href=\"{service_girl_link}\">উনাকে ইনবক্সে মেসেজ দিতে এখানে চাপ দিন ➜</a>\n\n"
+    "👉 <b>অনলাইন সদস্যরা:</b> {mentions_text}\n"
+    "━━━━━━━━━━━━━━━━━━━━━━━\n"
+    "🔞 <b>আমাদের মূল গ্রুপে জয়েন থাকুন:</b>\n"
+    "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা</a>"
+)
 
 
 async def get_chat_settings(chat_id: int) -> dict:
@@ -684,7 +705,15 @@ async def get_all_global_settings() -> dict:
             res = {
                 "site_gate_enabled": "1",
                 "site_gate_required_invites": "10",
-                "site_gate_custom_link": "https://t.me/alltimefantasyzone"
+                "site_gate_custom_link": "https://t.me/alltimefantasyzone",
+                "service_alert_enabled": "1",
+                "service_alert_interval": "30",
+                "service_girl_name": "Sadia Jahan",
+                "service_girl_username": "sadia4392",
+                "service_girl_link": "https://t.me/sadia4392",
+                "service_alert_btn_text": "💬 সরাসরি সাদিয়াকে ইনবক্স করুন ➜",
+                "service_alert_btn_url": "https://t.me/sadia4392",
+                "service_alert_text": DEFAULT_SERVICE_ALERT_TEXT
             }
             if rows:
                 for k, v in rows:
