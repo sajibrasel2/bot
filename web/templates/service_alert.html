@@ -126,33 +126,8 @@
         </div>
       </div>
 
-      <!-- Button Settings -->
-      <div style="margin-top:24px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
-        <strong style="color:#22c55e;font-size:14px;display:flex;align-items:center;gap:8px;">
-          <i class="fa-solid fa-square-arrow-up-right"></i> প্রধান বাটন সেটিংস
-        </strong>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:20px;">
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">
-            <i class="fa-solid fa-hand-pointer" style="color:#22c55e;"></i> ইনবক্স বাটন টেক্সট (Button Label)
-          </label>
-          <input type="text" name="service_alert_btn_text" class="form-control" value="{{ settings.service_alert_btn_text or '💬 সরাসরি জেরিনকে ইনবক্স করুন ➜' }}" placeholder="বাটনের লেখা" required>
-          <div class="form-hint">মেসেজের নিচে প্রধান বাটনে যে টেক্সট থাকবে।</div>
-        </div>
-
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">
-            <i class="fa-solid fa-up-right-from-square" style="color:#5b8dee;"></i> বাটন ইউআরএল (Button URL)
-          </label>
-          <input type="url" name="service_alert_btn_url" class="form-control" value="{{ settings.service_alert_btn_url or 'https://t.me/zerin627' }}" placeholder="https://t.me/zerin627" required>
-          <div class="form-hint">বাটনে ক্লিক করলে যে লিংকে যাবে।</div>
-        </div>
-      </div>
-
       <!-- Message Template (মেসেজ পরিবর্তন) -->
-      <div class="form-group" style="margin-top:20px;">
+      <div class="form-group" style="margin-top:24px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
           <label class="form-label" style="margin-bottom:0;">
             <i class="fa-solid fa-comment-dots" style="color:#eab308;"></i> ব্রডকাস্ট মেসেজ টেমপ্লেট (Message Template)

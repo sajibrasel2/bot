@@ -24,18 +24,16 @@ logger = logging.getLogger(__name__)
 ALERT_LIFETIME_SECONDS = 180  # Messages auto-delete after 3 minutes (180s) to keep chats clean
 
 
-def generate_service_alert_message(users: list, g_settings: dict) -> tuple:
+def generate_service_alert_message(users: list, g_settings: dict) -> str:
     """
     Generates a personalized Service Girl & Anti-Scam notification message,
-    tags active chat members for high visibility, and returns (text, keyboard).
+    tags active chat members for high visibility, and returns text with clickable links.
     """
     girl_name = g_settings.get("service_girl_name", "জেরিন (Zerin)") or "জেরিন (Zerin)"
     girl_username = (g_settings.get("service_girl_username", "zerin627") or "zerin627").lstrip("@")
     girl_link = g_settings.get("service_girl_link") or f"https://t.me/{girl_username}"
     admin_username = (g_settings.get("service_admin_username", "rafi0002") or "rafi0002").lstrip("@")
     admin_link = g_settings.get("service_admin_link") or f"https://t.me/{admin_username}"
-    btn_text = g_settings.get("service_alert_btn_text", "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜") or "💬 সরাসরি জেরিনকে ইনবক্স করুন ➜"
-    btn_url = g_settings.get("service_alert_btn_url") or girl_link
     main_group_link = g_settings.get("site_gate_custom_link", "https://t.me/alltimefantasyzone") or "https://t.me/alltimefantasyzone"
     raw_template = g_settings.get("service_alert_text") or DEFAULT_SERVICE_ALERT_TEXT
 
@@ -67,20 +65,7 @@ def generate_service_alert_message(users: list, g_settings: dict) -> tuple:
         .replace("{main_group_link}", main_group_link)
     )
 
-    # Share URL for viral forwarding
-    share_text_encoded = urllib.parse.quote(
-        f"⚠️ প্রতারক থেকে সাবধান! আমাদের অফিশিয়াল ভেরিফায়েড সার্ভিস গার্ল {girl_name} (@{girl_username}) এর সাথে যোগাযোগ করতে যুক্ত হোন: {main_group_link}"
-    )
-    forward_link = f"https://t.me/share/url?url={main_group_link}&text={share_text_encoded}"
-
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(text=btn_text, url=btn_url)],
-        [InlineKeyboardButton(text="👑 ভেরিফাইড হতে এডমিনকে মেসেজ দিন ➜", url=admin_link)],
-        [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=main_group_link)],
-        [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার করুন (Share) 🔓", url=forward_link)],
-    ])
-
-    return formatted_text, keyboard
+    return formatted_text
 
 
 async def _auto_delete(message, delay: int = ALERT_LIFETIME_SECONDS) -> None:
@@ -154,13 +139,12 @@ async def service_alert_loop(app: Application) -> None:
         for chat_id in target_chats:
             try:
                 users = await get_users_for_chat(chat_id)
-                alert_text, keyboard = generate_service_alert_message(users, g_settings)
+                alert_text = generate_service_alert_message(users, g_settings)
 
                 sent_msg = await app.bot.send_message(
                     chat_id=chat_id,
                     text=alert_text,
                     parse_mode="HTML",
-                    reply_markup=keyboard,
                     disable_web_page_preview=True
                 )
                 if sent_msg:
@@ -178,13 +162,12 @@ async def cmd_service_alert(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     chat = update.effective_chat
     users = await get_users_for_chat(chat.id)
     g_settings = await get_all_global_settings()
-    alert_text, keyboard = generate_service_alert_message(users, g_settings)
+    alert_text = generate_service_alert_message(users, g_settings)
 
     sent_msg = await context.bot.send_message(
         chat_id=chat.id,
         text=alert_text,
         parse_mode="HTML",
-        reply_markup=keyboard,
         disable_web_page_preview=True
     )
     if sent_msg:
