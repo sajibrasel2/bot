@@ -45,10 +45,13 @@ def generate_service_alert_message(users: list, g_settings: dict) -> tuple:
         selected_users = random.sample(users, sample_size)
         tags = []
         for u in selected_users:
-            fname = html.escape(u.get("first_name") or "Member")
             uid = u.get("user_id")
+            if not uid or not str(uid).isdigit() or int(uid) <= 0:
+                continue
+            raw_name = str(u.get("first_name") or "Member").strip()
+            fname = html.escape(raw_name) if raw_name else "Member"
             tags.append(f"<a href=\"tg://user?id={uid}\">{fname}</a>")
-        mentions_text = " • ".join(tags)
+        mentions_text = " • ".join(tags) if tags else "অনলাইন মেম্বাররা"
     else:
         mentions_text = "অনলাইন মেম্বাররা"
 
