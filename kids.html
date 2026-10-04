@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>বাচ্চাদের মজার ভিডিও ও কার্টুন জোন — ছোটদের সেরা ভিডিও দেখুন</title>
+  
+  <meta name="description" content="বাচ্চাদের জন্য সেরা মজার কার্টুন, বাংলা ছড়া গান, টম অ্যান্ড জেরি, ঈশপের রূপকথা গল্প এবং শিক্ষণীয় অ্যানিমেশন ভিডিও সম্পূর্ণ বিনামূল্যে দেখুন।" />
+  <meta name="keywords" content="বাচ্চাদের ভিডিও, কার্টুন ভিডিও, টম অ্যান্ড জেরি, বাংলা ছড়া, গোপাল ভাঁড়, ছোটদের গল্প, Kids Cartoon Bangla, Children Rhymes" />
+  
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b0f19" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
+  <!-- FontAwesome Icons & Stylesheet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/kids.css?v=1.0" />
+
+  <!-- Telegram WebApp SDK (Compatible if opened inside Telegram bot) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Adsterra Popunder Script (Monetization from previous pages) -->
+  <script src="https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js"></script>
+
+  <!-- Adsterra Native Social Bar Script -->
+  <script src="https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js" async data-cfasync="false"></script>
+</head>
+<body>
+
+  <!-- Floating Background Sparkles -->
+  <div class="kids-bg-stars" id="kids-bg-stars"></div>
+
+  <!-- Main Kids App Container -->
+  <div class="kids-app-container">
+
+    <!-- Top Navigation Header -->
+    <header class="kids-header">
+      <a href="kids.html" class="kids-logo">
+        <div class="kids-logo-icon">🎈</div>
+        <div class="kids-logo-title">
+          <h1>কিডস ভিডিও জোন</h1>
+          <span>ছোটদের আনন্দ ও শিক্ষার জগত ✨</span>
+        </div>
+      </a>
+      <div class="kids-header-right">
+        <div class="kids-badge-live">
+          <span class="kids-live-dot"></span>
+          <span>৮৫০+ বাচ্চা দেখছে</span>
+        </div>
+        <button class="kids-btn-gift" onclick="openSurpriseGift()" title="সারপ্রাইজ উপহার">🎁</button>
+      </div>
+    </header>
+
+    <!-- Hero Announcement / Welcoming Card -->
+    <section class="kids-hero-banner">
+      <div class="kids-hero-tag"><i class="fa-solid fa-crown"></i> আজকের সেরা কালেকশন</div>
+      <h2 class="kids-hero-title">বাচ্চাদের প্রিয় সব কার্টুন ও ছড়া ভিডিও একসাথে! 🌈</h2>
+      <p class="kids-hero-desc">টম অ্যান্ড জেরি, মিষ্টি বাংলা ছড়া গান, গোপাল ভাঁড় ও রূপকথার রোমাঞ্চকর গল্প দেখুন ফুল এইচডি কোয়ালিটিতে।</p>
+      <div class="kids-hero-actions">
+        <button class="kids-btn-play-all" onclick="openKidsPlayer(0)"><i class="fa-solid fa-play"></i> শুরু থেকে প্লে করুন</button>
+        <button class="kids-btn-spin-wheel" onclick="spinCartoonWheel()"><i class="fa-solid fa-dharmachakra"></i> লাকি স্পিন হুইল</button>
+      </div>
+    </section>
+
+    <!-- Top High-CTR Sponsored Offer Banner -->
+    <div class="kids-ad-promo-box" onclick="triggerAdRedirect(event)">
+      <div class="kids-ad-promo-info">
+        <span class="kids-ad-badge"><i class="fa-solid fa-fire"></i> স্পেশাল প্রমোশন</span>
+        <h3 class="kids-ad-title">🎮 বাচ্চাদের নতুন মজার গেম ও ভিডিও ইনস্টল করুন</h3>
+        <p class="kids-ad-subtitle">১-ক্লিকে ফ্রি ডাউনলোড করে অফলাইনে খেলতে এখনই ট্যাপ করুন</p>
+      </div>
+      <button class="kids-ad-btn"><i class="fa-solid fa-download"></i> ইনস্টল / প্লে</button>
+    </div>
+
+    <!-- Adsterra 300x250 Banner Slot (Top Position) -->
+    <div class="adsterra-slot-wrapper">
+      <div class="adsterra-slot-tag"><i class="fa-solid fa-rectangle-ad"></i> স্পন্সরড বিজ্ঞাপন</div>
+      <div class="adsterra-300x250-container"></div>
+    </div>
+
+    <!-- Instant Search Bar -->
+    <div class="kids-search-wrapper">
+      <i class="fa-solid fa-magnifying-glass kids-search-icon"></i>
+      <input type="text" id="kids-search-input" class="kids-search-input" placeholder="কার্টুন বা ছড়ার নাম লিখে খুঁজুন (যেমন: টম, ছড়া, গল্প)..." autocomplete="off" />
+      <button class="kids-search-clear" id="kids-search-clear"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Interactive Category Filter Chips -->
+    <div class="kids-filter-scroll">
+      <div class="kids-chip active" data-cat="all"><i class="fa-solid fa-star"></i> সব ভিডিও</div>
+      <div class="kids-chip" data-cat="tom-jerry"><i class="fa-solid fa-cat"></i> টম অ্যান্ড জেরি</div>
+      <div class="kids-chip" data-cat="rhymes"><i class="fa-solid fa-music"></i> ছড়া ও গান</div>
+      <div class="kids-chip" data-cat="comedy"><i class="fa-solid fa-face-laugh-squint"></i> মজার কমেডি</div>
+      <div class="kids-chip" data-cat="stories"><i class="fa-solid fa-wand-magic-sparkles"></i> রূপকথার গল্প</div>
+      <div class="kids-chip" data-cat="learning"><i class="fa-solid fa-palette"></i> ড্রয়িং ও শিক্ষা</div>
+    </div>
+
+    <!-- Section Title & Video Counter -->
+    <div class="kids-section-head">
+      <h2><i class="fa-solid fa-film" style="color:var(--kids-yellow);"></i> জনপ্রিয় ভিডিও পর্ব</h2>
+      <span class="kids-counter-badge" id="kids-video-count">১২ টি ভিডিও</span>
+    </div>
+
+    <!-- Dynamic Video Grid -->
+    <div class="kids-video-grid" id="kids-video-grid">
+      <!-- Populated dynamically via assets/js/kids.js -->
+    </div>
+
+    <!-- Empty Search State -->
+    <div class="kids-empty-state" id="kids-empty-state">
+      <div class="kids-empty-icon">🧸</div>
+      <h3>কোনো ভিডিও পাওয়া যায়নি!</h3>
+      <p>অনুগ্রহ করে অন্য কোনো কার্টুন বা ছড়ার নাম লিখে আবার চেষ্টা করুন।</p>
+    </div>
+
+    <!-- Adsterra 300x250 Banner Slot (Bottom In-Feed) -->
+    <div class="adsterra-slot-wrapper">
+      <div class="adsterra-slot-tag"><i class="fa-solid fa-rectangle-ad"></i> প্রস্তাবিত ভিডিও ও গেমস</div>
+      <div class="adsterra-300x250-container"></div>
+    </div>
+
+  </div>
+
+  <!-- ========================================================
+       MODAL VIDEO PLAYER WITH HIGH-CTR ACTIONS
+       ======================================================== -->
+  <div class="kids-player-modal" id="kids-player-modal">
+    <div class="kids-player-dialog">
+      <!-- Modal Header -->
+      <div class="kids-player-header">
+        <div class="kids-player-header-title">
+          <i class="fa-solid fa-circle-play" style="color:var(--kids-pink);"></i>
+          <span id="kids-player-title">ভিডিও প্লে হচ্ছে...</span>
+        </div>
+        <button class="kids-player-close-btn" onclick="closeKidsPlayer()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Embedded YouTube Video Container -->
+      <div class="kids-player-video-box">
+        <iframe id="kids-player-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <!-- Floating Kids Reactions Container -->
+        <div class="kids-float-container" id="kids-float-container"></div>
+      </div>
+
+      <!-- Modal Body Content -->
+      <div class="kids-player-body">
+        <div class="kids-player-info-meta">
+          <span id="kids-player-views"><i class="fa-solid fa-eye"></i> ১.৫ লক্ষ ভিউ</span>
+          <span class="kids-tag-pill fun" id="kids-player-tag" style="position:static;">বাংলা কার্টুন</span>
+        </div>
+
+        <!-- HIGH-CTR INTERACTIVE ACTION BUTTONS -->
+        <div class="kids-player-cta-grid">
+          <button class="kids-cta-btn-dl" onclick="downloadEpisodeHD()">
+            <i class="fa-solid fa-cloud-arrow-down"></i>
+            <span>HD ডাউনলোড করুন</span>
+          </button>
+          <button class="kids-cta-btn-next" onclick="playNextEpisode()">
+            <i class="fa-solid fa-forward-step"></i>
+            <span>পরবর্তী মজার পর্ব</span>
+          </button>
+        </div>
+
+        <!-- Kids Interactive Emoji Reaction Bar -->
+        <div class="kids-reaction-bar">
+          <span class="kids-reaction-title">ভিডিওটি কেমন লাগলো?</span>
+          <div class="kids-reaction-icons">
+            <button class="kids-react-btn" onclick="sendKidsReaction('💖')">💖</button>
+            <button class="kids-react-btn" onclick="sendKidsReaction('🎈')">🎈</button>
+            <button class="kids-react-btn" onclick="sendKidsReaction('⭐')">⭐</button>
+            <button class="kids-react-btn" onclick="sendKidsReaction('😂')">😂</button>
+            <button class="kids-react-btn" onclick="sendKidsReaction('🍭')">🍭</button>
+          </div>
+        </div>
+
+        <!-- In-Player 300x250 Banner Slot (Extremely High CTR) -->
+        <div class="kids-player-ad-slot">
+          <div class="adsterra-slot-tag"><i class="fa-solid fa-gift"></i> স্পন্সরড অফার</div>
+          <div class="adsterra-300x250-container"></div>
+        </div>
+
+        <!-- Related Next Episodes -->
+        <div class="kids-related-title">
+          <i class="fa-solid fa-list-check" style="color:var(--kids-cyan);"></i> পরবর্তী পর্বসমূহ
+        </div>
+        <div class="kids-related-list" id="kids-related-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       SURPRISE GIFT BOX MODAL
+       ======================================================== -->
+  <div class="kids-gift-modal" id="kids-gift-modal">
+    <div class="kids-gift-box">
+      <div class="kids-gift-big-icon">🎁</div>
+      <h3 class="kids-gift-title">অভিনন্দন! সারপ্রাইজ উপহার</h3>
+      <p class="kids-gift-desc">আপনার জন্য একটি বিশেষ এক্সক্লুসিভ নতুন কার্টুন ভিডিও আনলক হয়েছে! এখনই দেখতে নিচের বাটনে ক্লিক করুন।</p>
+      <button class="kids-btn-claim-gift" onclick="claimSurpriseGift()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> উপহারটি আনলক করুন
+      </button>
+      <button class="kids-btn-close-gift" onclick="closeSurpriseGift()">পরে দেখবো (বন্ধ করুন)</button>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       BOTTOM STICKY HIGH-CTR ACTION BAR
+       ======================================================== -->
+  <div class="kids-sticky-bar">
+    <div class="kids-sticky-inner">
+      <div class="kids-sticky-content">
+        <div class="kids-sticky-icon">🎁</div>
+        <div class="kids-sticky-text">
+          <h4>নতুন কার্টুন ও খেলনার ভিডিও!</h4>
+          <p>সম্পূর্ণ ফ্রি দেখতে এখনই ট্যাপ করুন ✨</p>
+        </div>
+      </div>
+      <button class="kids-sticky-btn" onclick="triggerAdRedirect(event)">
+        <i class="fa-solid fa-play"></i> ক্লিক করুন
+      </button>
+    </div>
+  </div>
+
+  <!-- Dedicated Kids Portal Scripts -->
+  <script src="assets/js/kids.js?v=1.0"></script>
+</body>
+</html>
