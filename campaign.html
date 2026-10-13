@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>বিকাশ ও নগদ ৫০০ টাকা ফ্রি মোবাইল রিচার্জ ক্যাম্পেইন — অফিশিয়াল অফার ২০২৬</title>
+  
+  <!-- SEO & Social Open Graph Tags (WhatsApp, Facebook, Telegram Preview) -->
+  <meta name="description" content="বিকাশ ও নগদ অফিশিয়াল ক্যাম্পেইন! ২০ জন বন্ধুকে রেফার করে সাইট ভিজিট করান এবং জিতে নিন ৫০০ টাকা ফ্রি মোবাইল রিচার্জ বা ক্যাশ। অফার সীমিত সময়ের জন্য।" />
+  <meta property="og:title" content="🎁 বিকাশ ও নগদ ৫০০ টাকা ফ্রি রিচার্জ ক্যাম্পেইন — এখনই ক্লেইম করুন!" />
+  <meta property="og:description" content="২০ জন বন্ধুকে রেফার করে সাইট ভিজিট করালেই পাচ্ছেন ৫০০ টাকা নিশ্চিত বিকাশ বা নগদ রিচার্জ! মাত্র ২০ জন বিজয়ী পাবেন।" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/img/bkash_nagad_promo.jpg" />
+  
+  <meta name="theme-color" content="#e2136e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
+  <!-- FontAwesome Icons & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/campaign.css?v=2.0" />
+</head>
+<body>
+
+  <!-- Background Ambient Glowing Blobs -->
+  <div class="ambient-blobs">
+    <div class="ambient-blob-1"></div>
+    <div class="ambient-blob-2"></div>
+  </div>
+
+  <div class="campaign-wrapper">
+
+    <!-- Top Branding Header -->
+    <header class="brand-top-bar">
+      <div class="brand-logos-cluster">
+        <span class="brand-badge brand-bkash"><i class="fa-solid fa-bolt"></i> বিকাশ</span>
+        <span class="brand-badge brand-nagad"><i class="fa-solid fa-fire"></i> নগদ</span>
+      </div>
+      <div class="brand-status-live">
+        <span class="pulse-dot"></span>
+        <span>লাইভ ক্যাম্পেইন</span>
+      </div>
+    </header>
+
+    <!-- Urgency Ticker -->
+    <div class="urgency-ticker">
+      <span class="urgency-badge">🔥 ধামাকা অফার</span>
+      <div class="urgency-text">মোট বাজেট: ১০,০০০ টাকা (২০ জন x ৫০০ টাকা) • সীমিত সময়ের ক্যাম্পেইন!</div>
+    </div>
+
+    <!-- Hero Card -->
+    <section class="hero-card">
+      <div class="hero-super-tag">
+        <i class="fa-solid fa-certificate"></i> ভেরিফাইড রিওয়ার্ড ক্যাম্পেইন ২০২৬
+      </div>
+      <h1 class="hero-title">
+        <span class="highlight-pink">বিকাশ</span> ও <span class="highlight-orange">নগদ</span> ৫০০ টাকা ফ্রি রিচার্জ!
+      </h1>
+      <p class="hero-subtitle">
+        সাইট ভিজিট করুন, স্পন্সর টাস্ক সম্পন্ন করুন এবং ২০ জন বন্ধুকে রেফার করে জিতে নিন সরাসরি ৫০০ টাকা মোবাইল রিচার্জ বা ক্যাশ!
+      </p>
+
+      <!-- Key Stats Grid -->
+      <div class="offer-stats-grid">
+        <div class="stat-box">
+          <span class="stat-val pink">২০ জন</span>
+          <span class="stat-lbl">সর্বোচ্চ বিজয়ী</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-val orange">৫০০ ৳</span>
+          <span class="stat-lbl">নিশ্চিত রিচার্জ</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-val green">২০ জন</span>
+          <span class="stat-lbl">রেফারেল টার্গেট</span>
+        </div>
+      </div>
+
+      <!-- Remaining Slots Bar (Scarcity & FOMO) -->
+      <div class="slots-box">
+        <div class="slots-header">
+          <span>মোট স্লট অগ্রগতি:</span>
+          <span>আর মাত্র <strong id="slots-remaining-num" class="slots-count-highlight">৬</strong> টি স্লট বাকি!</span>
+        </div>
+        <div class="slots-bar-track">
+          <div class="slots-bar-fill" id="slots-progress-fill" style="width: 70%;"></div>
+        </div>
+      </div>
+
+      <!-- Countdown Clock -->
+      <div class="countdown-container">
+        <i class="fa-regular fa-clock"></i>
+        <span>অফার শেষ হতে বাকি:</span>
+        <span class="timer-pill" id="timer-hours">১৪</span> ঘণ্টা
+        <span class="timer-pill" id="timer-mins">৪৫</span> মিনিট
+        <span class="timer-pill" id="timer-secs">২০</span> সেকেন্ড
+      </div>
+    </section>
+
+    <!-- ========================================================
+         বিজ্ঞাপন স্লট ১: TOP BANNER AD (728x90 / 300x250)
+         এখানে আপনার Adsterra / Google AdSense / Monetag ব্যানার কোড বসান
+         ======================================================== -->
+    <div class="ad-slot-box" id="ad-slot-top">
+      <span class="ad-slot-label"><i class="fa-solid fa-rectangle-ad"></i> স্পন্সর বিজ্ঞাপন</span>
+      
+      <!-- আপনার এড নেটওয়ার্কের ব্যানার স্ক্রিপ্ট বা কোড নিচে বসাতে পারেন -->
+      <div class="ad-banner-placeholder" onclick="handleAdTask1()">
+        <i class="fa-solid fa-gift"></i>
+        <strong>বিশেষ অফার ও স্পন্সর বিজ্ঞাপন দেখুন</strong>
+        <p>বিজ্ঞাপনে ক্লিক করে আকর্ষণীয় অফার যাচাই করুন (ক্লিক করুন)</p>
+      </div>
+      <!-- End of Ad Banner -->
+    </div>
+
+    <!-- ========================================================
+         ধাপ ১: নম্বর দিয়ে রেজিস্ট্রেশন ও রেফারেল লিংক তৈরি
+         ======================================================== -->
+    <div class="section-heading">
+      <i class="fa-solid fa-circle-check"></i> ধাপসমূহ সম্পন্ন করুন
+    </div>
+
+    <section class="step-card active-step" id="step-1-card">
+      <div class="step-header">
+        <div class="step-number-badge">১</div>
+        <div class="step-title-box">
+          <h3>রেজিস্ট্রেশন করুন ও লিংক নিন</h3>
+          <p>আপনার মোবাইল নম্বর দিন এবং আপনার রেফারেল লিংক পান</p>
+        </div>
+      </div>
+
+      <!-- Registration Form -->
+      <div id="registration-form-box">
+        <form onsubmit="handleRegister(event)">
+          <div class="input-group">
+            <label class="input-label" for="user-phone-input">
+              <i class="fa-solid fa-mobile-screen"></i> আপনার মোবাইল নম্বর (১১ ডিজিট):
+            </label>
+            <input 
+              type="tel" 
+              id="user-phone-input" 
+              class="input-field" 
+              placeholder="যেমন: 01712345678" 
+              maxlength="11" 
+              required 
+              autocomplete="tel"
+            />
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">
+              <i class="fa-solid fa-wallet"></i> রিচার্জ বা ক্যাশ মেথড নির্বাচন করুন:
+            </label>
+            <div class="wallet-selector">
+              <label class="wallet-option selected-bkash">
+                <input type="radio" name="wallet-method" value="bKash" checked />
+                <span>বিকাশ (bKash)</span>
+              </label>
+              <label class="wallet-option selected-nagad">
+                <input type="radio" name="wallet-method" value="Nagad" />
+                <span>নগদ (Nagad)</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary-gradient">
+            <i class="fa-solid fa-link"></i>
+            <span>আমার রেফারেল লিংক তৈরি করুন</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Generated Referral Link Box (Shown after Registration) -->
+      <div id="referral-box-container" class="referral-box">
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 12px; font-size: 0.88rem; color: #34d399;">
+          <i class="fa-solid fa-circle-check"></i> আপনার রেফারেল লিংক প্রস্তুত! এটি বন্ধুদের শেয়ার করে সাইট ভিজিট করান।
+        </div>
+
+        <label class="input-label"><i class="fa-solid fa-share-nodes"></i> আপনার ইউনিক রেফারেল লিংক:</label>
+        <div class="referral-link-display">
+          <input type="text" id="my-referral-link" class="ref-input-readonly" readonly />
+          <button class="btn-copy-ref" id="btn-copy-ref" onclick="copyReferralLink()">
+            <i class="fa-solid fa-copy"></i>
+            <span>কপি</span>
+          </button>
+        </div>
+
+        <!-- Viral Social Share Buttons -->
+        <label class="input-label"><i class="fa-solid fa-bullhorn"></i> এক ক্লিকে বন্ধুদের পাঠান:</label>
+        <div class="share-grid">
+          <button class="btn-share whatsapp" onclick="shareOnWhatsApp()">
+            <i class="fa-brands fa-whatsapp"></i>
+            <span>হোয়াটসঅ্যাপে শেয়ার</span>
+          </button>
+          <button class="btn-share facebook" onclick="shareOnFacebook()">
+            <i class="fa-brands fa-facebook"></i>
+            <span>ফেসবুকে শেয়ার</span>
+          </button>
+          <button class="btn-share telegram" onclick="shareOnTelegram()">
+            <i class="fa-brands fa-telegram"></i>
+            <span>টেলিগ্রামে শেয়ার</span>
+          </button>
+          <button class="btn-share messenger" onclick="shareOnMessenger()">
+            <i class="fa-brands fa-facebook-messenger"></i>
+            <span>মেসেঞ্জারে শেয়ার</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         ধাপ ২: বিজ্ঞাপন ভিজিট ও ক্লিক টাস্ক (Core Driver for Ads)
+         ======================================================== -->
+    <section class="step-card" id="step-tasks-card">
+      <div class="step-header">
+        <div class="step-number-badge">২</div>
+        <div class="step-title-box">
+          <h3>স্পন্সর এডস ভিজিট ও ক্লিক টাস্ক</h3>
+          <p>রিচার্জ আনলক করতে স্পন্সর বিজ্ঞাপন ভিজিট করুন</p>
+        </div>
+      </div>
+
+      <div class="ad-task-container">
+        <!-- Task 1: Visit Ad and stay 15-20s -->
+        <div class="ad-task-item" id="ad-task-item-1">
+          <div class="ad-task-top">
+            <div class="ad-task-info">
+              <div class="ad-task-icon"><i class="fa-solid fa-eye"></i></div>
+              <div class="ad-task-text">
+                <h4>টাস্ক ১: স্পন্সর এড ভিজিট (১৫ সেকেন্ড)</h4>
+                <p>বিজ্ঞাপনে ক্লিক করে ১৫ সেকেন্ড পেজে অপেক্ষা করুন</p>
+              </div>
+            </div>
+            <button class="ad-task-btn btn-ad-visit" id="btn-ad-task-1" onclick="handleAdTask1()">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              <span>ভিজিট করুন</span>
+            </button>
+          </div>
+
+          <!-- Countdown box during task 1 -->
+          <div class="ad-timer-countdown-box" id="ad-timer-box-1">
+            <span><i class="fa-solid fa-hourglass-half"></i> বিজ্ঞাপন দেখা হচ্ছে... পেজটি কাটবেন না</span>
+            <span>আর মাত্র <strong id="ad-timer-count-1">১৫</strong> সেকেন্ড</span>
+          </div>
+        </div>
+
+        <!-- Task 2: Click Sponsor Ad 2 -->
+        <div class="ad-task-item" id="ad-task-item-2">
+          <div class="ad-task-top">
+            <div class="ad-task-info">
+              <div class="ad-task-icon" style="background: rgba(226, 19, 110, 0.15); color: #ff3388;">
+                <i class="fa-solid fa-arrow-pointer"></i>
+              </div>
+              <div class="ad-task-text">
+                <h4>টাস্ক ২: স্পন্সর বিজ্ঞাপনে ক্লিক করুন</h4>
+                <p>নিচের বাটনে ক্লিক করে অফার পেজটি ওপেন করুন</p>
+              </div>
+            </div>
+            <button class="ad-task-btn btn-ad-visit" id="btn-ad-task-2" onclick="handleAdTask2()">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              <span>ক্লিক করুন</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         বিজ্ঞাপন স্লট ২: NATIVE IN-CONTENT AD
+         ======================================================== -->
+    <div class="ad-slot-box" id="ad-slot-middle">
+      <span class="ad-slot-label"><i class="fa-solid fa-bullhorn"></i> স্পন্সর পার্টনার</span>
+      <div class="ad-banner-placeholder" onclick="handleAdTask2()">
+        <i class="fa-solid fa-star"></i>
+        <strong>স্পন্সর সাইট ভিজিট করে অফার দেখুন</strong>
+        <p>সরাসরি স্পন্সর ওয়েবসাইটে প্রবেশ করুন</p>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         ধাপ ৩: ২০ জন রেফারেল প্রগ্রেস বার (Referral Tracker)
+         ======================================================== -->
+    <section class="step-card" id="step-ref-card">
+      <div class="step-header">
+        <div class="step-number-badge">৩</div>
+        <div class="step-title-box">
+          <h3>২০ জন ফ্রেন্ড রেফারেল প্রগ্রেস</h3>
+          <p>আপনার লিংকে ২০ জন বন্ধু সাইট ভিজিট করলেই আনলক হবে</p>
+        </div>
+      </div>
+
+      <div class="ref-progress-card">
+        <div class="ref-progress-header">
+          <div class="ref-count-text">
+            বর্তমান অগ্রগতি: <span id="current-ref-count">০</span> / ২০ জন
+          </div>
+          <div class="ref-percent-badge" id="current-ref-percent">০%</div>
+        </div>
+
+        <div class="ref-progress-track">
+          <div class="ref-progress-fill" id="ref-progress-fill"></div>
+        </div>
+
+        <div class="ref-progress-footer">
+          <span>💡 প্রতিটি বন্ধু লিংকে ঢুকলে অটোমেটিক কাউন্টার বাড়বে</span>
+          <button class="btn-refresh-status" id="btn-refresh-referrals" onclick="fetchReferralStatus(true)">
+            <i class="fa-solid fa-rotate"></i>
+            <span>রিফ্রেশ</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         ধাপ ৪: ৫০০ টাকা রিচার্জ ক্লেইম বক্স (Claim Prize)
+         ======================================================== -->
+    <section class="step-card" id="step-claim-card">
+      <div class="step-header">
+        <div class="step-number-badge">৪</div>
+        <div class="step-title-box">
+          <h3>৫০০ টাকা রিচার্জ / ক্যাশ গ্রহণ করুন</h3>
+          <p>টাস্ক এবং ২০ রেফারেল সম্পন্ন হলে দাবি সাবমিট করুন</p>
+        </div>
+      </div>
+
+      <!-- Locked State -->
+      <div class="claim-card-locked" id="claim-card-locked">
+        <div class="claim-lock-icon"><i class="fa-solid fa-lock"></i></div>
+        <h3>রিচার্জ অপশনটি বর্তমানে লক করা আছে</h3>
+        <p>রিচার্জ আনলক করতে অনুগ্রহ করে <b>২০ জন রেফারেল</b> এবং <b>স্পন্সর এডস ভিজিট</b> টাস্ক সম্পন্ন করুন।</p>
+      </div>
+
+      <!-- Unlocked State (Active when conditions met) -->
+      <div class="claim-card-unlocked" id="claim-card-unlocked">
+        <span class="claim-unlocked-badge">
+          <i class="fa-solid fa-unlock"></i> অভিনন্দন! আপনার সব টাস্ক সম্পন্ন
+        </span>
+        <h3 style="font-size: 1.15rem; color: #fff; margin-bottom: 6px;">
+          🎉 আপনার ৫০০ টাকা রিচার্জ নম্বর কনফার্ম করুন
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px;">
+          আমাদের এডমিন টিম যাচাই করে আপনার বিকাশ / নগদ বা সিমে ৫০০ টাকা রিচার্জ পাঠিয়ে দিবে।
+        </p>
+
+        <form onsubmit="handleClaimSubmit(event)">
+          <div class="input-group">
+            <label class="input-label" for="claim-phone-input">টাকা পাওয়ার মোবাইল নম্বর:</label>
+            <input type="tel" id="claim-phone-input" class="input-field" placeholder="01XXXXXXXXX" maxlength="11" required />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+            <div class="input-group" style="margin-bottom: 0;">
+              <label class="input-label" for="claim-payment-method">পেমেন্ট মেথড:</label>
+              <select id="claim-payment-method" class="input-field" style="height: 48px;">
+                <option value="bKash">বিকাশ পার্সোনাল</option>
+                <option value="Nagad">নগদ পার্সোনাল</option>
+                <option value="Grameenphone">গ্রামীণফোন রিচার্জ</option>
+                <option value="Banglalink">বাংলালিংক রিচার্জ</option>
+                <option value="Robi">রবি রিচার্জ</option>
+                <option value="Airtel">এয়ারটেল রিচার্জ</option>
+                <option value="Teletalk">টেলিটক রিচার্জ</option>
+              </select>
+            </div>
+            <div class="input-group" style="margin-bottom: 0;">
+              <label class="input-label" for="claim-sim-type">সিম টাইপ:</label>
+              <select id="claim-sim-type" class="input-field" style="height: 48px;">
+                <option value="Prepaid">প্রিপেইড (Prepaid)</option>
+                <option value="Postpaid">পোস্টপেইড (Postpaid)</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary-gradient" id="btn-claim-submit">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>৫০০ টাকা রিচার্জ গ্রহণ করুন</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         সোশ্যাল প্রুফ: সাম্প্রতিক বিজয়ীদের তালিকা
+         ======================================================== -->
+    <section class="winners-section">
+      <div class="section-heading" style="margin-top: 0;">
+        <i class="fa-solid fa-trophy"></i> সাম্প্রতিক বিজয়ীদের তালিকা (লাইভ)
+      </div>
+      <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 10px;">
+        সর্বোচ্চ ২০ জনের মধ্যে যারা ইতিমধ্যে ২০ রেফারেল ও টাস্ক সম্পন্ন করে রিচার্জ পেয়েছেন:
+      </p>
+
+      <div class="winners-table-wrapper">
+        <table class="winners-table">
+          <thead>
+            <tr>
+              <th>বিজয়ীর নম্বর</th>
+              <th>মেথড</th>
+              <th>পরিমাণ</th>
+              <th>TrxID</th>
+              <th>স্ট্যাটাস</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>০১৭১*****৫২</td>
+              <td>বিকাশ</td>
+              <td style="color: #34d399; font-weight: 700;">৫০০ ৳</td>
+              <td>BL92***</td>
+              <td><span class="badge-paid"><i class="fa-solid fa-check"></i> পেইড</span></td>
+            </tr>
+            <tr>
+              <td>০১৮২*****৮৯</td>
+              <td>নগদ</td>
+              <td style="color: #34d399; font-weight: 700;">৫০০ ৳</td>
+              <td>NG71***</td>
+              <td><span class="badge-paid"><i class="fa-solid fa-check"></i> পেইড</span></td>
+            </tr>
+            <tr>
+              <td>০১৯১*****২০</td>
+              <td>বিকাশ</td>
+              <td style="color: #34d399; font-weight: 700;">৫০০ ৳</td>
+              <td>BL55***</td>
+              <td><span class="badge-paid"><i class="fa-solid fa-check"></i> পেইড</span></td>
+            </tr>
+            <tr>
+              <td>০১৭৮*****০১</td>
+              <td>নগদ</td>
+              <td style="color: #34d399; font-weight: 700;">৫০০ ৳</td>
+              <td>NG84***</td>
+              <td><span class="badge-paid"><i class="fa-solid fa-check"></i> পেইড</span></td>
+            </tr>
+            <tr>
+              <td>০১৬৪*****৩৩</td>
+              <td>জিপি সিম</td>
+              <td style="color: #34d399; font-weight: 700;">৫০০ ৳</td>
+              <td>RC19***</td>
+              <td><span class="badge-paid"><i class="fa-solid fa-check"></i> পেইড</span></td>
+            </tr>
+            <tr>
+              <td>০১৮১*****৭৪</td>
+              <td>বিকাশ</td>
+              <td style="color: #34d399; font-weight: 700;">৫০০ ৳</td>
+              <td>BL38***</td>
+              <td><span class="badge-paid"><i class="fa-solid fa-check"></i> পেইড</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         FAQ ও ক্যাম্পেইনের অফিসিয়াল নিয়মাবলী
+         ======================================================== -->
+    <section class="faq-box">
+      <div class="section-heading" style="margin-top: 0;">
+        <i class="fa-solid fa-circle-question"></i> সচরাচর জিজ্ঞাসা ও নিয়মাবলী
+      </div>
+
+      <div class="faq-item open">
+        <div class="faq-question">
+          <span>১. রিচার্জ পাওয়ার নিয়ম কী?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          আপনার মোবাইল নম্বর দিয়ে রেজিস্ট্রেশন করার পর প্রাপ্ত লিংকটি ২০ জন বন্ধুকে শেয়ার করুন। তারা লিংকে ক্লিক করে সাইট ভিজিট করলেই আপনার ২০ রেফারেল সম্পন্ন হবে। এরপর স্পন্সর এড ভিজিট করে ৫০০ টাকা রিচার্জ ক্লেইম করুন।
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>২. রিচার্জ পেতে কত সময় লাগবে?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          রিকুয়েস্ট সাবমিট করার পর আমাদের অটোমেটেড সিস্টেম ও এডমিন টিম আপনার রেফারেল যাচাই করে সর্বোচ্চ ২ থেকে ১২ ঘণ্টার মধ্যে সরাসরি আপনার নম্বরে ৫০০ টাকা বিকাশ, নগদ বা ফ্লেক্সিলোড পাঠিয়ে দিবে।
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">
+          <span>৩. এক মোবাইল থেকে কতবার নেওয়া যাবে?</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+          ক্যাম্পেইনটি স্বচ্ছ রাখতে প্রতিটি ইউনিক ডিভাইস ও মোবাইল নম্বর থেকে একবারই ৫০০ টাকা রিচার্জ পাওয়ার সুযোগ রয়েছে। মোট ২০ জন বিজয়ী পূর্ণ হলে ক্যাম্পেইন স্বয়ংক্রিয়ভাবে বন্ধ হয়ে যাবে।
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ========================================================
+       ভাসমান লাইভ উইনার্স নোটিফিকেশন টোস্ট
+       ======================================================== -->
+  <div class="floating-toast" id="floating-winner-toast">
+    <div class="toast-avatar"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+    <div class="toast-content">
+      <h5 id="toast-winner-name">মো: আরিফুল ইসলাম (০১৭১***৪৫২)</h5>
+      <p id="toast-winner-detail">🎉 ৫০০ টাকা বিকাশ ক্যাশ পেয়েছেন (১ মিনিট আগে)</p>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       মোবাইলে নিচের ফিক্সড স্টিকি একশন বার
+       ======================================================== -->
+  <div class="bottom-sticky-bar">
+    <div class="sticky-info">
+      <div class="sticky-reward-title">🎁 ৫০০ টাকা ফ্রি রিচার্জ</div>
+      <div class="sticky-reward-desc">আর মাত্র ৬ টি স্লট খালি আছে</div>
+    </div>
+    <button class="btn-sticky-action" onclick="document.getElementById('step-1-card').scrollIntoView({behavior: 'smooth'})">
+      <i class="fa-solid fa-bolt"></i> এখনই নিন
+    </button>
+  </div>
+
+  <!-- ========================================================
+       সাকসেস ক্লেইম রিসিট পপআপ মোডাল
+       ======================================================== -->
+  <div class="modal-overlay" id="success-modal-overlay">
+    <div class="modal-box">
+      <div class="modal-success-icon"><i class="fa-solid fa-check"></i></div>
+      <h2 class="modal-title">আবেদন সফল হয়েছে!</h2>
+      <p class="modal-desc">
+        অভিনন্দন! আপনার ৫০০ টাকা রিচার্জ রিকুয়েস্ট সফলভাবে জমা হয়েছে।
+      </p>
+
+      <div class="receipt-card">
+        <div class="receipt-row">
+          <span class="receipt-label">ট্র্যাকিং আইডি:</span>
+          <span class="receipt-val" id="receipt-claim-id">BK500-7821</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">রিচার্জ নম্বর:</span>
+          <span class="receipt-val" id="receipt-phone">01712345678</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">পেমেন্ট মেথড:</span>
+          <span class="receipt-val" id="receipt-method">বিকাশ পার্সোনাল</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">টাকার পরিমাণ:</span>
+          <span class="receipt-val" style="color: #34d399;">৫০০ টাকা</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">আবেদনের সময়:</span>
+          <span class="receipt-val" id="receipt-time">এইমাত্র</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">স্ট্যাটাস:</span>
+          <span class="receipt-val" style="color: #fbbf24;">যাচাই প্রক্রিয়াধীন (Pending)</span>
+        </div>
+      </div>
+
+      <button class="btn-primary-gradient" onclick="closeModal()">
+        <i class="fa-solid fa-check"></i> ঠিক আছে
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Campaign Engine Script -->
+  <script src="assets/js/campaign.js?v=2.0"></script>
+</body>
+</html>
