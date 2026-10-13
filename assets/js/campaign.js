@@ -4,14 +4,17 @@
  */
 
 // ============================================================================
-// ১. আপনার বিজ্ঞাপন ও ক্যাম্পেইন কনফিগারেশন (এখানে আপনার লিংকগুলো বসাবেন)
+// ১. আপনার বিজ্ঞাপন ও ক্যাম্পেইন কনফিগারেশন (Adsterra Network Active Integration)
 // ============================================================================
 const CAMPAIGN_CONFIG = {
-  // আপনার ১ম বিজ্ঞাপন / ডিরেক্ট লিংক (Adsterra / Monetag / Sponsor URL)
-  adLink1: "https://www.google.com", 
+  // আপনার আসল ১ম Adsterra Direct Link (High CPM)
+  adLink1: "https://omg10.com/4/11017767", 
   
-  // আপনার ২য় বিজ্ঞাপন লিংক (অথবা অন্য এড নেটওয়ার্কের লিংক)
-  adLink2: "https://www.google.com", 
+  // আপনার আসল ২য় Adsterra Direct Link
+  adLink2: "https://www.effectivecpmnetwork.com/mgtqwzbp?key=5c4003e0ae2b0ebd387daded087bc9aa", 
+
+  // Adsterra 300x250 Banner Key
+  bannerKey: "f920a5f88d34b8eb65e572486b98b226",
   
   // অফারের মূল শর্তাবলী
   requiredReferrals: 20, // ২০ জনকে রেফার বা সাইট ভিজিট করাতে হবে
@@ -32,6 +35,7 @@ let isClaimed = false;
 
 // DOM Ready
 document.addEventListener("DOMContentLoaded", () => {
+  initAdsterraMonetization();
   initUrlParams();
   loadSavedUser();
   initCountdownTimer();
@@ -39,6 +43,80 @@ document.addEventListener("DOMContentLoaded", () => {
   initFaqAccordion();
   checkApiInit();
 });
+
+/**
+ * Initialize all Adsterra network scripts (Popunder, Social Bar, 300x250 banners)
+ */
+function initAdsterraMonetization() {
+  // 1. Adsterra Popunder Script
+  try {
+    const popScript = document.createElement('script');
+    popScript.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
+    document.body.appendChild(popScript);
+  } catch(e) {}
+
+  // 2. Adsterra Native Social Bar Script
+  try {
+    const nativeScript = document.createElement('script');
+    nativeScript.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
+    nativeScript.async = true;
+    nativeScript.setAttribute('data-cfasync', 'false');
+    document.body.appendChild(nativeScript);
+  } catch(e) {}
+
+  // 3. Adsterra 300x250 Banner Slots
+  initBannerSlots();
+}
+
+/**
+ * Injects high-revenue 300x250 banner into all placeholder containers
+ */
+function initBannerSlots() {
+  const containers = document.querySelectorAll('.adsterra-300x250-container');
+  containers.forEach((container) => {
+    if (!container.hasChildNodes() || container.children.length === 0) {
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '300px';
+        iframe.style.height = '250px';
+        iframe.style.border = 'none';
+        iframe.style.overflow = 'hidden';
+        iframe.style.margin = '0 auto';
+        iframe.style.display = 'block';
+        iframe.setAttribute('scrolling', 'no');
+        
+        container.appendChild(iframe);
+        
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;background:transparent;overflow:hidden;}</style>
+          </head>
+          <body>
+            <script type="text/javascript">
+              atOptions = {
+                'key' : '${CAMPAIGN_CONFIG.bannerKey}',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            <\/script>
+            <script type="text/javascript" src="https://www.highrevenueformat.com/${CAMPAIGN_CONFIG.bannerKey}/invoke.js"><\/script>
+          </body>
+          </html>
+        `);
+        iframeDoc.close();
+      } catch(e) {
+        console.log("Banner Load Note:", e);
+      }
+    }
+  });
+}
 
 // ============================================================================
 // ২. URL প্যারামিটার ও ভিজিটর ট্র্যাকিং (?ref=...)
