@@ -552,11 +552,11 @@ async def is_bot_admin(user_id: int) -> bool:
 
 
 async def get_all_chat_ids() -> list:
-    """Returns a list of all unique chat IDs stored in chat_settings."""
+    """Returns a list of all unique group chat IDs (chat_id < 0) stored in chat_settings."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
-            await cur.execute("SELECT chat_id FROM chat_settings")
+            await cur.execute("SELECT chat_id FROM chat_settings WHERE chat_id < 0")
             rows = await cur.fetchall()
             return [row[0] for row in rows]
 
