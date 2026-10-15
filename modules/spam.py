@@ -62,7 +62,7 @@ ANTIFORWARD_STRIKE_WINDOW  = 3600    # ১ ঘণ্টার মধ্যে st
 ANTIFORWARD_STRIKE_LIMIT   = 3       # সর্বোচ্চ ৩ বার ফরোয়ার্ড দিলে মিউট
 ANTIFORWARD_MUTE_DURATION  = 3600    # ১ ঘণ্টা (৩৬০০ সেকেন্ড) মিউট
 
-BOT_MSG_AUTO_DELETE        = 180    # বটের সতর্কতা মেসেজ ১৮০ সেকেন্ড (৩ মিনিট) পর ডিলিট হবে
+BOT_MSG_AUTO_DELETE        = 30     # বটের সতর্কতা মেসেজ ৩০ সেকেন্ড পর ডিলিট হবে
 
 URL_PATTERN = re.compile(
     r"(https?://|ftp://|www\.|t\.me/|telegram\.me/|telegram\.dog/|tg://|"

@@ -184,8 +184,8 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
                 reply_markup=reply_markup,
                 parse_mode="HTML"
             )
-            # Message stays visible for 180 seconds (3 minutes) so user has plenty of time to read & act
-            asyncio.create_task(_auto_delete(sent, 180))
+            # Message stays visible for 30 seconds then auto-deletes
+            asyncio.create_task(_auto_delete(sent, 30))
         except Exception as e:
             logger.warning(f"Could not send force add lock notice in chat {chat.id}: {e}")
 
