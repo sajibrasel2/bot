@@ -188,7 +188,15 @@ def get_all_chats():
 
 
 def get_settings(chat_id: int):
-    return _query("SELECT * FROM chat_settings WHERE chat_id=%s", (chat_id,), fetchone=True)
+    try:
+        row = _query("SELECT * FROM chat_settings WHERE chat_id=%s", (chat_id,), fetchone=True)
+        if not row:
+            _execute("INSERT IGNORE INTO chat_settings (chat_id) VALUES (%s)", (chat_id,))
+            row = _query("SELECT * FROM chat_settings WHERE chat_id=%s", (chat_id,), fetchone=True)
+        return row or {}
+    except Exception:
+        return {}
+
 
 
 def save_settings(chat_id: int, data: dict):

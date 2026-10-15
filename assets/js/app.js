@@ -281,6 +281,8 @@ async function checkRealDatabaseInvites(isAutoCheck = false) {
 
 function unlockTelegramGate() {
   localStorage.setItem('tg10Added', 'true');
+  localStorage.setItem('tgVerifiedReal', 'true');
+  localStorage.removeItem('gateBypassed');
   isTgVerified = true;
 
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
@@ -845,6 +847,35 @@ let siteGateConfig = {
   link: TG_GROUP_LINK
 };
 
+function updateGateUiElements() {
+  try {
+    const req = siteGateConfig.required || 10;
+    const link = siteGateConfig.link || TG_GROUP_LINK;
+
+    // Update group link buttons
+    const groupLinks = document.querySelectorAll('.tg-task-list a[href*="t.me"], .tg-task-btn[href*="t.me"]');
+    groupLinks.forEach(a => {
+      a.href = link;
+    });
+
+    // Update text in lock warning
+    const lockWarning = document.querySelector('.tg-lock-warning div');
+    if (lockWarning) {
+      lockWarning.innerHTML = `<strong style="color: #fff;">লক নোটিশ:</strong> টেলিগ্রাম গ্রুপে <b>${toBengaliNumerals(req)} জন মেম্বার এড</b> না করা পর্যন্ত সাইটের কোনো গোপন ভিডিও, লাইভ ক্যামেরা বা চ্যাট রুম আনলক হবে না!`;
+    }
+
+    // Update progress bar required text
+    const progressText = document.querySelector('.tg-progress-text');
+    if (progressText) {
+      const counterEl = document.getElementById('tg-added-counter');
+      const percentEl = document.getElementById('tg-progress-percent');
+      const curCount = counterEl ? counterEl.innerText : '০';
+      const curPct = percentEl ? percentEl.innerText : '০%';
+      progressText.innerHTML = `<span>মেম্বার এড অগ্রগতি:</span><span><strong id="tg-added-counter" style="color: var(--tg-cyan);">${curCount}</strong> / ${toBengaliNumerals(req)} জন (<span id="tg-progress-percent">${curPct}</span>)</span>`;
+    }
+  } catch (e) {}
+}
+
 async function checkGlobalSiteGateStatus() {
   try {
     const res = await fetch(`api/check_invites.php?action=gate_status&_nocache=${Date.now()}`, {
@@ -861,6 +892,7 @@ async function checkGlobalSiteGateStatus() {
         // Gate is turned OFF by Admin from Dashboard!
         isTgVerified = true;
         localStorage.setItem('tg10Added', 'true');
+        localStorage.setItem('gateBypassed', 'true');
         const tgOverlay = document.getElementById('tg-forceadd-overlay');
         if (tgOverlay) tgOverlay.style.display = 'none';
 
@@ -874,6 +906,15 @@ async function checkGlobalSiteGateStatus() {
           unlockAllAndStart();
         }
         return false;
+      } else {
+        // Gate is explicitly turned ON by Admin!
+        // Invalidate previous bypass if user hasn't legitimately verified in DB:
+        if (localStorage.getItem('gateBypassed') === 'true' || localStorage.getItem('tgVerifiedReal') !== 'true') {
+          localStorage.removeItem('gateBypassed');
+          localStorage.removeItem('tg10Added');
+          isTgVerified = false;
+        }
+        updateGateUiElements();
       }
     }
   } catch(e) {}

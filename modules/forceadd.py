@@ -24,6 +24,20 @@ logger = logging.getLogger(__name__)
 MAIN_DARK_ROMANCE_GROUP = "https://t.me/alltimefantasyzone"
 
 
+def _to_int(val, default: int = 0) -> int:
+    if val is None:
+        return default
+    if isinstance(val, (bytes, bytearray)):
+        try:
+            return int.from_bytes(val, "big")
+        except Exception:
+            return default
+    try:
+        return int(val)
+    except Exception:
+        return default
+
+
 async def _auto_delete(message, delay: int = 7) -> None:
     """Auto-deletes a message after specified seconds."""
     await asyncio.sleep(delay)
@@ -47,8 +61,8 @@ async def handle_member_invites(update: Update, context: ContextTypes.DEFAULT_TY
         return
 
     settings = await get_chat_settings(chat.id)
-    req_count = int(settings.get("force_add_count") or 5)
-    enabled = int(settings.get("force_add_enabled", 0))
+    req_count = _to_int(settings.get("force_add_count"), 5)
+    enabled = _to_int(settings.get("force_add_enabled"), 0)
 
     added_count = 0
     total_invites = 0
@@ -117,8 +131,8 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
 
     # Check settings for this group
     settings = await get_chat_settings(chat.id)
-    enabled = int(settings.get("force_add_enabled", 0) or 0)
-    req_count = int(settings.get("force_add_count") or 5)
+    enabled = _to_int(settings.get("force_add_enabled"), 0)
+    req_count = _to_int(settings.get("force_add_count"), 5)
     user_invites = await get_user_invite_count(chat.id, user.id)
 
     logger.info(f"🔍 ForceAdd check: user={user.id} ({user.first_name}) in chat={chat.id} ({chat.title}): enabled={enabled}, invites={user_invites}/{req_count}")
@@ -187,8 +201,8 @@ async def cmd_myinvites(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     settings = await get_chat_settings(chat.id)
-    req_count = int(settings.get("force_add_count") or 5)
-    enabled = int(settings.get("force_add_enabled", 0))
+    req_count = _to_int(settings.get("force_add_count"), 5)
+    enabled = _to_int(settings.get("force_add_enabled"), 0)
     count = await get_user_invite_count(chat.id, user.id)
 
     if enabled:
@@ -273,8 +287,9 @@ async def cmd_forceadd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     if not args:
         settings = await get_chat_settings(chat.id)
-        en = "চালু (ON) ✅" if settings.get("force_add_enabled", 0) else "বন্ধ (OFF) ❌"
-        cnt = settings.get("force_add_count") or 5
+        en_val = _to_int(settings.get("force_add_enabled"), 0)
+        en = "চালু (ON) ✅" if en_val == 1 else "বন্ধ (OFF) ❌"
+        cnt = _to_int(settings.get("force_add_count"), 5)
         await update.message.reply_html(
             f"⚙️ <b>ফোর্স অ্যাড (চ্যাট আনলক) সেটিংস:</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -327,7 +342,7 @@ async def callback_forceadd_query(update: Update, context: ContextTypes.DEFAULT_
             return
 
         settings = await get_chat_settings(chat_id)
-        req_count = int(settings.get("force_add_count") or 5)
+        req_count = _to_int(settings.get("force_add_count"), 5)
         invites = await get_user_invite_count(chat_id, target_user_id)
         remaining = max(0, req_count - invites)
 
