@@ -508,15 +508,36 @@ async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def cmd_restart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Restarts or exits the bot process so the latest code is loaded into RAM."""
-    from modules.utils import is_owner
-    if not await is_owner(update):
+    from modules.utils import is_admin, is_owner
+    from database import is_bot_admin
+
+    user = update.effective_user
+    chat = update.effective_chat
+    if not user or not update.message:
         return
 
-    if update.message:
+    is_own = await is_owner(update)
+    is_bot_adm = await is_bot_admin(user.id)
+
+    # In groups: chat administrator or owner
+    # In private: bot owner or database bot admin
+    if chat and chat.type in ("group", "supergroup"):
+        allowed = is_own or is_bot_adm or await is_admin(update)
+    else:
+        allowed = is_own or is_bot_adm
+
+    if not allowed:
         await update.message.reply_html(
-            "🔄 <b>বট রিস্টার্ট করা হচ্ছে...</b>\n"
-            "<i>কয়েক সেকেন্ডের মধ্যে বট নতুন কোড নিয়ে পুনরায় চালু হবে।</i>"
+            f"⛔ <b>অনুমতি নেই!</b>\n"
+            f"শুধুমাত্র গ্রুপ অ্যাডমিন বা বট ওনার এই কমান্ডটি ব্যবহার করতে পারবেন।\n"
+            f"🆔 আপনার Telegram ID: <code>{user.id}</code>"
         )
+        return
+
+    await update.message.reply_html(
+        "🔄 <b>বট সফলভাবে রিস্টার্ট করা হচ্ছে...</b>\n"
+        "<i>কয়েক সেকেন্ডের মধ্যে বট নতুন কোড নিয়ে পুনরায় চালু হবে।</i>"
+    )
     await asyncio.sleep(1)
 
     import sys
