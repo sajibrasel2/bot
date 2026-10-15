@@ -43,8 +43,8 @@ async def _auto_delete(message, delay: int = 7) -> None:
     await asyncio.sleep(delay)
     try:
         await message.delete()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Failed to auto-delete force add alert: {e}")
 
 
 # ── 1. Track New Members Added By Users ──────────────

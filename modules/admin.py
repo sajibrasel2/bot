@@ -504,6 +504,31 @@ async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             pass
 
 
+# ── RESTART / REBOOT ──────────────────────────
+
+async def cmd_restart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Restarts or exits the bot process so the latest code is loaded into RAM."""
+    from modules.utils import is_owner
+    if not await is_owner(update):
+        return
+
+    if update.message:
+        await update.message.reply_html(
+            "🔄 <b>বট রিস্টার্ট করা হচ্ছে...</b>\n"
+            "<i>কয়েক সেকেন্ডের মধ্যে বট নতুন কোড নিয়ে পুনরায় চালু হবে।</i>"
+        )
+    await asyncio.sleep(1)
+
+    import sys
+    import os
+    try:
+        # Re-execute in place
+        os.execv(sys.executable, [sys.executable, "main.py"])
+    except Exception:
+        # Terminate; cPanel cron will detect death and revive within 60s
+        os._exit(0)
+
+
 def register(app) -> None:
     app.add_handler(CommandHandler("pin",            cmd_pin))
     app.add_handler(CommandHandler("pinsilent",      cmd_pinsilent))
@@ -522,4 +547,5 @@ def register(app) -> None:
     app.add_handler(CommandHandler("setgrouptitle",  cmd_setgrouptitle))
     app.add_handler(CommandHandler("setdesc",        cmd_setdesc))
     app.add_handler(CommandHandler("settings",       cmd_settings))
+    app.add_handler(CommandHandler(["restart", "reboot"], cmd_restart))
     app.add_handler(CallbackQueryHandler(settings_callback, pattern=r"^set_"))
