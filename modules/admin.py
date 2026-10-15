@@ -30,39 +30,37 @@ from modules.utils import admin_only, get_target_user, is_admin
 # ── PIN / UNPIN ─────────────────────────────────
 
 @admin_only
-async def cmd_pin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_pin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message.reply_to_message:
-        await update.message.reply_text("পিন করতে কোনো মেসেজ reply করুন।")
-        return
+        return await update.message.reply_text("পিন করতে কোনো মেসেজ reply করুন।")
     try:
         await context.bot.pin_chat_message(
             update.effective_chat.id,
             update.message.reply_to_message.message_id,
             disable_notification=False
         )
-        await update.message.reply_text("📌 মেসেজ পিন করা হয়েছে।")
+        return await update.message.reply_text("📌 মেসেজ পিন করা হয়েছে।")
     except Exception as e:
-        await update.message.reply_text(f"❌ পিন ব্যর্থ: {e}")
+        return await update.message.reply_text(f"❌ পিন ব্যর্থ: {e}")
 
 
 @admin_only
-async def cmd_pinsilent(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_pinsilent(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message.reply_to_message:
-        await update.message.reply_text("পিন করতে কোনো মেসেজ reply করুন।")
-        return
+        return await update.message.reply_text("পিন করতে কোনো মেসেজ reply করুন।")
     try:
         await context.bot.pin_chat_message(
             update.effective_chat.id,
             update.message.reply_to_message.message_id,
             disable_notification=True
         )
-        await update.message.reply_text("📌 মেসেজ নীরবে পিন করা হয়েছে।")
+        return await update.message.reply_text("📌 মেসেজ নীরবে পিন করা হয়েছে।")
     except Exception as e:
-        await update.message.reply_text(f"❌ পিন ব্যর্থ: {e}")
+        return await update.message.reply_text(f"❌ পিন ব্যর্থ: {e}")
 
 
 @admin_only
-async def cmd_unpin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_unpin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if update.message.reply_to_message:
             await context.bot.unpin_chat_message(
@@ -71,18 +69,18 @@ async def cmd_unpin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             )
         else:
             await context.bot.unpin_chat_message(update.effective_chat.id)
-        await update.message.reply_text("📌 মেসেজ আনপিন করা হয়েছে।")
+        return await update.message.reply_text("📌 মেসেজ আনপিন করা হয়েছে।")
     except Exception as e:
-        await update.message.reply_text(f"❌ আনপিন ব্যর্থ: {e}")
+        return await update.message.reply_text(f"❌ আনপিন ব্যর্থ: {e}")
 
 
 @admin_only
-async def cmd_unpinall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_unpinall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.unpin_all_chat_messages(update.effective_chat.id)
-        await update.message.reply_text("✅ সব পিন করা মেসেজ সরানো হয়েছে।")
+        return await update.message.reply_text("✅ সব পিন করা মেসেজ সরানো হয়েছে।")
     except Exception as e:
-        await update.message.reply_text(f"❌ ব্যর্থ: {e}")
+        return await update.message.reply_text(f"❌ ব্যর্থ: {e}")
 
 
 # ── LOCK / UNLOCK ───────────────────────────────
@@ -123,47 +121,44 @@ async def _apply_permissions(chat_id: int, bot) -> None:
 
 
 @admin_only
-async def cmd_lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_lock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lock_type = (context.args[0].lower() if context.args else "all")
     if lock_type not in _LOCK_TYPES:
-        await update.message.reply_text(f"লক টাইপ: {', '.join(_LOCK_TYPES.keys())}")
-        return
+        return await update.message.reply_text(f"লক টাইপ: {', '.join(_LOCK_TYPES.keys())}")
     chat_id = update.effective_chat.id
     for key in _LOCK_TYPES[lock_type]:
         await update_chat_setting(chat_id, key, 1)
     try:
         await _apply_permissions(chat_id, context.bot)
-        await update.message.reply_html(f"🔒 <b>{lock_type}</b> লক করা হয়েছে।")
+        return await update.message.reply_html(f"🔒 <b>{lock_type}</b> লক করা হয়েছে।")
     except Exception as e:
-        await update.message.reply_text(f"❌ লক ব্যর্থ: {e}")
+        return await update.message.reply_text(f"❌ লক ব্যর্থ: {e}")
 
 
 @admin_only
-async def cmd_unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_unlock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lock_type = (context.args[0].lower() if context.args else "all")
     if lock_type not in _LOCK_TYPES:
-        await update.message.reply_text(f"লক টাইপ: {', '.join(_LOCK_TYPES.keys())}")
-        return
+        return await update.message.reply_text(f"লক টাইপ: {', '.join(_LOCK_TYPES.keys())}")
     chat_id = update.effective_chat.id
     for key in _LOCK_TYPES[lock_type]:
         await update_chat_setting(chat_id, key, 0)     # Fix #9: set to 0 BEFORE applying
     try:
         await _apply_permissions(chat_id, context.bot)
-        await update.message.reply_html(f"🔓 <b>{lock_type}</b> আনলক করা হয়েছে।")
+        return await update.message.reply_html(f"🔓 <b>{lock_type}</b> আনলক করা হয়েছে।")
     except Exception as e:
-        await update.message.reply_text(f"❌ আনলক ব্যর্থ: {e}")
+        return await update.message.reply_text(f"❌ আনলক ব্যর্থ: {e}")
 
 
 # ── RULES ─────────────────────────────────────
 
 @admin_only
-async def cmd_setrules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_setrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.partition(" ")[2].strip()
     if not text:
-        await update.message.reply_text("ব্যবহার: /setrules <নিয়মাবলী>")
-        return
+        return await update.message.reply_text("ব্যবহার: /setrules <নিয়মাবলী>")
     await update_chat_setting(update.effective_chat.id, "rules_text", text)
-    await update.message.reply_text("✅ গ্রুপের নিয়মাবলী সেট করা হয়েছে।")
+    return await update.message.reply_text("✅ গ্রুপের নিয়মাবলী সেট করা হয়েছে।")
 
 
 async def cmd_rules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -527,18 +522,38 @@ async def cmd_restart(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         allowed = is_own or is_bot_adm
 
     if not allowed:
-        await update.message.reply_html(
+        sent = await update.message.reply_html(
             f"⛔ <b>অনুমতি নেই!</b>\n"
             f"শুধুমাত্র গ্রুপ অ্যাডমিন বা বট ওনার এই কমান্ডটি ব্যবহার করতে পারবেন।\n"
             f"🆔 আপনার Telegram ID: <code>{user.id}</code>"
         )
+        if chat and chat.type in ("group", "supergroup"):
+            await asyncio.sleep(3)
+            try:
+                await update.message.delete()
+            except Exception:
+                pass
+            try:
+                await sent.delete()
+            except Exception:
+                pass
         return
 
-    await update.message.reply_html(
+    sent = await update.message.reply_html(
         "🔄 <b>বট সফলভাবে রিস্টার্ট করা হচ্ছে...</b>\n"
         "<i>কয়েক সেকেন্ডের মধ্যে বট নতুন কোড নিয়ে পুনরায় চালু হবে।</i>"
     )
-    await asyncio.sleep(1)
+
+    # 3 second auto-delete for both command and reply
+    await asyncio.sleep(3)
+    try:
+        await update.message.delete()
+    except Exception:
+        pass
+    try:
+        await sent.delete()
+    except Exception:
+        pass
 
     import sys
     import os

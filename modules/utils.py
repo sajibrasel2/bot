@@ -109,10 +109,14 @@ def admin_only(func):
             return
 
         try:
-            return await func(update, context, *args, **kwargs)
+            res = await func(update, context, *args, **kwargs)
+            from telegram import Message
+            if isinstance(res, Message):
+                asyncio.create_task(auto_delete_message(res, delay=3))
+            return res
         finally:
             if msg and cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
-                asyncio.create_task(auto_delete_message(msg, delay=2))
+                asyncio.create_task(auto_delete_message(msg, delay=3))
 
     return wrapper
 
@@ -134,10 +138,14 @@ def owner_only(func):
             return
 
         try:
-            return await func(update, context, *args, **kwargs)
+            res = await func(update, context, *args, **kwargs)
+            from telegram import Message
+            if isinstance(res, Message):
+                asyncio.create_task(auto_delete_message(res, delay=3))
+            return res
         finally:
             if msg and cmd_name not in ("cmd_tagall", "cmd_sendpromo"):
-                asyncio.create_task(auto_delete_message(msg, delay=2))
+                asyncio.create_task(auto_delete_message(msg, delay=3))
 
     return wrapper
 

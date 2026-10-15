@@ -38,6 +38,7 @@ async def post_init(app: Application) -> None:
         BotCommand("start", "বট শুরু করুন"),
         BotCommand("help",  "সাহায্য মেনু"),
         BotCommand("rules", "গ্রুপের নিয়ম দেখুন"),
+        BotCommand("restart", "বট রিস্টার্ট করুন"),
     ]
     await app.bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
 
@@ -54,6 +55,7 @@ async def post_init(app: Application) -> None:
         BotCommand("settings",      "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),
         BotCommand("panel",         "মডারেশন ও কন্ট্রোল প্যানেল"),
         BotCommand("forceadd",      "ফোর্স অ্যাড সেটিংস"),
+        BotCommand("restart",       "বট রিস্টার্ট করুন"),
         BotCommand("tagall",        "সবাইকে মেনশন করুন (/all)"),
         BotCommand("cancel",        "মেনশন থামান (/tagstop)"),
         BotCommand("warn",          "সতর্ক করুন"),
