@@ -83,13 +83,13 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
     init_msg = await update.message.reply_html(
         f"🚀 <b>মেনশন প্রক্রিয়া শুরু হচ্ছে...</b>\n"
-        f"👥 মোট সদস্য: <b>{total_users}</b> জন (প্রতি মেসেজে ২০ জন)\n"
+        f"👥 মোট সদস্য: <b>{total_users}</b> জন (প্রতি মেসেজে ৫০ জন)\n"
         f"🛑 বন্ধ করতে লিখুন: <code>/cancel</code>"
     )
     if init_msg:
         asyncio.create_task(_auto_delete(init_msg, delay=90))
 
-    batch_size = 20
+    batch_size = 50
     try:
         for i in range(0, total_users, batch_size):
             if not _active_tags.get(chat_id):
@@ -102,7 +102,7 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             mentions = []
             for u in batch:
                 uid = u["user_id"]
-                fname = html.escape(u["first_name"] or "Member")
+                fname = html.escape((u["first_name"] or "Member")[:15])
                 mentions.append(f"<a href=\"tg://user?id={uid}\">{fname}</a>")
 
             text = f"{header_text}\n👉 " + " • ".join(mentions)
@@ -118,8 +118,8 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             except Exception as e:
                 logger.debug(f"Tagall batch error in chat {chat_id}: {e}")
 
-            # Sleep 2 seconds between batches
-            await asyncio.sleep(2)
+            # Sleep 1.2 seconds between batches (optimized for Telegram rate limits)
+            await asyncio.sleep(1.2)
 
         if _active_tags.get(chat_id):
             done_msg = await context.bot.send_message(chat_id=chat_id, text="✅ <b>সফলভাবে সকল সদস্যকে মেনশন করা সম্পন্ন হয়েছে!</b>", parse_mode="HTML")
