@@ -58,6 +58,7 @@ async def post_init(app: Application) -> None:
         BotCommand("restart",       "বট রিস্টার্ট করুন"),
         BotCommand("tagall",        "সবাইকে মেনশন করুন (/all)"),
         BotCommand("cancel",        "মেনশন থামান (/tagstop)"),
+        BotCommand("autotag",       "রাত ১১টার অটো-ট্যাগ শিডিউল"),
         BotCommand("warn",          "সতর্ক করুন"),
         BotCommand("warns",         "ওয়ার্ন তালিকা দেখুন"),
         BotCommand("ban",           "ব্যান করুন"),
@@ -92,6 +93,11 @@ async def post_init(app: Application) -> None:
     # Start the group title and member count synchronization task
     asyncio.create_task(sync_group_info(app))
     logger.info("✅ Group info and member count synchronization task registered")
+
+    # Start the daily 11:00 PM auto-tagall scheduler task (Bangladesh Time UTC+6)
+    from modules import tagall
+    asyncio.create_task(tagall.scheduled_daily_tagall_loop(app))
+    logger.info("✅ Daily 11:00 PM auto-tagall scheduler task registered")
 
 
 async def sync_group_info(app: Application) -> None:
