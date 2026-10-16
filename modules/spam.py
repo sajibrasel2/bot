@@ -22,6 +22,7 @@ import time
 import asyncio
 import logging
 import urllib.parse
+import html
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -130,28 +131,193 @@ async def _mute_user(context, chat_id: int, user, duration: int = 60) -> None:
     )
 
 
+
+def is_forward_or_channel_post(msg: Message, chat) -> tuple[bool, str]:
+    """
+    Checks if a message is forwarded from any user/chat/channel, or posted as an external channel.
+    Returns (is_forwarded, reason).
+    """
+    if not msg:
+        return False, ""
+
+    # 1. Automatic forwards from group's own linked channel are allowed
+    if getattr(msg, "is_automatic_forward", False):
+        return False, ""
+
+    # 2. External channel sender (posting as a channel)
+    sender_chat = getattr(msg, "sender_chat", None)
+    if sender_chat:
+        # Group itself (anonymous admin) is allowed
+        if sender_chat.id == chat.id:
+            return False, ""
+        # Linked discussion channel is allowed
+        linked_id = getattr(chat, "linked_chat_id", None)
+        if linked_id and sender_chat.id == linked_id:
+            return False, ""
+        # Any other channel posting in the group is blocked
+        return True, "channel_sender"
+
+    # 3. Telegram Bot API 7.0+ MessageOrigin (User, HiddenUser, Chat, Channel)
+    origin = getattr(msg, "forward_origin", None)
+    if origin is not None:
+        origin_type = getattr(origin, "type", "")
+        if origin_type == "channel":
+            return True, "channel_forward"
+        return True, "forward_origin"
+
+    # 4. Legacy Telegram forward attributes
+    if getattr(msg, "forward_from_chat", None) is not None:
+        from_chat = getattr(msg, "forward_from_chat", None)
+        if getattr(from_chat, "type", "") == "channel":
+            return True, "channel_forward"
+        return True, "forward_legacy"
+
+    if (
+        getattr(msg, "forward_date", None) is not None or
+        getattr(msg, "forward_from", None) is not None or
+        getattr(msg, "forward_sender_name", None) is not None
+    ):
+        return True, "forward_legacy"
+
+    # 5. Telegram Stories
+    if getattr(msg, "story", None) is not None:
+        return True, "story"
+
+    return False, ""
+
+
 # ── Main filter ───────────────────────────────────
 
 async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """সব মেসেজ চেক করে — flood, links, bad words, forwards।"""
+    """সব মেসেজ চেক করে — forwards, flood, links, bad words, media locks।"""
     msg = update.message or update.edited_message
-    if not msg or not msg.from_user:
+    if not msg:
         return
 
     chat = update.effective_chat
-    user = msg.from_user
+    if not chat:
+        return
 
-    # Record user and chat title in database for accurate stats
-    if user and chat:
-        asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
-        if chat.type != "private" and chat.title:
-            asyncio.create_task(update_chat_info(chat.id, title=chat.title))
-
-    # অ্যাডমিনরা বাদ
+    # অ্যাডমিনরা সম্পূর্ণ বাদ (মুক্ত)
     if await is_admin(update):
         return
 
     settings = await get_chat_settings(chat.id)
+
+    # ── 1. Anti-forward & Anti-Channel Protection (কঠোর ফরোয়ার্ড ও চ্যানেল ব্লক) ────
+    forward_blocked = bool(
+        settings.get("antiforward_enabled", 1) or
+        settings.get("lock_messages", 0)
+    )
+
+    is_fwd, fwd_reason = is_forward_or_channel_post(msg, chat)
+    if forward_blocked and is_fwd:
+        # Delete forwarded message / channel post immediately
+        try:
+            await msg.delete()
+        except Exception:
+            pass
+
+        # Handle external channel sender (posting as a channel)
+        if fwd_reason == "channel_sender" and msg.sender_chat:
+            try:
+                await context.bot.ban_chat_sender_chat(chat_id=chat.id, sender_chat_id=msg.sender_chat.id)
+                logger.info(f"🚫 Banned external channel {msg.sender_chat.id} from chat {chat.id}")
+            except Exception as e:
+                logger.debug(f"Could not ban sender chat: {e}")
+
+            channel_title = html.escape(getattr(msg.sender_chat, "title", "চ্যানেল") or "চ্যানেল")
+            alert_text = (
+                f"📵 <b>চ্যানেল পোস্ট সম্পূর্ণ নিষিদ্ধ!</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📢 <b>চ্যানেল:</b> {channel_title}\n"
+                f"🆔 <b>চ্যানেল আইডি:</b> <code>{msg.sender_chat.id}</code>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"🔒 এই গ্রুপে কোনো প্রকার চ্যানেলের পোস্ট ফরোয়ার্ড করা বা চ্যানেলের মাধ্যমে মেসেজ দেওয়া সম্পূর্ণ নিষিদ্ধ!\n\n"
+                f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করুন:</b>\n"
+                f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>"
+            )
+            await _send_and_delete(context, chat.id, alert_text, delay=BOT_MSG_AUTO_DELETE)
+            return
+
+        # Handle standard user forward (channel forward, user forward, media forward, story)
+        user = msg.from_user or update.effective_user
+        if user:
+            now = time.time()
+            last_strike = _antiforward_strike_time[chat.id][user.id]
+            if now - last_strike > ANTIFORWARD_STRIKE_WINDOW:
+                _antiforward_strikes[chat.id][user.id] = 0
+
+            _antiforward_strikes[chat.id][user.id] += 1
+            _antiforward_strike_time[chat.id][user.id] = now
+            strike_count = _antiforward_strikes[chat.id][user.id]
+
+            reply_markup = _build_action_buttons(chat.id, user.id, chat.title or "")
+
+            if strike_count >= ANTIFORWARD_STRIKE_LIMIT:
+                _antiforward_strikes[chat.id][user.id] = 0
+                try:
+                    await _mute_user(context, chat.id, user, duration=ANTIFORWARD_MUTE_DURATION)
+                except Exception:
+                    pass
+
+                action_desc = "চ্যানেলের পোস্ট ফরোয়ার্ড" if fwd_reason == "channel_forward" else "মেসেজ বা মিডিয়া ফরোয়ার্ড"
+                mute_alert = (
+                    f"🚨 <b>মিউট করা হয়েছে! (১ ঘণ্টা)</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
+                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
+                    f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"⚠️ <i>গ্রুপে <b>{action_desc} করা সম্পূর্ণ নিষিদ্ধ</b>। বারবার <b>৩ বার ফরোয়ার্ড</b> করার অপরাধে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
+                    f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করুন:</b>\n"
+                    f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>\n\n"
+                    f"👉 <i>আনমিউট হওয়ার পর সতর্ক থাকবেন, পুনরায় ফরোয়ার্ড করলে আবারও মিউট করা হবে।</i>"
+                )
+                await _send_and_delete(
+                    context, chat.id,
+                    mute_alert,
+                    reply_markup=reply_markup,
+                    delay=BOT_MSG_AUTO_DELETE
+                )
+            else:
+                strikes_left = ANTIFORWARD_STRIKE_LIMIT - strike_count
+                if fwd_reason == "channel_forward":
+                    warning_title = "📵 <b>চ্যানেল ফরোয়ার্ড সম্পূর্ণ নিষিদ্ধ!</b>"
+                    warning_desc = "এই গ্রুপে কোনো <b>চ্যানেলের পোস্ট বা মিডিয়া ফরোয়ার্ড করা কঠোরভাবে নিষেধ</b>। আপনার ফরোয়ার্ডকৃত পোস্টটি মুছে ফেলা হয়েছে।"
+                else:
+                    warning_title = "📵 <b>ফরোয়ার্ড মেসেজ সম্পূর্ণ নিষিদ্ধ!</b>"
+                    warning_desc = "এই গ্রুপে কোনো প্রকার <b>মেসেজ, মিডিয়া বা স্টোরি ফরোয়ার্ড করা কঠোরভাবে নিষেধ</b>। আপনার ফরোয়ার্ডকৃত মেসেজটি মুছে ফেলা হয়েছে।"
+
+                alert_text = (
+                    f"{warning_title}\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
+                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
+                    f"⚠️ <b>সতর্কতা / স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🔒 {warning_desc}\n\n"
+                    f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
+                    f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>\n\n"
+                    f"⚠️ <i>সতর্কতা: ৩ বার ফরোয়ার্ড করলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
+                )
+                await _send_and_delete(
+                    context, chat.id,
+                    alert_text,
+                    reply_markup=reply_markup,
+                    delay=BOT_MSG_AUTO_DELETE
+                )
+        return
+
+    # If not a forward, require a valid user for tracking other features
+    user = msg.from_user or update.effective_user
+    if not user:
+        return
+
+    # Record user and chat title in database for accurate stats
+    asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
+    if chat.type != "private" and chat.title:
+        asyncio.create_task(update_chat_info(chat.id, title=chat.title))
 
     # ── Anti-flood (স্বাভাবিক ফ্লাড প্রটেকশন) ──────────────────────────────────
     if settings.get("antiflood_enabled", 0):
@@ -378,98 +544,7 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 )
             return
 
-    # ── Anti-forward (১০ জন মেম্বার অ্যাড করলে অটোমেটিক ফরোয়ার্ড অনুমতি) ─────────
-    forward_blocked = bool(
-        settings.get("antiforward_enabled", 0) or
-        settings.get("lock_messages", 0)
-    )
-    is_forwarded = bool(
-        getattr(msg, "forward_origin", None) is not None or
-        getattr(msg, "forward_date", None) is not None or
-        getattr(msg, "forward_from", None) is not None or
-        getattr(msg, "forward_from_chat", None) is not None or
-        getattr(msg, "forward_sender_name", None) is not None
-    )
 
-    if forward_blocked and is_forwarded:
-        # Check user confirmed invites from database
-        user_invites = await get_user_invite_count(chat.id, user.id)
-        required_invites = int(settings.get("antiforward_required_invites") or settings.get("antilink_required_invites") or 10)
-
-        if user_invites >= required_invites:
-            # User has added 10 or more members -> AUTOMATICALLY PERMITTED!
-            pass
-        else:
-            # User has not added 10 members -> Delete forwarded msg, track strike, warn or mute for 1 hour
-            try:
-                await msg.delete()
-            except Exception:
-                pass
-
-            now = time.time()
-            last_strike = _antiforward_strike_time[chat.id][user.id]
-            if now - last_strike > ANTIFORWARD_STRIKE_WINDOW:
-                _antiforward_strikes[chat.id][user.id] = 0
-
-            _antiforward_strikes[chat.id][user.id] += 1
-            _antiforward_strike_time[chat.id][user.id] = now
-            strike_count = _antiforward_strikes[chat.id][user.id]
-
-            remaining_invites = max(0, required_invites - user_invites)
-
-            reply_markup = _build_action_buttons(chat.id, user.id, chat.title or "")
-
-            if strike_count >= ANTIFORWARD_STRIKE_LIMIT:
-                # Strike limit reached (3 times) -> Mute user for 1 hour (3600s)
-                _antiforward_strikes[chat.id][user.id] = 0
-                try:
-                    await _mute_user(context, chat.id, user, duration=ANTIFORWARD_MUTE_DURATION)
-                except Exception:
-                    pass
-
-                mute_alert = (
-                    f"🚨 <b>মিউট করা হয়েছে! (১ ঘণ্টা)</b>\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
-                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
-                    f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"⚠️ <i>শর্ত ({required_invites} জন মেম্বার এড) পূরণ না করে বারবার <b>৩ বার মেসেজ ফরোয়ার্ড</b> করার কারণে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
-                    f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করুন:</b>\n"
-                    f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>\n\n"
-                    f"👉 <i>আনমিউট হওয়ার পর ফরোয়ার্ড করতে চাইলে আগে অবশ্যই ১০ জন মেম্বার এড করবেন।</i>"
-                )
-
-                await _send_and_delete(
-                    context, chat.id,
-                    mute_alert,
-                    reply_markup=reply_markup,
-                    delay=BOT_MSG_AUTO_DELETE
-                )
-            else:
-                strikes_left = ANTIFORWARD_STRIKE_LIMIT - strike_count
-                alert_text = (
-                    f"📵 <b>ফরোয়ার্ড মেসেজ লক করা আছে!</b>\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
-                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
-                    f"⚠️ <b>সতর্কতা / স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code>\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"🔒 এই গ্রুপে মেসেজ বা মিডিয়া ফরোয়ার্ড করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
-                    f"📊 <b>আপনার বর্তমান অগ্রগতি:</b> <code>{user_invites}/{required_invites}</code> জন\n"
-                    f"👉 <i>আরও <b>{remaining_invites} জন</b> মেম্বার অ্যাড করলে ফরোয়ার্ড সুবিধা অটোমেটিক আনলক হবে!</i>\n\n"
-                    f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
-                    f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>\n\n"
-                    f"⚠️ <i>সতর্কতা: ৩ বার ফরোয়ার্ড করলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
-                )
-
-                await _send_and_delete(
-                    context, chat.id,
-                    alert_text,
-                    reply_markup=reply_markup,
-                    delay=BOT_MSG_AUTO_DELETE
-                )
-            return
 
     # ── Media lock (DB-driven: lock_media_msg) ────
     if settings.get("lock_media_msg", 0):
@@ -536,26 +611,17 @@ async def cmd_antiforward(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     args = context.args
     if not args or args[0].lower() not in ("on", "off"):
         await update.message.reply_text(
-            "ব্যবহার: <code>/antiforward on</code> অথবা <code>/antiforward off</code>\n"
-            "নির্দিষ্ট মেম্বার সংখ্যা সেট করতে: <code>/antiforward on 10</code>\n\n"
-            "💡 <i>নোট: Anti-forward চালু থাকলে ১০ জন মেম্বার অ্যাড করা ইউজাররা স্বয়ংক্রিয়ভাবে ফরোয়ার্ড করার অনুমতি পাবে।</i>",
+            "ব্যবহার: <code>/antiforward on</code> অথবা <code>/antiforward off</code>\n\n"
+            "💡 <i>নোট: Anti-forward চালু থাকলে সাধারণ সদস্যদের জন্য মেসেজ, মিডিয়া এবং চ্যানেলের পোস্ট ফরোয়ার্ড করা সম্পূর্ণ নিষিদ্ধ থাকবে। ৩ বার ফরোয়ার্ড করলে স্বয়ংক্রিয়ভাবে ১ ঘণ্টার জন্য মিউট করা হবে।</i>",
             parse_mode="HTML"
         )
         return
     val = 1 if args[0].lower() == "on" else 0
     await update_chat_setting(update.effective_chat.id, "antiforward_enabled", val)
-    if val and len(args) > 1 and args[1].isdigit():
-        custom_req = max(1, int(args[1]))
-        await update_chat_setting(update.effective_chat.id, "antiforward_required_invites", custom_req)
-        await update.message.reply_text(
-            f"📵 Anti-forward <b>চালু ✅</b> (প্রতি মেম্বারকে <b>{custom_req} জন</b> অ্যাড করতে হবে)।",
-            parse_mode="HTML"
-        )
-    else:
-        await update.message.reply_text(
-            f"📵 Anti-forward {'<b>চালু ✅</b> (১০ জন মেম্বার অ্যাড করলে অটো আনলক)' if val else '<b>বন্ধ ❌</b>'}",
-            parse_mode="HTML"
-        )
+    await update.message.reply_text(
+        f"📵 Anti-forward {'<b>চালু ✅</b> (মেম্বারদের জন্য ফরোয়ার্ড ও চ্যানেল পোস্ট সম্পূর্ণ বন্ধ)' if val else '<b>বন্ধ ❌</b>'}",
+        parse_mode="HTML"
+    )
 
 
 @admin_only
@@ -659,19 +725,17 @@ async def unknown_command_cleaner(update: Update, context: ContextTypes.DEFAULT_
 
 
 def register(app) -> None:
-    # TEXT filter (flood, link, badword, forward)
+    # 1. FORWARDED handler (catches ALL forwards: text, photos, videos, stickers, polls, locations, etc.)
     app.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.ChatType.GROUPS,
+        filters.FORWARDED & ~filters.StatusUpdate.ALL & filters.ChatType.GROUPS,
         spam_filter
     ))
-    # MEDIA filter (photo, video, document, audio etc.)
+    # 2. General messages & media (flood, link, badword, media lock)
     app.add_handler(MessageHandler(
-        (filters.PHOTO | filters.VIDEO | filters.Document.ALL |
-         filters.AUDIO | filters.VOICE | filters.VIDEO_NOTE | filters.ANIMATION)
-        & filters.ChatType.GROUPS,
+        (filters.TEXT | filters.ATTACHMENT) & ~filters.COMMAND & ~filters.StatusUpdate.ALL & filters.ChatType.GROUPS,
         spam_filter
     ))
-    # Unknown / spam command cleaner (catches all /command messages not in VALID_COMMANDS, e.g. /Sawya)
+    # 3. Unknown / spam command cleaner (catches all /command messages not in VALID_COMMANDS)
     app.add_handler(MessageHandler(
         (filters.COMMAND | filters.Regex(r"^/[a-zA-Z0-9_]+")) & filters.ChatType.GROUPS,
         unknown_command_cleaner
