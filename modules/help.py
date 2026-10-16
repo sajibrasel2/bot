@@ -127,12 +127,15 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if user and chat:
         asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
     if chat.type != "private":
-        await update.message.reply_html(
+        sent = await update.message.reply_html(
             f"👋 হ্যালো {user.mention_html()}!\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"🤖 আমি এই গ্রুপের ম্যানেজার বট।\n"
-            f"📖 /help লিখে সব কমান্ড দেখুন।"
+            f"📖 বিস্তারিত দেখতে আমাকে ইনবক্সে /help পাঠান।"
         )
+        from modules.utils import auto_delete_message
+        asyncio.create_task(auto_delete_message(sent, delay=5))
+        asyncio.create_task(auto_delete_message(update.message, delay=5))
         return
     await update.message.reply_html(
         f"╔═══════════════════════╗\n"
@@ -157,6 +160,14 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat = update.effective_chat
     if user and chat:
         asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
+    if chat and chat.type != "private":
+        sent = await update.message.reply_html(
+            "📖 <b>কমান্ড তালিকা দেখতে আমাকে ইনবক্সে /help পাঠান।</b>"
+        )
+        from modules.utils import auto_delete_message
+        asyncio.create_task(auto_delete_message(sent, delay=5))
+        asyncio.create_task(auto_delete_message(update.message, delay=5))
+        return
     await update.message.reply_html(
         "📖 <b>কমান্ড তালিকা</b> — বিভাগ বেছে নিন:",
         reply_markup=_main_keyboard()

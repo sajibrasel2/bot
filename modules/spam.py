@@ -20,8 +20,11 @@ Admin commands:
 import re
 import time
 import asyncio
+import logging
 import urllib.parse
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 from telegram import Update, ChatPermissions, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, MessageHandler, CommandHandler, filters
@@ -608,6 +611,53 @@ async def cmd_badwordlist(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_html(f"🚫 <b>নিষিদ্ধ শব্দ তালিকা:</b>\n\n{word_list}")
 
 
+# ── Unknown / Spam Slash Command Cleaner ──────────
+VALID_COMMANDS = {
+    # Member & General
+    "start", "help", "rules", "id", "info", "chatinfo", "adminlist",
+    "myinvites", "invites", "myadd", "top", "topinvites", "leaderboard",
+    # Admin / Management
+    "settings", "panel", "forceadd", "force_add", "restart", "reboot",
+    "tagall", "all", "cancel", "tagstop",
+    "warn", "warns", "resetwarns", "resetwarn", "unwarn", "ban", "unban", "tban", "kick", "mute", "unmute", "tmute",
+    "pin", "pinsilent", "unpin", "unpinall", "lock", "unlock",
+    "setrules", "setwarnaction", "setwarnlimit",
+    "promote", "addadmin", "setadmin", "makeadmin", "demote", "removeadmin", "deladmin", "unadmin",
+    "del", "delete", "purge", "setgrouptitle", "setdesc",
+    "setwelcome", "setgoodbye", "welcome", "goodbye", "resetwelcome", "setwelcomesticker", "delwelcomesticker", "setwelcomebtn", "delwelcomebtn",
+    "promo", "sendpromo", "setpromosticker", "delpromosticker",
+    "servicealert", "sendalert", "girlnotice",
+    "antiflood", "antilink", "antiforward", "badwords", "addbadword", "delbadword", "badwordlist",
+    "notes", "save", "get", "clear"
+}
+
+
+async def unknown_command_cleaner(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Instantly deletes any unknown or spam slash commands (e.g. /Sawya, /video, /xxx) sent in groups."""
+    msg = update.effective_message
+    chat = update.effective_chat
+    if not msg or not msg.text or not chat:
+        return
+
+    text = msg.text.strip()
+    if not text.startswith("/"):
+        return
+
+    # Extract command keyword (e.g. "/Sawya@bot" -> "sawya")
+    cmd = text.split()[0].lstrip("/").split("@")[0].lower()
+    if not cmd:
+        return
+
+    # If it is not a recognized bot command:
+    if cmd not in VALID_COMMANDS:
+        if not await is_admin(update):
+            try:
+                await msg.delete()
+                logger.info(f"🗑️ Deleted unknown command /{cmd} from user {update.effective_user.id} in chat {chat.id}")
+            except Exception as e:
+                logger.debug(f"Failed to delete unknown command /{cmd}: {e}")
+
+
 def register(app) -> None:
     # TEXT filter (flood, link, badword, forward)
     app.add_handler(MessageHandler(
@@ -620,6 +670,11 @@ def register(app) -> None:
          filters.AUDIO | filters.VOICE | filters.VIDEO_NOTE | filters.ANIMATION)
         & filters.ChatType.GROUPS,
         spam_filter
+    ))
+    # Unknown / spam command cleaner (catches all /command messages not in VALID_COMMANDS, e.g. /Sawya)
+    app.add_handler(MessageHandler(
+        (filters.COMMAND | filters.Regex(r"^/[a-zA-Z0-9_]+")) & filters.ChatType.GROUPS,
+        unknown_command_cleaner
     ))
     app.add_handler(CommandHandler("antiflood",   cmd_antiflood))
     app.add_handler(CommandHandler("antilink",    cmd_antilink))

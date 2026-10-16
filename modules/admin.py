@@ -165,7 +165,11 @@ async def cmd_rules(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     settings = await get_chat_settings(update.effective_chat.id)
     from database import DEFAULT_RULES
     rules = settings.get("rules_text") or DEFAULT_RULES
-    await update.message.reply_html(rules)
+    sent = await update.message.reply_html(rules)
+    if update.effective_chat and update.effective_chat.type != "private":
+        from modules.utils import auto_delete_message
+        asyncio.create_task(auto_delete_message(sent, delay=10))
+        asyncio.create_task(auto_delete_message(update.message, delay=1))
 
 
 # ── WARN SETTINGS ─────────────────────────────
