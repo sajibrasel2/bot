@@ -3,9 +3,13 @@ Shared utility helpers used across modules.
 """
 
 import functools
+import time
 from telegram import Update, ChatMember
 from telegram.ext import ContextTypes
 from config import OWNER_ID
+
+# Admin status TTL cache: {(chat_id, user_id): (is_admin_bool, timestamp)}
+_admin_cache: dict[tuple[int, int], tuple[bool, float]] = {}
 
 
 async def is_admin(update: Update, user_id: int = None) -> bool:
@@ -41,24 +45,36 @@ async def is_admin(update: Update, user_id: int = None) -> bool:
     except Exception:
         pass
 
-    # 4. Check chat member status
+    # 4. Check in-memory cache (TTL: 60s)
+    now = time.time()
+    cache_key = (chat.id, uid)
+    cached = _admin_cache.get(cache_key)
+    if cached and (now - cached[1] < 60):
+        return cached[0]
+
+    # 5. Check chat member status
+    is_adm = False
     try:
         member = await chat.get_member(uid)
-        if member and member.status in (ChatMember.ADMINISTRATOR, ChatMember.OWNER, "administrator", "creator", "admin"):
-            return True
+        if member:
+            is_adm = member.status in (ChatMember.ADMINISTRATOR, ChatMember.OWNER, "administrator", "creator", "admin")
+            _admin_cache[cache_key] = (is_adm, now)
+            return is_adm
     except Exception:
         pass
 
-    # 5. Check chat administrators list as fallback
+    # 6. Check chat administrators list as fallback
     try:
         admins = await chat.get_administrators()
         for a in admins:
             if a.user.id == uid:
-                return True
+                is_adm = True
+                break
     except Exception:
         pass
 
-    return False
+    _admin_cache[cache_key] = (is_adm, now)
+    return is_adm
 
 
 async def is_owner(update: Update) -> bool:

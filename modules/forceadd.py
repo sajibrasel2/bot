@@ -5,9 +5,11 @@ Can be toggled ON/OFF and configured from the Web Dashboard or Telegram admin co
 """
 
 import asyncio
+import time
 import logging
 import html
 import urllib.parse
+from collections import defaultdict
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, ContextTypes, MessageHandler, CommandHandler, CallbackQueryHandler, filters
 from telegram.helpers import mention_html
@@ -22,6 +24,9 @@ from config import OWNER_ID
 logger = logging.getLogger(__name__)
 
 MAIN_DARK_ROMANCE_GROUP = "https://t.me/alltimefantasyzone"
+
+# Debounce tracker: {chat_id: {user_id: last_alert_timestamp}} to avoid Telegram 429 FloodWait
+_last_forceadd_alert: dict = defaultdict(lambda: defaultdict(float))
 
 
 def _to_int(val, default: int = 0) -> int:
@@ -147,6 +152,12 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
             await msg.delete()
         except Exception as e:
             logger.warning(f"Could not delete message in chat {chat.id} from user {user.id}: {e}")
+
+        # Debounce: only send alert notice once every 30 seconds per user per chat
+        now = time.time()
+        if now - _last_forceadd_alert[chat.id][user.id] < 30:
+            return
+        _last_forceadd_alert[chat.id][user.id] = now
 
         remaining = req_count - user_invites
         alert_text = (
