@@ -43,11 +43,18 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         return
 
     chat_id = chat.id
+
+    # Auto-delete admin's /tagall command message in 3 seconds (keeps group clean)
+    if update.message:
+        asyncio.create_task(_auto_delete(update.message, delay=3))
+
     if _active_tags.get(chat_id):
-        await update.message.reply_text(
-            "⚠️ ইতিমধ্যে একটি মেনশন সেশন চলছে!\n"
-            "বন্ধ করতে /cancel অথবা /tagstop লিখুন।"
+        warn_msg = await context.bot.send_message(
+            chat_id=chat_id,
+            text="⚠️ ইতিমধ্যে একটি মেনশন সেশন চলছে!\nবন্ধ করতে /cancel অথবা /tagstop লিখুন。"
         )
+        if warn_msg:
+            asyncio.create_task(_auto_delete(warn_msg, delay=10))
         return
 
     # Extract optional custom message
@@ -72,10 +79,14 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         pass
 
     if not users:
-        await update.message.reply_html(
-            "ℹ️ <b>এখনো কোনো সদস্যের তথ্য ডেটাবেজে জমা হয়নি!</b>\n"
-            "মেম্বাররা গ্রুপে মেসেজ দিলে বা নতুন মেম্বার জয়েন করলে বট স্বয়ংক্রিয়ভাবে তালিকায় যুক্ত করে নেবে।"
+        no_users = await context.bot.send_message(
+            chat_id=chat_id,
+            text="ℹ️ <b>এখনো কোনো সদস্যের তথ্য ডেটাবেজে জমা হয়নি!</b>\n"
+                 "মেম্বাররা গ্রুপে মেসেজ দিলে বা নতুন মেম্বার জয়েন করলে বট স্বয়ংক্রিয়ভাবে তালিকায় যুক্ত করে নেবে।",
+            parse_mode="HTML"
         )
+        if no_users:
+            asyncio.create_task(_auto_delete(no_users, delay=15))
         return
 
     _active_tags[chat_id] = True
@@ -106,14 +117,16 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
     total_batches = len(batches)
 
-    init_msg = await update.message.reply_html(
-        f"🚀 <b>মেনশন প্রক্রিয়া শুরু হচ্ছে...</b>\n"
-        f"👥 মোট সদস্য: <b>{total_users}</b> জন (প্রতি মেসেজে সর্বোচ্চ ~১০০ জন)\n"
-        f"📦 মোট ব্যাচ: <b>{total_batches}</b> টি\n"
-        f"🛑 বন্ধ করতে লিখুন: <code>/cancel</code>"
+    init_msg = await context.bot.send_message(
+        chat_id=chat_id,
+        text=f"🚀 <b>মেনশন প্রক্রিয়া শুরু হচ্ছে...</b>\n"
+             f"👥 মোট সদস্য: <b>{total_users}</b> জন (প্রতি মেসেজে সর্বোচ্চ ~১০০ জন)\n"
+             f"📦 মোট ব্যাচ: <b>{total_batches}</b> টি\n"
+             f"🛑 বন্ধ করতে লিখুন: <code>/cancel</code>",
+        parse_mode="HTML"
     )
     if init_msg:
-        asyncio.create_task(_auto_delete(init_msg, delay=90))
+        asyncio.create_task(_auto_delete(init_msg, delay=60))
 
     try:
         for batch_idx, batch_mentions in enumerate(batches, start=1):
@@ -124,7 +137,7 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
                     parse_mode="HTML"
                 )
                 if stop_msg:
-                    asyncio.create_task(_auto_delete(stop_msg, delay=90))
+                    asyncio.create_task(_auto_delete(stop_msg, delay=30))
                 return
 
             text = f"{header_text}\n👉 " + " ".join(batch_mentions)
@@ -150,7 +163,7 @@ async def cmd_tagall(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
                 parse_mode="HTML"
             )
             if done_msg:
-                asyncio.create_task(_auto_delete(done_msg, delay=90))
+                asyncio.create_task(_auto_delete(done_msg, delay=30))
 
     finally:
         _active_tags[chat_id] = False
@@ -161,11 +174,18 @@ async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     chat = update.effective_chat
     chat_id = chat.id
 
+    if update.message:
+        asyncio.create_task(_auto_delete(update.message, delay=3))
+
     if _active_tags.get(chat_id):
         _active_tags[chat_id] = False
-        await update.message.reply_html("🛑 <b>মেনশন প্রক্রিয়া তাৎক্ষণিক থামানো হয়েছে!</b>")
+        reply = await context.bot.send_message(chat_id=chat_id, text="🛑 <b>মেনশন প্রক্রিয়া তাৎক্ষণিক থামানো হয়েছে!</b>", parse_mode="HTML")
+        if reply:
+            asyncio.create_task(_auto_delete(reply, delay=15))
     else:
-        await update.message.reply_text("ℹ️ বর্তমানে কোনো সক্রিয় মেনশন প্রক্রিয়া চলছে না (বা ইতিমধ্যে শেষ হয়ে গেছে)।")
+        reply = await context.bot.send_message(chat_id=chat_id, text="ℹ️ বর্তমানে কোনো সক্রিয় মেনশন প্রক্রিয়া চলছে না (বা ইতিমধ্যে শেষ হয়ে গেছে)।")
+        if reply:
+            asyncio.create_task(_auto_delete(reply, delay=10))
 
 
 def register(app: Application) -> None:
