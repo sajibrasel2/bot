@@ -55,6 +55,8 @@ async def post_init(app: Application) -> None:
         BotCommand("settings",      "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),
         BotCommand("panel",         "মডারেশন ও কন্ট্রোল প্যানেল"),
         BotCommand("forceadd",      "ফোর্স অ্যাড সেটিংস"),
+        BotCommand("forceunlock",   "মেম্বারের চ্যাট আনলক করুন"),
+        BotCommand("forcelock",     "মেম্বারের চ্যাট লক করুন"),
         BotCommand("restart",       "বট রিস্টার্ট করুন"),
         BotCommand("tagall",        "সবাইকে মেনশন করুন (/all)"),
         BotCommand("cancel",        "মেনশন থামান (/tagstop)"),

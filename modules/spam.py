@@ -683,7 +683,7 @@ VALID_COMMANDS = {
     "start", "help", "rules", "id", "info", "chatinfo", "adminlist",
     "myinvites", "invites", "myadd", "top", "topinvites", "leaderboard",
     # Admin / Management
-    "settings", "panel", "forceadd", "force_add", "restart", "reboot",
+    "settings", "panel", "forceadd", "force_add", "forceunlock", "funlock", "forcelock", "flock", "restart", "reboot",
     "tagall", "all", "cancel", "tagstop", "autotag", "autotagall",
     "warn", "warns", "resetwarns", "resetwarn", "unwarn", "ban", "unban", "tban", "kick", "mute", "unmute", "tmute",
     "pin", "pinsilent", "unpin", "unpinall", "lock", "unlock",

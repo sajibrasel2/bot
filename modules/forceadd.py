@@ -16,7 +16,8 @@ from telegram.helpers import mention_html
 
 from database import (
     get_chat_settings, update_chat_setting, add_invite,
-    get_user_invite_count, get_top_inviters
+    get_user_invite_count, get_top_inviters,
+    is_user_forceadd_unlocked, unlock_user_forceadd, lock_user_forceadd
 )
 from modules.utils import admin_only, is_admin
 from config import OWNER_ID
@@ -80,15 +81,18 @@ async def handle_member_invites(update: Update, context: ContextTypes.DEFAULT_TY
         added_count += 1
 
     if added_count > 0 and enabled:
-        # If the user just reached or crossed the unlock requirement
-        if total_invites == req_count or (total_invites - added_count < req_count and total_invites >= req_count):
+        # Check if user has already unlocked previously
+        already_unlocked = await is_user_forceadd_unlocked(chat.id, inviter.id)
+        if not already_unlocked and total_invites >= req_count:
+            # Permanently mark as unlocked so raising requirement later will never re-lock them!
+            await unlock_user_forceadd(chat.id, inviter.id)
             try:
                 congrats = await msg.reply_html(
                     f"🎉 <b>অভিনন্দন {mention_html(inviter.id, inviter.first_name)}!</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"✅ আপনি সফলভাবে <b>{total_invites} জন</b> বন্ধুকে গ্রুপে অ্যাড করেছেন।\n"
-                    f"🔓 আপনার চ্যাট ও মেসেজ লক <b>সম্পূর্ণ আনলক</b> করা হয়েছে!\n"
-                    f"💬 এখন আপনি গ্রুপে যেকোনো মেসেজ ও চ্যাট করতে পারবেন।\n\n"
+                    f"🔓 আপনার চ্যাট ও মেসেজ লক <b>আজীবন আনলক</b> করা হয়েছে!\n"
+                    f"💬 এখন আপনি গ্রুপে সবসময় যেকোনো মেসেজ ও চ্যাট করতে পারবেন।\n\n"
                     f"🔞 <b>আমাদের মূল Dark Romance গ্রুপে জয়েন করুন:</b>\n"
                     f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>"
                 )
@@ -145,60 +149,71 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
     if enabled != 1:
         return
 
-    if user_invites < req_count:
-        logger.info(f"⛔ ForceAdd Locking user {user.id} in chat {chat.id} ({user_invites}/{req_count})")
-        # Delete the unauthorized message
-        try:
-            await msg.delete()
-        except Exception as e:
-            logger.warning(f"Could not delete message in chat {chat.id} from user {user.id}: {e}")
+    # 1. If user is already permanently unlocked, allow them immediately!
+    if await is_user_forceadd_unlocked(chat.id, user.id):
+        return
 
-        # Debounce: only send alert notice once every 30 seconds per user per chat
-        now = time.time()
-        if now - _last_forceadd_alert[chat.id][user.id] < 30:
-            return
-        _last_forceadd_alert[chat.id][user.id] = now
+    # 2. Check user's current invites in this group
+    user_invites = await get_user_invite_count(chat.id, user.id)
 
-        remaining = req_count - user_invites
-        alert_text = (
-            f"⛔ <b>চ্যাট লক করা আছে!</b>\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
-            f"🔒 গ্রুপে মেসেজ লিখতে ও চ্যাট করতে হলে আপনাকে অবশ্যই <b>{req_count} জন বন্ধুকে</b> অ্যাড করতে হবে।\n\n"
-            f"📊 <b>আপনার অগ্রগতি:</b> <code>{user_invites}/{req_count}</code> জন\n"
-            f"👉 <i>দয়া করে আরও <b>{remaining} জন</b> বন্ধুকে গ্রুপে অ্যাড করে চ্যাট আনলক করুন!</i>\n\n"
-            f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
-            f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>"
-        )
+    # If user currently meets or exceeds the required count, permanently unlock them now!
+    if user_invites >= req_count:
+        await unlock_user_forceadd(chat.id, user.id)
+        return
 
-        share_text = urllib.parse.quote(f"🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
-        share_url = f"https://t.me/share/url?url={MAIN_DARK_ROMANCE_GROUP}&text={share_text}"
+    logger.info(f"⛔ ForceAdd Locking user {user.id} in chat {chat.id} ({user_invites}/{req_count})")
+    # Delete the unauthorized message
+    try:
+        await msg.delete()
+    except Exception as e:
+        logger.warning(f"Could not delete message in chat {chat.id} from user {user.id}: {e}")
 
-        buttons = [
-            [
-                InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=MAIN_DARK_ROMANCE_GROUP)
-            ],
-            [
-                InlineKeyboardButton(text="👥 বন্ধুদের ইনভাইট পাঠান (Invite/Share)", url=share_url),
-            ],
-            [
-                InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
-                InlineKeyboardButton(text="🏆 সেরা ইনভাইটার", callback_data=f"topinv_{chat.id}"),
-            ]
+    # Debounce: only send alert notice once every 30 seconds per user per chat
+    now = time.time()
+    if now - _last_forceadd_alert[chat.id][user.id] < 30:
+        return
+    _last_forceadd_alert[chat.id][user.id] = now
+
+    remaining = req_count - user_invites
+    alert_text = (
+        f"⛔ <b>চ্যাট লক করা আছে!</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+        f"🔒 গ্রুপে মেসেজ লিখতে ও চ্যাট করতে হলে আপনাকে অবশ্যই <b>{req_count} জন বন্ধুকে</b> অ্যাড করতে হবে।\n\n"
+        f"📊 <b>আপনার অগ্রগতি:</b> <code>{user_invites}/{req_count}</code> জন\n"
+        f"👉 <i>দয়া করে আরও <b>{remaining} জন</b> বন্ধুকে গ্রুপে অ্যাড করে চ্যাট আনলক করুন!</i>\n\n"
+        f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
+        f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>"
+    )
+
+    share_text = urllib.parse.quote(f"🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
+    share_url = f"https://t.me/share/url?url={MAIN_DARK_ROMANCE_GROUP}&text={share_text}"
+
+    buttons = [
+        [
+            InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=MAIN_DARK_ROMANCE_GROUP)
+        ],
+        [
+            InlineKeyboardButton(text="👥 বন্ধুদের ইনভাইট পাঠান (Invite/Share)", url=share_url),
+        ],
+        [
+            InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
+            InlineKeyboardButton(text="🏆 সেরা ইনভাইটার", callback_data=f"topinv_{chat.id}"),
         ]
-        reply_markup = InlineKeyboardMarkup(buttons)
+    ]
+    reply_markup = InlineKeyboardMarkup(buttons)
 
-        try:
-            sent = await context.bot.send_message(
-                chat_id=chat.id,
-                text=alert_text,
-                reply_markup=reply_markup,
-                parse_mode="HTML"
-            )
-            # Message stays visible for 30 seconds then auto-deletes
-            asyncio.create_task(_auto_delete(sent, 30))
-        except Exception as e:
-            logger.warning(f"Could not send force add lock notice in chat {chat.id}: {e}")
+    try:
+        sent = await context.bot.send_message(
+            chat_id=chat.id,
+            text=alert_text,
+            reply_markup=reply_markup,
+            parse_mode="HTML"
+        )
+        # Message stays visible for 30 seconds then auto-deletes
+        asyncio.create_task(_auto_delete(sent, 30))
+    except Exception as e:
+        logger.warning(f"Could not send force add lock notice in chat {chat.id}: {e}")
 
 
 # ── 3. Member Commands ─────────────────────────────
@@ -215,12 +230,14 @@ async def cmd_myinvites(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     req_count = _to_int(settings.get("force_add_count"), 5)
     enabled = _to_int(settings.get("force_add_enabled"), 0)
     count = await get_user_invite_count(chat.id, user.id)
+    is_unlocked = await is_user_forceadd_unlocked(chat.id, user.id) or (count >= req_count)
 
     if enabled:
-        if count >= req_count:
-            status_text = "✅ <b>স্ট্যাটাস:</b> চ্যাট সম্পূর্ণ আনলকড (Unlocked) 🎉"
+        if is_unlocked:
+            status_text = "✅ <b>স্ট্যাটাস:</b> চ্যাট আজীবন আনলকড (Permanently Unlocked) 🎉"
         else:
-            status_text = f"🔒 <b>স্ট্যাটাস:</b> লকড (আরও {req_count - count} জন অ্যাড বাকি)"
+            remaining = max(1, req_count - count)
+            status_text = f"🔒 <b>স্ট্যাটাস:</b> লকড (আরও {remaining} জন অ্যাড বাকি)"
     else:
         status_text = "ℹ️ এই গ্রুপে বর্তমানে ফোর্স-অ্যাড সিস্টেম নিষ্ক্রিয়।"
 
@@ -355,11 +372,12 @@ async def callback_forceadd_query(update: Update, context: ContextTypes.DEFAULT_
         settings = await get_chat_settings(chat_id)
         req_count = _to_int(settings.get("force_add_count"), 5)
         invites = await get_user_invite_count(chat_id, target_user_id)
-        remaining = max(0, req_count - invites)
+        is_unlocked = await is_user_forceadd_unlocked(chat_id, target_user_id) or (invites >= req_count)
 
-        if invites >= req_count:
-            await query.answer(f"🎉 অভিনন্দন! আপনার চ্যাট সম্পূর্ণ আনলকড ({invites}/{req_count} জন অ্যাড করা হয়েছে)।", show_alert=True)
+        if is_unlocked:
+            await query.answer(f"🎉 অভিনন্দন! আপনার চ্যাট আজীবন আনলকড ({invites} জন অ্যাড করা হয়েছে)।", show_alert=True)
         else:
+            remaining = max(0, req_count - invites)
             await query.answer(f"📊 আপনার অগ্রগতি: {invites}/{req_count} জন\n👉 চ্যাট আনলক করতে আরও {remaining} জন বন্ধুকে গ্রুপে অ্যাড করুন!", show_alert=True)
 
     elif data.startswith("topinv_"):
@@ -378,7 +396,59 @@ async def callback_forceadd_query(update: Update, context: ContextTypes.DEFAULT_
         await query.answer("🏆 শীর্ষ ইনভাইটার:\n" + "\n".join(lines), show_alert=True)
 
 
-# ── 6. Register Handlers ─────────────────────────────
+# ── 6. Admin Manual Unlock / Lock Commands ───────────
+
+@admin_only
+async def cmd_force_unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin command to manually permanently unlock a user: /forceunlock <user_id or reply>"""
+    chat = update.effective_chat
+    msg = update.effective_message
+    if not chat or not msg:
+        return
+
+    target_id = None
+    target_name = "User"
+    if msg.reply_to_message and msg.reply_to_message.from_user:
+        target_id = msg.reply_to_message.from_user.id
+        target_name = msg.reply_to_message.from_user.first_name
+    elif context.args and context.args[0].isdigit():
+        target_id = int(context.args[0])
+        target_name = f"<code>{target_id}</code>"
+
+    if not target_id:
+        await msg.reply_text("ব্যবহার: কোনো ইউজারের মেসেজে রিপ্লাই দিয়ে <code>/forceunlock</code> লিখুন অথবা <code>/forceunlock [USER_ID]</code> লিখুন।", parse_mode="HTML")
+        return
+
+    await unlock_user_forceadd(chat.id, target_id)
+    await msg.reply_html(f"✅ {target_name} (<code>{target_id}</code>) এর চ্যাট এই গ্রুপে <b>আজীবন আনলক</b> করা হয়েছে।")
+
+
+@admin_only
+async def cmd_force_lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin command to manually re-lock a user: /forcelock <user_id or reply>"""
+    chat = update.effective_chat
+    msg = update.effective_message
+    if not chat or not msg:
+        return
+
+    target_id = None
+    target_name = "User"
+    if msg.reply_to_message and msg.reply_to_message.from_user:
+        target_id = msg.reply_to_message.from_user.id
+        target_name = msg.reply_to_message.from_user.first_name
+    elif context.args and context.args[0].isdigit():
+        target_id = int(context.args[0])
+        target_name = f"<code>{target_id}</code>"
+
+    if not target_id:
+        await msg.reply_text("ব্যবহার: কোনো ইউজারের মেসেজে রিপ্লাই দিয়ে <code>/forcelock</code> লিখুন অথবা <code>/forcelock [USER_ID]</code> লিখুন।", parse_mode="HTML")
+        return
+
+    await lock_user_forceadd(chat.id, target_id)
+    await msg.reply_html(f"🔒 {target_name} (<code>{target_id}</code>) এর চ্যাট পুনরায় <b>লক</b> করা হয়েছে।")
+
+
+# ── 7. Register Handlers ─────────────────────────────
 
 def register(app: Application) -> None:
     # Handler for members adding friends
@@ -397,6 +467,8 @@ def register(app: Application) -> None:
     app.add_handler(CommandHandler(["myinvites", "invites", "myadd"], cmd_myinvites))
     app.add_handler(CommandHandler(["top", "topinvites", "leaderboard"], cmd_top))
     app.add_handler(CommandHandler(["forceadd", "force_add"], cmd_forceadd))
+    app.add_handler(CommandHandler(["forceunlock", "funlock"], cmd_force_unlock))
+    app.add_handler(CommandHandler(["forcelock", "flock"], cmd_force_lock))
 
     # Button Callbacks
     app.add_handler(CallbackQueryHandler(callback_forceadd_query, pattern=r"^(myinv_|topinv_)"))

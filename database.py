@@ -168,6 +168,23 @@ async def init_db() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             await cur.execute("""
+                CREATE TABLE IF NOT EXISTS forceadd_unlocked_users (
+                    chat_id     BIGINT NOT NULL,
+                    user_id     BIGINT NOT NULL,
+                    unlocked_at INT NOT NULL,
+                    PRIMARY KEY (chat_id, user_id),
+                    INDEX idx_chat_user (chat_id, user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            # Auto-seed existing unlocked users (who have >= 2 confirmed invites)
+            await cur.execute("""
+                INSERT IGNORE INTO forceadd_unlocked_users (chat_id, user_id, unlocked_at)
+                SELECT ui.chat_id, ui.inviter_id, MAX(ui.timestamp)
+                FROM user_invites ui
+                GROUP BY ui.chat_id, ui.inviter_id
+                HAVING COUNT(*) >= 2
+            """)
+            await cur.execute("""
                 CREATE TABLE IF NOT EXISTS global_settings (
                     setting_key VARCHAR(100) PRIMARY KEY,
                     setting_val TEXT
@@ -723,4 +740,54 @@ async def get_all_global_settings() -> dict:
                 for k, v in rows:
                     res[k] = v
             return res
+
+
+# ── Force Add / Chat Unlock Persistence ───────────
+# In-memory fast cache for unlocked status: {(chat_id, user_id)}
+_forceadd_unlocked_cache: set[tuple[int, int]] = set()
+
+
+async def is_user_forceadd_unlocked(chat_id: int, user_id: int) -> bool:
+    """Returns True if user has already permanently unlocked chat in this group."""
+    if (chat_id, user_id) in _forceadd_unlocked_cache:
+        return True
+
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT 1 FROM forceadd_unlocked_users WHERE chat_id=%s AND user_id=%s LIMIT 1",
+                (chat_id, user_id)
+            )
+            row = await cur.fetchone()
+            if row:
+                _forceadd_unlocked_cache.add((chat_id, user_id))
+                return True
+            return False
+
+
+async def unlock_user_forceadd(chat_id: int, user_id: int) -> None:
+    """Permanently marks a user as unlocked in a group."""
+    _forceadd_unlocked_cache.add((chat_id, user_id))
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO forceadd_unlocked_users (chat_id, user_id, unlocked_at) "
+                "VALUES (%s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE unlocked_at=VALUES(unlocked_at)",
+                (chat_id, user_id, int(time.time()))
+            )
+
+
+async def lock_user_forceadd(chat_id: int, user_id: int) -> None:
+    """Removes permanent unlock status of a user in a group."""
+    _forceadd_unlocked_cache.discard((chat_id, user_id))
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM forceadd_unlocked_users WHERE chat_id=%s AND user_id=%s",
+                (chat_id, user_id)
+            )
 
