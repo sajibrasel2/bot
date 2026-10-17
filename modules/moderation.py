@@ -388,6 +388,10 @@ async def cmd_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             InlineKeyboardButton("🚪 কিক (Kick)", callback_data=f"mod_kick:{target_user.id}")
         ],
         [
+            InlineKeyboardButton("🔓 চ্যাট আজীবন আনলক", callback_data=f"mod_funlock:{target_user.id}"),
+            InlineKeyboardButton("🔒 চ্যাট লক", callback_data=f"mod_flock:{target_user.id}")
+        ],
+        [
             InlineKeyboardButton("📌 পিন (Pin)", callback_data=f"mod_pin:{target_msg_id}"),
             InlineKeyboardButton("🗑️ ডিলিট (Delete)", callback_data=f"mod_del:{target_msg_id}")
         ]
@@ -465,6 +469,18 @@ async def moderation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
             )
             await query.answer("ইউজারকে মিউট করা হয়েছে।")
             success_text = "🔇 ইউজারকে ১ ঘণ্টার জন্য <b>মিউট</b> করা হয়েছে।"
+
+        elif action == "mod_funlock":
+            from database import unlock_user_forceadd
+            await unlock_user_forceadd(chat.id, target_id)
+            await query.answer("ইউজারের চ্যাট আজীবন আনলক করা হয়েছে!", show_alert=True)
+            success_text = f"🔓 ইউজার (<code>{target_id}</code>) এর চ্যাট <b>সরাসরি আজীবন আনলক</b> করা হয়েছে।"
+
+        elif action == "mod_flock":
+            from database import lock_user_forceadd
+            await lock_user_forceadd(chat.id, target_id)
+            await query.answer("ইউজারের চ্যাট লক করা হয়েছে!", show_alert=True)
+            success_text = f"🔒 ইউজার (<code>{target_id}</code>) এর চ্যাট পুনরায় <b>লক</b> করা হয়েছে।"
 
         elif action == "mod_pin":
             msg_id = int(parts[1]) # parts[1] is replied_msg_id for pin

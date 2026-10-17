@@ -323,10 +323,13 @@ async def cmd_forceadd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"🔘 বর্তমান অবস্থা: <b>{en}</b>\n"
             f"🎯 প্রয়োজনীয় সংখ্যা: <b>{cnt} জন</b>\n\n"
-            f"<b>কমান্ড ব্যবহার:</b>\n"
-            f"• <code>/forceadd on</code> ─ চালু করুন\n"
-            f"• <code>/forceadd off</code> ─ বন্ধ করুন\n"
-            f"• <code>/forceadd 5</code> ─ সংখ্যা সেট করুন"
+            f"<b>কমান্ড তালিকা ও ব্যবহার:</b>\n"
+            f"• <code>/forceadd on</code> ─ সিস্টেম চালু করুন\n"
+            f"• <code>/forceadd off</code> ─ সিস্টেম বন্ধ করুন\n"
+            f"• <code>/forceadd 5</code> ─ সংখ্যা নির্ধারণ করুন\n"
+            f"• <code>/forceunlock</code> বা <code>/forceunlock [USER_ID]</code> ─ চ্যাট সরাসরি আজীবন আনলক করতে\n"
+            f"• <code>/forcelock</code> বা <code>/forcelock [USER_ID]</code> ─ চ্যাট পুনরায় লক করতে\n\n"
+            f"💡 <i>কোনো মেম্বারের মেসেজে রিপ্লাই দিয়ে অথবা সরাসরি টেলিগ্রাম আইডি লিখে আনলক/লক করতে পারেন।</i>"
         )
         return
 
@@ -410,17 +413,22 @@ async def cmd_force_unlock(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     target_name = "User"
     if msg.reply_to_message and msg.reply_to_message.from_user:
         target_id = msg.reply_to_message.from_user.id
-        target_name = msg.reply_to_message.from_user.first_name
+        target_name = msg.reply_to_message.from_user.mention_html()
     elif context.args and context.args[0].isdigit():
         target_id = int(context.args[0])
-        target_name = f"<code>{target_id}</code>"
+        target_name = f"ইউজার (<code>{target_id}</code>)"
 
     if not target_id:
-        await msg.reply_text("ব্যবহার: কোনো ইউজারের মেসেজে রিপ্লাই দিয়ে <code>/forceunlock</code> লিখুন অথবা <code>/forceunlock [USER_ID]</code> লিখুন।", parse_mode="HTML")
+        await msg.reply_html(
+            "ℹ️ <b>চ্যাট সরাসরি আজীবন আনলক করার নিয়ম:</b>\n\n"
+            "১. মেম্বারের মেসেজে রিপ্লাই দিয়ে লিখুন: <code>/forceunlock</code>\n"
+            "অথবা,\n"
+            "২. সরাসরি আইডি দিয়ে লিখুন: <code>/forceunlock USER_ID</code>"
+        )
         return
 
     await unlock_user_forceadd(chat.id, target_id)
-    await msg.reply_html(f"✅ {target_name} (<code>{target_id}</code>) এর চ্যাট এই গ্রুপে <b>আজীবন আনলক</b> করা হয়েছে।")
+    await msg.reply_html(f"🔓 {target_name} এর চ্যাট এই গ্রুপে <b>সরাসরি আজীবন আনলক</b> করা হয়েছে।")
 
 
 @admin_only
@@ -435,17 +443,22 @@ async def cmd_force_lock(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     target_name = "User"
     if msg.reply_to_message and msg.reply_to_message.from_user:
         target_id = msg.reply_to_message.from_user.id
-        target_name = msg.reply_to_message.from_user.first_name
+        target_name = msg.reply_to_message.from_user.mention_html()
     elif context.args and context.args[0].isdigit():
         target_id = int(context.args[0])
-        target_name = f"<code>{target_id}</code>"
+        target_name = f"ইউজার (<code>{target_id}</code>)"
 
     if not target_id:
-        await msg.reply_text("ব্যবহার: কোনো ইউজারের মেসেজে রিপ্লাই দিয়ে <code>/forcelock</code> লিখুন অথবা <code>/forcelock [USER_ID]</code> লিখুন।", parse_mode="HTML")
+        await msg.reply_html(
+            "ℹ️ <b>চ্যাট পুনরায় লক করার নিয়ম:</b>\n\n"
+            "১. মেম্বারের মেসেজে রিপ্লাই দিয়ে লিখুন: <code>/forcelock</code>\n"
+            "অথবা,\n"
+            "২. সরাসরি আইডি দিয়ে লিখুন: <code>/forcelock USER_ID</code>"
+        )
         return
 
     await lock_user_forceadd(chat.id, target_id)
-    await msg.reply_html(f"🔒 {target_name} (<code>{target_id}</code>) এর চ্যাট পুনরায় <b>লক</b> করা হয়েছে।")
+    await msg.reply_html(f"🔒 {target_name} এর চ্যাট পুনরায় <b>লক</b> করা হয়েছে।")
 
 
 # ── 7. Register Handlers ─────────────────────────────

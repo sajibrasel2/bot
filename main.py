@@ -35,10 +35,15 @@ async def post_init(app: Application) -> None:
 
     # 1. Commands for private chat with bot (ব্যক্তিগত চ্যাটে মেনু)
     private_commands = [
-        BotCommand("start", "বট শুরু করুন"),
-        BotCommand("help",  "সাহায্য মেনু"),
-        BotCommand("rules", "গ্রুপের নিয়ম দেখুন"),
-        BotCommand("restart", "বট রিস্টার্ট করুন"),
+        BotCommand("start",         "বট শুরু করুন"),
+        BotCommand("help",          "সাহায্য মেনু ও সকল কমান্ড"),
+        BotCommand("settings",      "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),
+        BotCommand("panel",         "মডারেশন ও কন্ট্রোল প্যানেল"),
+        BotCommand("forceadd",      "ফোর্স অ্যাড সেটিংস"),
+        BotCommand("forceunlock",   "চ্যাট সরাসরি আজীবন আনলক করতে"),
+        BotCommand("forcelock",     "চ্যাট পুনরায় লক করতে"),
+        BotCommand("rules",         "গ্রুপের নিয়ম দেখুন"),
+        BotCommand("restart",       "বট রিস্টার্ট করুন"),
     ]
     await app.bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
 
@@ -55,8 +60,8 @@ async def post_init(app: Application) -> None:
         BotCommand("settings",      "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),
         BotCommand("panel",         "মডারেশন ও কন্ট্রোল প্যানেল"),
         BotCommand("forceadd",      "ফোর্স অ্যাড সেটিংস"),
-        BotCommand("forceunlock",   "মেম্বারের চ্যাট আনলক করুন"),
-        BotCommand("forcelock",     "মেম্বারের চ্যাট লক করুন"),
+        BotCommand("forceunlock",   "চ্যাট সরাসরি আজীবন আনলক করতে"),
+        BotCommand("forcelock",     "চ্যাট পুনরায় লক করতে"),
         BotCommand("restart",       "বট রিস্টার্ট করুন"),
         BotCommand("tagall",        "সবাইকে মেনশন করুন (/all)"),
         BotCommand("cancel",        "মেনশন থামান (/tagstop)"),
@@ -81,7 +86,9 @@ async def post_init(app: Application) -> None:
         BotCommand("top",               "সেরা ইনভাইটার লিডারবোর্ড"),
     ]
     await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
-    logger.info("✅ Bot commands registered with dedicated private, group member, and admin scopes.")
+    # 4. Default fallback scope
+    await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeDefault())
+    logger.info("✅ Bot commands registered with private, group member, admin, and default scopes.")
 
     # Start the promo loop task when event loop is active
     from modules import promo

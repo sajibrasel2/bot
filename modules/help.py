@@ -27,6 +27,7 @@ HELP_SECTIONS = {
         "title": "🔨 মডারেশন",
         "text": (
             "<b>মডারেশন কমান্ড:</b>\n\n"
+            "/panel — ইনলাইন মডারেশন প্যানেল\n"
             "/warn — ব্যবহারকারীকে সতর্ক করুন\n"
             "/unwarn — শেষ ওয়ার্ন সরান\n"
             "/warns — ওয়ার্ন গণনা দেখুন\n"
@@ -37,7 +38,9 @@ HELP_SECTIONS = {
             "/kick — গ্রুপ থেকে বের করুন\n"
             "/mute — মিউট করুন\n"
             "/unmute — আনমিউট করুন\n"
-            "/tmute &lt;সময়&gt; — নির্দিষ্ট সময়ের জন্য মিউট"
+            "/tmute &lt;সময়&gt; — নির্দিষ্ট সময়ের জন্য মিউট\n"
+            "/forceunlock [ID|Reply] — চ্যাট সরাসরি আজীবন আনলক করতে\n"
+            "/forcelock [ID|Reply] — চ্যাট পুনরায় লক করতে"
         ),
     },
     "spam": {
@@ -46,6 +49,7 @@ HELP_SECTIONS = {
             "<b>স্প্যাম প্রটেকশন কমান্ড:</b>\n\n"
             "/antiflood on|off — ফ্লাড প্রটেকশন\n"
             "/antilink on|off — লিংক ব্লক\n"
+            "/antiforward on|off — ফরোয়ার্ড ব্লক\n"
             "/badwords on|off — নিষিদ্ধ শব্দ ফিল্টার\n"
             "/addbadword &lt;শব্দ&gt; — নিষিদ্ধ শব্দ যোগ করুন\n"
             "/delbadword &lt;শব্দ&gt; — নিষিদ্ধ শব্দ সরান\n"
@@ -56,6 +60,14 @@ HELP_SECTIONS = {
         "title": "⚙️ অ্যাডমিন টুলস",
         "text": (
             "<b>অ্যাডমিন কমান্ড:</b>\n\n"
+            "/settings — গ্রুপ সেটিংস কন্ট্রোল প্যানেল\n"
+            "/panel — ইনলাইন মডারেশন প্যানেল\n"
+            "/forceadd on|off|&lt;সংখ্যা&gt; — ফোর্স অ্যাড সেটিংস\n"
+            "/forceunlock &lt;ID|Reply&gt; — চ্যাট সরাসরি আজীবন আনলক করতে\n"
+            "/forcelock &lt;ID|Reply&gt; — চ্যাট পুনরায় লক করতে\n"
+            "/tagall &lt;বার্তা&gt; — সবাইকে মেনশন করুন (/all)\n"
+            "/cancel — চলমান মেনশন বন্ধ করুন\n"
+            "/autotag on|off — রাত ১১টার অটো-ট্যাগ শিডিউল\n"
             "/pin — মেসেজ পিন করুন\n"
             "/pinsilent — নীরবে পিন\n"
             "/unpin — পিন সরান\n"
@@ -68,8 +80,21 @@ HELP_SECTIONS = {
             "/purge &lt;N&gt; — শেষ N মেসেজ মুছুন\n"
             "/setwarnaction ban|kick|mute\n"
             "/setwarnlimit &lt;সংখ্যা&gt;\n"
-            "/tagall &lt;বার্তা&gt; — সবাইকে মেনশন করুন (/all)\n"
-            "/cancel — চলমান মেনশন বন্ধ করুন"
+            "/restart — বট রিস্টার্ট করুন"
+        ),
+    },
+    "forceadd": {
+        "title": "👥 ফোর্স অ্যাড (চ্যাট আনলক)",
+        "text": (
+            "<b>👥 ফোর্স অ্যাড ও চ্যাট আনলক কমান্ড:</b>\n\n"
+            "/forceadd — বর্তমান অবস্থা ও সেটিংস দেখুন\n"
+            "/forceadd on|off — ফোর্স অ্যাড চালু বা বন্ধ করুন\n"
+            "/forceadd &lt;সংখ্যা&gt; — প্রয়োজনীয় ইনভাইট সংখ্যা নির্ধারণ\n"
+            "/forceunlock &lt;ID|Reply&gt; — চ্যাট সরাসরি আজীবন আনলক করতে\n"
+            "/forcelock &lt;ID|Reply&gt; — চ্যাট পুনরায় লক করতে\n"
+            "/myinvites — মেম্বারের ইনভাইট অগ্রগতি ও আনলক অবস্থা\n"
+            "/top — সেরা ইনভাইটার লিডারবোর্ড\n\n"
+            "💡 <i>টিপস: কোনো মেম্বারের মেসেজে রিপ্লাই দিয়ে অথবা সরাসরি ইউজার আইডি বসিয়ে আজীবন আনলক বা লক করা যায়।</i>"
         ),
     },
     "notes": {
@@ -99,6 +124,7 @@ def _main_keyboard():
             InlineKeyboardButton("⚙️ অ্যাডমিন", callback_data="help_admin"),
         ],
         [
+            InlineKeyboardButton("👥 ফোর্স অ্যাড", callback_data="help_forceadd"),
             InlineKeyboardButton("📝 নোটস", callback_data="help_notes"),
         ],
     ]
