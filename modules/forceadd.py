@@ -63,7 +63,7 @@ async def handle_member_invites(update: Update, context: ContextTypes.DEFAULT_TY
 
     if not msg or not msg.new_chat_members or not chat or not inviter:
         return
-    if chat.type == "private" or inviter.is_bot:
+    if getattr(chat, "type", "") not in ("group", "supergroup") or inviter.is_bot:
         return
 
     settings = await get_chat_settings(chat.id)
@@ -111,7 +111,7 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
 
     if not msg or not chat or not user:
         return
-    if chat.type == "private":
+    if getattr(chat, "type", "") not in ("group", "supergroup"):
         return
 
     # Ignore service status messages (e.g. member joins, leaves, pins) so welcome and tracking always run

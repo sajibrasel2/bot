@@ -162,6 +162,10 @@ async def _send_welcome(chat, user, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not chat or not user or user.is_bot:
         return
 
+    # Never send welcome messages to channels or private chats (only groups and supergroups)
+    if getattr(chat, "type", "") not in ("group", "supergroup"):
+        return
+
     key = (chat.id, user.id)
     now = time.time()
     if key in _recent_welcomes and (now - _recent_welcomes[key]) < 8:
@@ -247,12 +251,16 @@ async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if not chat_member_update:
         return
 
+    chat = update.effective_chat or chat_member_update.chat
+    # Completely ignore channels and private chats (never welcome or process channel joins)
+    if not chat or getattr(chat, "type", "") not in ("group", "supergroup"):
+        return
+
     old_status = chat_member_update.old_chat_member.status
     new_status = chat_member_update.new_chat_member.status
 
     if new_status == ChatMember.BANNED:
         user = chat_member_update.new_chat_member.user
-        chat = update.effective_chat
         admin_user = update.effective_user
         from database import add_banned_user
         asyncio.create_task(add_banned_user(
@@ -263,18 +271,18 @@ async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     if new_status in [ChatMember.MEMBER, ChatMember.LEFT] and old_status in [ChatMember.BANNED, 'kicked']:
         user = chat_member_update.new_chat_member.user
-        chat = update.effective_chat
         from database import remove_banned_user
         asyncio.create_task(remove_banned_user(chat.id, user.id))
 
     if new_status == ChatMember.MEMBER and old_status in [ChatMember.LEFT, ChatMember.BANNED, ChatMember.RESTRICTED, 'left', 'kicked', 'restricted', None]:
-        chat = update.effective_chat
         user = chat_member_update.new_chat_member.user
         await _send_welcome(chat, user, context)
 
 
 async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat = update.effective_chat
+    if not chat or getattr(chat, "type", "") not in ("group", "supergroup"):
+        return
     if not update.message or not update.message.new_chat_members:
         return
     for user in update.message.new_chat_members:
@@ -282,6 +290,8 @@ async def handle_new_chat_members(update: Update, context: ContextTypes.DEFAULT_
 
 async def handle_left_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat     = update.effective_chat
+    if not chat or getattr(chat, "type", "") not in ("group", "supergroup"):
+        return
     settings = await get_chat_settings(chat.id)
 
     if not settings.get("goodbye_enabled", 0):
