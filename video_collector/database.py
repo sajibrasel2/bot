@@ -1,6 +1,6 @@
 """
 Database module for Video Collector Bot — Async MySQL via aiomysql.
-Tables: vc_channels, vc_queue, vc_settings, vc_stats
+Tables: vc_channels, vc_queue, vc_settings, vc_stats, vc_processed
 """
 
 import logging
@@ -42,15 +42,27 @@ async def init_db() -> None:
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS vc_channels (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    channel_id BIGINT NOT NULL,
+                    channel_id BIGINT DEFAULT NULL,
                     channel_title VARCHAR(255) DEFAULT '',
                     channel_username VARCHAR(255) DEFAULT '',
                     channel_type ENUM('source', 'delivery') NOT NULL,
                     is_active TINYINT(1) DEFAULT 1,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE KEY uq_chan_type (channel_id, channel_type)
+                    INDEX idx_chan_type (channel_id, channel_type),
+                    INDEX idx_user_type (channel_username, channel_type)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """)
+
+            # Safely drop old unique constraint on (channel_id, channel_type) if present
+            try:
+                await cur.execute("ALTER TABLE vc_channels DROP INDEX uq_chan_type")
+            except Exception:
+                pass
+
+            try:
+                await cur.execute("ALTER TABLE vc_channels MODIFY channel_id BIGINT DEFAULT NULL")
+            except Exception:
+                pass
 
             # 2. Video processing queue (Deleted immediately after successful delivery)
             await cur.execute("""
@@ -60,8 +72,9 @@ async def init_db() -> None:
                     source_message_id INT NOT NULL,
                     file_id VARCHAR(255) NOT NULL,
                     caption TEXT,
-                    status VARCHAR(50) DEFAULT 'processing',
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    status VARCHAR(50) DEFAULT 'pending',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_chat_msg (source_chat_id, source_message_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """)
 
@@ -82,13 +95,26 @@ async def init_db() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """)
 
+            # 5. Processed messages history (to prevent duplicates even after queue record is deleted)
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS vc_processed (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    source_chat_id BIGINT NOT NULL,
+                    message_id INT NOT NULL,
+                    processed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY uq_chat_msg (source_chat_id, message_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+
             # Insert default settings if not exists
             await cur.execute("""
                 INSERT IGNORE INTO vc_settings (key_name, value)
                 VALUES 
                 ('delete_source_message', '0'),
                 ('is_collector_active', '1'),
-                ('custom_caption', '')
+                ('custom_caption', ''),
+                ('delivery_interval_minutes', '30'),
+                ('trigger_immediate_send', '0')
             """)
 
             await cur.execute("""
@@ -96,35 +122,40 @@ async def init_db() -> None:
                 VALUES ('total_forwarded', 0)
             """)
 
-            # Pre-seed default delivery channel darkromance4u if not exists
+            # Pre-seed default delivery channel @darkromance4u if not exists
             await cur.execute("""
                 INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
-                SELECT 0, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
+                SELECT NULL, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
                 WHERE NOT EXISTS (
                     SELECT 1 FROM vc_channels WHERE channel_username = 'darkromance4u' AND channel_type = 'delivery'
                 )
             """)
+
+            # Pre-seed initial source channels requested by user
+            initial_sources = [
+                ("ayssorbonas420", "Ays Sorbonas"),
+                ("pfff_boom", "Pfff Boom"),
+                ("adult_desi30", "Adult Desi 30")
+            ]
+            for u, t in initial_sources:
+                await cur.execute("""
+                    INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+                    SELECT NULL, %s, %s, 'source', 1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM vc_channels WHERE channel_username = %s AND channel_type = 'source'
+                    )
+                """, (t, u, u))
     logger.info("✅ Video Collector database tables initialized successfully.")
 
 
 # ── Channel Management ─────────────────────────────
 
-async def get_source_channel_ids() -> Set[int]:
-    """Return set of all active source channel/group IDs."""
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute("SELECT channel_id FROM vc_channels WHERE channel_type = 'source' AND is_active = 1")
-            rows = await cur.fetchall()
-            return {int(r[0]) for r in rows}
-
-
 async def get_source_channel_targets() -> Dict[str, Any]:
-    """Return dict of IDs set and usernames set for active source channels."""
+    """Return dict of IDs set, usernames set, and full records for active source channels."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("SELECT channel_id, channel_username FROM vc_channels WHERE channel_type = 'source' AND is_active = 1")
+            await cur.execute("SELECT id, channel_id, channel_title, channel_username FROM vc_channels WHERE channel_type = 'source' AND is_active = 1")
             rows = await cur.fetchall()
             ids = set()
             usernames = set()
@@ -141,17 +172,7 @@ async def get_source_channel_targets() -> Dict[str, Any]:
                         ids.add(-raw)
                 if r.get("channel_username"):
                     usernames.add(r["channel_username"].lower().strip().lstrip("@"))
-            return {"ids": ids, "usernames": usernames}
-
-
-async def get_delivery_channel_ids() -> List[int]:
-    """Return list of all active delivery channel IDs."""
-    pool = await get_pool()
-    async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute("SELECT channel_id FROM vc_channels WHERE channel_type = 'delivery' AND is_active = 1")
-            rows = await cur.fetchall()
-            return [int(r[0]) for r in rows]
+            return {"ids": ids, "usernames": usernames, "rows": rows}
 
 
 async def get_delivery_channel_targets() -> List[Any]:
@@ -193,19 +214,47 @@ async def get_all_channels() -> List[Dict[str, Any]]:
             return await cur.fetchall()
 
 
-async def add_channel(channel_id: int, channel_title: str, channel_username: str, channel_type: str) -> bool:
-    """Add a source or delivery channel."""
+async def add_channel(channel_id: Optional[int], channel_title: str, channel_username: str, channel_type: str) -> bool:
+    """Add a source or delivery channel with proper deduplication."""
     pool = await get_pool()
+    clean_user = channel_username.lower().strip().lstrip("@") if channel_username else ""
+    cid = channel_id if channel_id and channel_id != 0 else None
+
     async with pool.acquire() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute("""
-                INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
-                VALUES (%s, %s, %s, %s, 1)
-                ON DUPLICATE KEY UPDATE 
-                    channel_title = VALUES(channel_title),
-                    channel_username = VALUES(channel_username),
-                    is_active = 1
-            """, (channel_id, channel_title, channel_username, channel_type))
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            # Check existing
+            existing_id = None
+            if clean_user:
+                await cur.execute(
+                    "SELECT id FROM vc_channels WHERE channel_username = %s AND channel_type = %s",
+                    (clean_user, channel_type)
+                )
+                r = await cur.fetchone()
+                if r:
+                    existing_id = r["id"]
+            if not existing_id and cid is not None:
+                await cur.execute(
+                    "SELECT id FROM vc_channels WHERE channel_id = %s AND channel_type = %s",
+                    (cid, channel_type)
+                )
+                r = await cur.fetchone()
+                if r:
+                    existing_id = r["id"]
+
+            if existing_id:
+                await cur.execute("""
+                    UPDATE vc_channels
+                    SET channel_id = COALESCE(%s, channel_id),
+                        channel_title = %s,
+                        channel_username = %s,
+                        is_active = 1
+                    WHERE id = %s
+                """, (cid, channel_title, clean_user, existing_id))
+            else:
+                await cur.execute("""
+                    INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+                    VALUES (%s, %s, %s, %s, 1)
+                """, (cid, channel_title, clean_user, channel_type))
             return True
 
 
@@ -218,18 +267,68 @@ async def delete_channel_by_id(pk_id: int) -> bool:
             return cur.rowcount > 0
 
 
-# ── Queue & Deletion ───────────────────────────────
+# ── Queue & Deletion (Sequential FIFO) ─────────────
 
-async def add_queue_item(source_chat_id: int, source_message_id: int, file_id: str, caption: str) -> int:
-    """Add video to queue before sending."""
+async def is_message_processed(source_chat_id: int, message_id: int) -> bool:
+    """Check if message was already processed/delivered."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT 1 FROM vc_processed WHERE source_chat_id = %s AND message_id = %s",
+                (source_chat_id, message_id)
+            )
+            return bool(await cur.fetchone())
+
+
+async def mark_message_processed(source_chat_id: int, message_id: int) -> None:
+    """Record message as processed to prevent duplicate collection."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                INSERT INTO vc_processed (source_chat_id, message_id)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE message_id = VALUES(message_id)
+            """, (source_chat_id, message_id))
+
+
+async def is_message_in_queue(source_chat_id: int, message_id: int) -> bool:
+    """Check if message is already waiting in queue."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT 1 FROM vc_queue WHERE source_chat_id = %s AND source_message_id = %s",
+                (source_chat_id, message_id)
+            )
+            return bool(await cur.fetchone())
+
+
+async def add_queue_item(source_chat_id: int, source_message_id: int, file_id: str, caption: str) -> Optional[int]:
+    """Add video to queue before sending, avoiding duplicates."""
+    if await is_message_processed(source_chat_id, source_message_id):
+        return None
+    if await is_message_in_queue(source_chat_id, source_message_id):
+        return None
+
     pool = await get_pool()
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
                 INSERT INTO vc_queue (source_chat_id, source_message_id, file_id, caption, status)
-                VALUES (%s, %s, %s, %s, 'processing')
+                VALUES (%s, %s, %s, %s, 'pending')
             """, (source_chat_id, source_message_id, file_id, caption or ""))
             return cur.lastrowid
+
+
+async def get_next_queue_item() -> Optional[Dict[str, Any]]:
+    """Get the next sequential video from the queue (FIFO order)."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT * FROM vc_queue ORDER BY id ASC LIMIT 1")
+            return await cur.fetchone()
 
 
 async def delete_queue_item(queue_id: int) -> None:
@@ -250,6 +349,15 @@ async def increment_forwarded_count() -> None:
                 SET stat_value = stat_value + 1 
                 WHERE stat_name = 'total_forwarded'
             """)
+
+
+async def get_queue_items(limit: int = 50) -> List[Dict[str, Any]]:
+    """Get list of current queued videos for display in dashboard."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT * FROM vc_queue ORDER BY id ASC LIMIT %s", (limit,))
+            return await cur.fetchall()
 
 
 async def get_collector_stats() -> Dict[str, Any]:

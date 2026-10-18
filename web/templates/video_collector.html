@@ -3,7 +3,8 @@
 {% block page_title %}ভিডিও অটো-কালেক্টর ও ডেলিভারি ড্যাশবোর্ড{% endblock %}
 
 {% block content %}
-<div class="stats-grid">
+<!-- Top Stats Row -->
+<div class="stats-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:18px; margin-bottom:24px;">
   <div class="stat-card">
     <div class="stat-icon" style="background:rgba(59,130,246,0.15); color:#3b82f6;">
       <i class="fa-solid fa-cloud-arrow-down" style="font-size:22px;"></i>
@@ -25,46 +26,78 @@
   </div>
 
   <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;">
+      <i class="fa-solid fa-clock-rotate-left" style="font-size:22px;"></i>
+    </div>
+    <div>
+      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">ডেলিভারি সিডিউল</div>
+      <div style="font-size:20px; font-weight:700; margin-top:2px; color:#f59e0b;">প্রতি {{ settings.delivery_interval_minutes or '30' }} মিনিট</div>
+      <div style="font-size:11px; color:var(--muted);">সিরিয়াল বাই ১টি করে ভিডিও</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
     <div class="stat-icon" style="background:rgba(236,72,153,0.15); color:#ec4899;">
       <i class="fa-solid fa-circle-play" style="font-size:22px;"></i>
     </div>
     <div>
-      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">মোট ফরওয়ার্ডকৃত ভিডিও</div>
+      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">মোট ডেলিভারিকৃত</div>
       <div style="font-size:24px; font-weight:700; margin-top:2px;">{{ total_forwarded }} টি</div>
     </div>
   </div>
 
   <div class="stat-card">
     <div class="stat-icon" style="background:rgba(168,85,247,0.15); color:#a855f7;">
-      <i class="fa-solid fa-server" style="font-size:22px;"></i>
+      <i class="fa-solid fa-layer-group" style="font-size:22px;"></i>
     </div>
-    <div>
-      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">কালেক্টর স্ট্যাটাস</div>
-      <div style="font-size:16px; font-weight:700; margin-top:4px; color:{% if settings.is_collector_active == '1' %}#22c55e{% else %}#ef4444{% endif %};">
-        {% if settings.is_collector_active == '1' %}🟢 সক্রিয় (Active){% else %}🔴 বন্ধ (Paused){% endif %}
+    <div style="flex:1;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">কিউ অপেক্ষা করছে</div>
+        {% if queue_count > 0 %}
+        <form method="POST" action="{{ url_for('video_collector_send_now') }}" style="margin:0;">
+          <button type="submit" class="btn" style="padding:3px 8px; font-size:11px; background:linear-gradient(135deg,#a855f7,#ec4899); color:#fff; border:none; border-radius:4px; cursor:pointer;" title="পরবর্তী ভিডিওটি এখনই ডেলিভারি করুন">
+            ⚡ এখনই পাঠান
+          </button>
+        </form>
+        {% endif %}
       </div>
+      <div style="font-size:24px; font-weight:700; margin-top:2px;">{{ queue_count }} টি</div>
     </div>
   </div>
 </div>
 
-<!-- Settings & Bot Token Config -->
+<!-- Configuration & General Settings Card -->
 <div class="card" style="margin-bottom:24px;">
   <div class="card-header">
     <div class="card-title">
-      <i class="fa-solid fa-robot"></i> বট কনফিগারেশন ও জেনারেল সেটিংস
+      <i class="fa-solid fa-sliders"></i> ডেলিভারি সেটিংস ও কনফিগারেশন
+    </div>
+    <div style="font-size:13px; font-weight:700; color:{% if settings.is_collector_active == '1' %}#22c55e{% else %}#ef4444{% endif %};">
+      {% if settings.is_collector_active == '1' %}🟢 সিস্টেম সক্রিয় (Active){% else %}🔴 সিস্টেম স্থগিত (Paused){% endif %}
     </div>
   </div>
   <form method="POST" action="{{ url_for('video_collector_settings') }}">
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-bottom:18px;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px; margin-bottom:18px;">
       <div>
-        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">বট টোকেন (Bot Token)</label>
-        <input type="text" name="vc_bot_token" value="{{ settings.vc_bot_token }}" placeholder="e.g. 7123456789:AAH..." class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#fff; font-family:monospace; font-size:13px;">
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
+          ⏱️ ডেলিভারি বিরতি (মিনিট) — <span style="color:#22c55e;">সিরিয়াল বাই ১টি করে</span>
+        </label>
+        <input type="number" name="delivery_interval_minutes" value="{{ settings.delivery_interval_minutes or '30' }}" min="1" max="1440" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#fff; font-size:14px; font-weight:600;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">ডিফল্ট ৩০ মিনিট। প্রতি ৩০ মিনিট পর পর সোর্স থেকে সিরিয়ালে ১টি ভিডিও পাঠানো হবে।</div>
       </div>
+
       <div>
-        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">বট ইউজারনেম (Bot Username)</label>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
+          ✍️ কাস্টম ক্যাপশন (ঐচ্ছিক — ফাঁকা রাখলে মূল ক্যাপশন যাবে)
+        </label>
+        <input type="text" name="custom_caption" value="{{ settings.custom_caption }}" placeholder="e.g. Join @darkromance4u for more!" class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#fff; font-size:13px;">
+      </div>
+
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">বট ইউজারনেম (সংযুক্ত বট)</label>
         <div style="display:flex; align-items:center;">
           <span style="padding:10px 12px; background:var(--card2); border:1px solid var(--border); border-right:none; border-radius:8px 0 0 8px; color:var(--muted);">@</span>
-          <input type="text" name="vc_bot_username" value="{{ settings.vc_bot_username }}" placeholder="my_collector_bot" class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:0 8px 8px 0; color:#fff; font-size:13px;">
+          <input type="text" name="vc_bot_username" value="{{ settings.vc_bot_username }}" placeholder="newideos_bot" class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:0 8px 8px 0; color:#fff; font-size:13px;">
         </div>
       </div>
     </div>
@@ -72,23 +105,23 @@
     <div style="display:flex; flex-wrap:wrap; gap:24px; margin-bottom:18px; background:var(--card2); padding:14px 18px; border-radius:8px;">
       <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px;">
         <input type="checkbox" name="is_collector_active" {% if settings.is_collector_active == '1' %}checked{% endif %} style="width:18px; height:18px; accent-color:var(--accent);">
-        <span>অটো-কালেক্টর সার্ভিস চালু রাখুন</span>
+        <span>ভিডিও অটো-কালেক্টর ও ডেলিভারি সার্ভিস চালু রাখুন</span>
       </label>
 
       <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px;">
         <input type="checkbox" name="delete_source_message" {% if settings.delete_source_message == '1' %}checked{% endif %} style="width:18px; height:18px; accent-color:var(--accent);">
-        <span>ভিডিও ডেলিভারি হওয়ার পর সোর্স চ্যানেল/গ্রুপ থেকেও ডিলিট করুন</span>
+        <span>ডেলিভারি হওয়ার পর সোর্স চ্যানেল/গ্রুপ থেকেও ডিলিট করুন (যদি আপনার অ্যাডমিন এক্সেস থাকে)</span>
       </label>
     </div>
 
-    <button type="submit" class="btn btn-primary" style="padding:9px 20px; font-size:13px; font-weight:600; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; cursor:pointer;">
+    <button type="submit" class="btn btn-primary" style="padding:10px 24px; font-size:13px; font-weight:600; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; cursor:pointer;">
       <i class="fa-solid fa-floppy-disk"></i> সেটিংস সংরক্ষণ করুন
     </button>
   </form>
 </div>
 
 <!-- Two columns: Source Channels & Delivery Channels -->
-<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:24px;">
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:24px; margin-bottom:24px;">
 
   <!-- Column 1: Source Channels -->
   <div class="card">
@@ -100,32 +133,37 @@
     </div>
 
     <!-- Add Source Channel Form -->
-    <form method="POST" action="{{ url_for('video_collector_add') }}" style="background:var(--card2); padding:14px; border-radius:8px; margin-bottom:18px;">
+    <form method="POST" action="{{ url_for('video_collector_add') }}" style="background:var(--card2); padding:16px; border-radius:8px; margin-bottom:18px; border:1px solid var(--border);">
       <input type="hidden" name="channel_type" value="source">
-      <div style="font-size:13px; font-weight:600; margin-bottom:10px; color:var(--text);">+ নতুন সোর্স চ্যানেল যোগ করুন</div>
-      <div style="display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:10px;">
-        <input type="text" name="channel_id" placeholder="চ্যানেল/গ্রুপ আইডি (e.g. -100123456789)" required style="width:100%; padding:8px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
-        <input type="text" name="channel_title" placeholder="চ্যানেলের নাম (e.g. Viral Videos Source)" style="width:100%; padding:8px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
-        <input type="text" name="channel_username" placeholder="ইউজারনেম (যদি থাকে, e.g. @mysource)" style="width:100%; padding:8px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text);">+ নতুন সোর্স চ্যানেল/গ্রুপ যুক্ত করুন</div>
+      <div style="display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:12px;">
+        <input type="text" name="channel_username" placeholder="চ্যানেল লিংক বা ইউজারনেম (e.g. https://t.me/ayssorbonas420 বা @pfff_boom)" required style="width:100%; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
+        <input type="text" name="channel_title" placeholder="চ্যানেলের নাম (ঐচ্ছিক, e.g. Ays Sorbonas)" style="width:100%; padding:9px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
       </div>
-      <button type="submit" class="btn" style="width:100%; padding:8px; background:#3b82f6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;">
+      <button type="submit" class="btn" style="width:100%; padding:10px; background:#3b82f6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;">
         <i class="fa-solid fa-plus"></i> সোর্স চ্যানেল যুক্ত করুন
       </button>
     </form>
 
     <!-- Source Channels List -->
     {% if sources %}
-      <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
         {% for ch in sources %}
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--card2); border-radius:8px; border:1px solid var(--border);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:var(--card2); border-radius:8px; border:1px solid var(--border);">
           <div>
-            <div style="font-weight:600; font-size:14px; color:var(--text);">{{ ch.channel_title or 'অজ্ঞাত চ্যানেল' }}</div>
-            <div style="font-size:11px; color:var(--muted); font-family:monospace; margin-top:2px;">
-              ID: <code>{{ ch.channel_id }}</code> {% if ch.channel_username %}| @{{ ch.channel_username }}{% endif %}
+            <div style="font-weight:600; font-size:14px; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <span>{{ ch.channel_title or ch.channel_username or 'সোর্স চ্যানেল' }}</span>
+              <span style="font-size:10px; padding:2px 6px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:4px; font-weight:700;">SOURCE</span>
+            </div>
+            <div style="font-size:12px; color:var(--muted); font-family:monospace; margin-top:3px;">
+              {% if ch.channel_username %}
+                <a href="https://t.me/{{ ch.channel_username }}" target="_blank" style="color:var(--accent); text-decoration:none;">@{{ ch.channel_username }}</a>
+              {% endif %}
+              {% if ch.channel_id %} | ID: <code>{{ ch.channel_id }}</code>{% endif %}
             </div>
           </div>
-          <form method="POST" action="{{ url_for('video_collector_delete', channel_id_pk=ch.id) }}" onsubmit="return confirm('এই সোর্স চ্যানেলটি ডিলিট করতে চান?');">
-            <button type="submit" style="padding:6px 10px; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#ef4444; border-radius:6px; cursor:pointer; font-size:12px;">
+          <form method="POST" action="{{ url_for('video_collector_delete', channel_id_pk=ch.id) }}" onsubmit="return confirm('এই সোর্স চ্যানেলটি মুছে ফেলতে চান?');" style="margin:0;">
+            <button type="submit" style="padding:6px 12px; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#ef4444; border-radius:6px; cursor:pointer; font-size:12px; transition:0.2s;" title="চ্যানেল ডিলিট করুন">
               <i class="fa-solid fa-trash"></i>
             </button>
           </form>
@@ -134,7 +172,7 @@
       </div>
     {% else %}
       <div style="text-align:center; padding:24px; color:var(--muted); font-size:13px;">
-        কোনো সোর্স চ্যানেল যোগ করা হয়নি। উপরে ফর্ম থেকে যুক্ত করুন।
+        কোনো সোর্স চ্যানেল যুক্ত নেই। উপরের ফর্ম থেকে সোর্স চ্যানেলের লিংক বা ইউজারনেম দিয়ে যুক্ত করুন।
       </div>
     {% endif %}
   </div>
@@ -149,32 +187,37 @@
     </div>
 
     <!-- Add Delivery Channel Form -->
-    <form method="POST" action="{{ url_for('video_collector_add') }}" style="background:var(--card2); padding:14px; border-radius:8px; margin-bottom:18px;">
+    <form method="POST" action="{{ url_for('video_collector_add') }}" style="background:var(--card2); padding:16px; border-radius:8px; margin-bottom:18px; border:1px solid var(--border);">
       <input type="hidden" name="channel_type" value="delivery">
-      <div style="font-size:13px; font-weight:600; margin-bottom:10px; color:var(--text);">+ নতুন ডেলিভারি চ্যানেল যোগ করুন</div>
-      <div style="display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:10px;">
-        <input type="text" name="channel_id" placeholder="চ্যানেল আইডি (e.g. -100987654321)" required style="width:100%; padding:8px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
-        <input type="text" name="channel_title" placeholder="চ্যানেলের নাম (e.g. Main Public Channel)" style="width:100%; padding:8px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
-        <input type="text" name="channel_username" placeholder="ইউজারনেম (যদি থাকে, e.g. @mymainchan)" style="width:100%; padding:8px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
+      <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text);">+ নতুন ডেলিভারি চ্যানেল যুক্ত করুন</div>
+      <div style="display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:12px;">
+        <input type="text" name="channel_username" placeholder="চ্যানেল লিংক বা ইউজারনেম (e.g. https://t.me/darkromance4u বা @darkromance4u)" required style="width:100%; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
+        <input type="text" name="channel_title" placeholder="চ্যানেলের নাম (ঐচ্ছিক, e.g. Dark Romance 4U)" style="width:100%; padding:9px 12px; background:var(--card); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:13px;">
       </div>
-      <button type="submit" class="btn" style="width:100%; padding:8px; background:#22c55e; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;">
+      <button type="submit" class="btn" style="width:100%; padding:10px; background:#22c55e; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;">
         <i class="fa-solid fa-plus"></i> ডেলিভারি চ্যানেল যুক্ত করুন
       </button>
     </form>
 
     <!-- Delivery Channels List -->
     {% if deliveries %}
-      <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
         {% for ch in deliveries %}
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--card2); border-radius:8px; border:1px solid var(--border);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:var(--card2); border-radius:8px; border:1px solid var(--border);">
           <div>
-            <div style="font-weight:600; font-size:14px; color:var(--text);">{{ ch.channel_title or 'অজ্ঞাত চ্যানেল' }}</div>
-            <div style="font-size:11px; color:var(--muted); font-family:monospace; margin-top:2px;">
-              ID: <code>{{ ch.channel_id }}</code> {% if ch.channel_username %}| @{{ ch.channel_username }}{% endif %}
+            <div style="font-weight:600; font-size:14px; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <span>{{ ch.channel_title or ch.channel_username or 'ডেলিভারি চ্যানেল' }}</span>
+              <span style="font-size:10px; padding:2px 6px; background:rgba(34,197,94,0.15); color:#22c55e; border-radius:4px; font-weight:700;">DELIVERY</span>
+            </div>
+            <div style="font-size:12px; color:var(--muted); font-family:monospace; margin-top:3px;">
+              {% if ch.channel_username %}
+                <a href="https://t.me/{{ ch.channel_username }}" target="_blank" style="color:var(--accent); text-decoration:none;">@{{ ch.channel_username }}</a>
+              {% endif %}
+              {% if ch.channel_id %} | ID: <code>{{ ch.channel_id }}</code>{% endif %}
             </div>
           </div>
-          <form method="POST" action="{{ url_for('video_collector_delete', channel_id_pk=ch.id) }}" onsubmit="return confirm('এই ডেলিভারি চ্যানেলটি ডিলিট করতে চান?');">
-            <button type="submit" style="padding:6px 10px; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#ef4444; border-radius:6px; cursor:pointer; font-size:12px;">
+          <form method="POST" action="{{ url_for('video_collector_delete', channel_id_pk=ch.id) }}" onsubmit="return confirm('এই ডেলিভারি চ্যানেলটি মুছে ফেলতে চান?');" style="margin:0;">
+            <button type="submit" style="padding:6px 12px; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#ef4444; border-radius:6px; cursor:pointer; font-size:12px;" title="চ্যানেল ডিলিট করুন">
               <i class="fa-solid fa-trash"></i>
             </button>
           </form>
@@ -183,25 +226,63 @@
       </div>
     {% else %}
       <div style="text-align:center; padding:24px; color:var(--muted); font-size:13px;">
-        কোনো ডেলিভারি চ্যানেল যোগ করা হয়নি। উপরে ফর্ম থেকে যুক্ত করুন।
+        কোনো ডেলিভারি চ্যানেল যুক্ত নেই।
       </div>
     {% endif %}
   </div>
 
 </div>
 
-<!-- Instructions Card -->
-<div class="card" style="margin-top:24px;">
+<!-- Queue Preview Card -->
+{% if queue_items %}
+<div class="card" style="margin-bottom:24px;">
   <div class="card-header">
     <div class="card-title">
-      <i class="fa-solid fa-circle-question" style="color:var(--accent);"></i> ব্যবহারের নিয়মাবলী ও গাইড
+      <i class="fa-solid fa-hourglass-half" style="color:#f59e0b;"></i> অপেক্ষমাণ ভিডিও কিউ (সিরিয়াল বাই ৩০ মিনিট পর পর ডেলিভারি হবে)
+    </div>
+    <span class="badge badge-yellow">{{ queue_count }} টি ভিডিও অপেক্ষমাণ</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border); text-align:left; color:var(--muted);">
+          <th style="padding:10px;">সিরিয়াল</th>
+          <th style="padding:10px;">সোর্স চ্যাট আইডি</th>
+          <th style="padding:10px;">মেসেজ আইডি</th>
+          <th style="padding:10px;">ক্যাপশন প্রিভিউ</th>
+          <th style="padding:10px;">সংগ্রহের সময়</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in queue_items %}
+        <tr style="border-bottom:1px solid var(--card2);">
+          <td style="padding:10px; font-weight:700; color:var(--accent);">#{{ loop.index }}</td>
+          <td style="padding:10px; font-family:monospace;">{{ item.source_chat_id }}</td>
+          <td style="padding:10px; font-family:monospace;">{{ item.source_message_id }}</td>
+          <td style="padding:10px; color:var(--muted); max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            {{ item.caption or '<i>(ক্যাপশন নেই)</i>' }}
+          </td>
+          <td style="padding:10px; color:var(--muted); font-size:12px;">{{ item.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Instructions Card -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-circle-question" style="color:var(--accent);"></i> স্বয়ংক্রিয় কার্যপদ্ধতি ও গাইড
     </div>
   </div>
-  <div style="font-size:14px; line-height:1.7; color:var(--muted);">
-    <p>১. <b>সোর্স চ্যানেল/গ্রুপ (অন্যের চ্যানেল):</b> আপনি যে অন্যের চ্যানেল বা গ্রুপ থেকে ভিডিও আনতে চান, শুধু আপনার টেলিগ্রাম অ্যাকাউন্ট দিয়ে সেই চ্যানেলে জয়েন থাকুন। <b>কোনো অ্যাডমিন পারমিশন লাগবে না!</b></p>
-    <p>২. <b>ডেলিভারি চ্যানেল (আপনার চ্যানেল):</b> আপনার ডেলিভারি চ্যানেলটিতে আপনার অ্যাকাউন্ট বা বট অ্যাডমিন হিসেবে যুক্ত রাখুন (পোস্ট করার পারমিশন সহ)।</p>
-    <p>৩. <b>স্বয়ংক্রিয় প্রসেসিং:</b> সোর্স চ্যানেলে নতুন কোনো ভিডিও আসামাত্রই ইউজারবট তা শনাক্ত করবে, আপনার ডেলিভারি চ্যানেলে পাঠাবে এবং <b>সাথে সাথে ডাটাবেজ থেকে মুছে ফেলবে</b>।</p>
-    <p>৪. <b>চ্যানেল আইডি যেভাবে বের করবেন:</b> <a href="https://t.me/userinfobot" target="_blank" style="color:var(--accent);">@userinfobot</a> এ চ্যানেলের যেকোনো মেসেজ ফরওয়ার্ড করলে আইডি (যেমন: <code>-100...</code>) পেয়ে যাবেন অথবা সরাসরি চ্যানেলের ইউজারনেম (e.g. <code>@channelname</code>) দিলেও চলবে।</p>
+  <div style="font-size:14px; line-height:1.8; color:var(--muted);">
+    <p>১. <b>সোর্স চ্যানেল / গ্রুপ:</b> আপনি যে অন্যের চ্যানেল বা গ্রুপ থেকে ভিডিও আনতে চান, শুধু আপনার টেলিগ্রাম অ্যাকাউন্ট দিয়ে সেই চ্যানেলে জয়েন থাকুন। <b>কোনো অ্যাডমিন পারমিশন লাগবে না!</b> উপরে লিংক বা ইউজারনেম দিয়ে যত খুশি সোর্স চ্যানেল যোগ করতে বা ডিলিট করতে পারবেন।</p>
+    <p>২. <b>ডেলিভারি চ্যানেল:</b> আপনার ডেলিভারি চ্যানেলটিতে (<a href="https://t.me/darkromance4u" target="_blank" style="color:var(--accent);">@darkromance4u</a>) আপনার অ্যাকাউন্ট বা বট অ্যাডমিন হিসেবে যুক্ত রাখুন যাতে ভিডিও পোস্ট করতে পারে।</p>
+    <p>৩. <b>৩০ মিনিট পর পর সিরিয়াল ডেলিভারি:</b> সোর্স চ্যানেলগুলো থেকে ভিডিও ক্রমানুসারে (FIFO/সিরিয়াল অর্ডারে) সংগ্রহ করা হয় এবং প্রতি ৩০ মিনিট পর পর ১টি করে ভিডিও ডেলিভারি চ্যানেলে সফলভাবে পাঠানো হয়।</p>
+    <p>৪. <b>ডাটাবেজ থেকে তাৎক্ষণিক ডিলিট:</b> প্রতিটি ভিডিও সফলভাবে ডেলিভারি হওয়ার সাথে সাথেই MySQL ডাটাবেজের কিউ টেবিল থেকে তাৎক্ষণিকভাবে মুছে ফেলা হয়।</p>
   </div>
 </div>
 {% endblock %}

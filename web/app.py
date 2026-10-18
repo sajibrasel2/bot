@@ -829,15 +829,25 @@ def video_collector():
     _execute("""
         CREATE TABLE IF NOT EXISTS vc_channels (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            channel_id BIGINT NOT NULL,
+            channel_id BIGINT DEFAULT NULL,
             channel_title VARCHAR(255) DEFAULT '',
             channel_username VARCHAR(255) DEFAULT '',
             channel_type ENUM('source', 'delivery') NOT NULL,
             is_active TINYINT(1) DEFAULT 1,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY uq_chan_type (channel_id, channel_type)
+            INDEX idx_chan_type (channel_id, channel_type),
+            INDEX idx_user_type (channel_username, channel_type)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """)
+    try:
+        _execute("ALTER TABLE vc_channels DROP INDEX uq_chan_type")
+    except Exception:
+        pass
+    try:
+        _execute("ALTER TABLE vc_channels MODIFY channel_id BIGINT DEFAULT NULL")
+    except Exception:
+        pass
+
     _execute("""
         CREATE TABLE IF NOT EXISTS vc_settings (
             key_name VARCHAR(100) PRIMARY KEY,
@@ -851,15 +861,41 @@ def video_collector():
             stat_value BIGINT DEFAULT 0
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """)
+    _execute("""
+        CREATE TABLE IF NOT EXISTS vc_queue (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            source_chat_id BIGINT NOT NULL,
+            source_message_id INT NOT NULL,
+            file_id VARCHAR(255) NOT NULL,
+            caption TEXT,
+            status VARCHAR(50) DEFAULT 'pending',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    """)
 
     # Pre-seed default delivery channel @darkromance4u if not exists
     _execute("""
         INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
-        SELECT 0, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
+        SELECT NULL, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
         WHERE NOT EXISTS (
             SELECT 1 FROM vc_channels WHERE channel_username = 'darkromance4u' AND channel_type = 'delivery'
         )
     """)
+
+    # Pre-seed initial source channels requested by user
+    initial_sources = [
+        ("ayssorbonas420", "Ays Sorbonas"),
+        ("pfff_boom", "Pfff Boom"),
+        ("adult_desi30", "Adult Desi 30")
+    ]
+    for u, t in initial_sources:
+        _execute("""
+            INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+            SELECT NULL, %s, %s, 'source', 1
+            WHERE NOT EXISTS (
+                SELECT 1 FROM vc_channels WHERE channel_username = %s AND channel_type = 'source'
+            )
+        """, (t, u, u))
 
     sources = _query("SELECT * FROM vc_channels WHERE channel_type='source' ORDER BY id DESC", fetchall=True) or []
     deliveries = _query("SELECT * FROM vc_channels WHERE channel_type='delivery' ORDER BY id DESC", fetchall=True) or []
@@ -868,6 +904,8 @@ def video_collector():
     settings = {
         "delete_source_message": "0",
         "is_collector_active": "1",
+        "delivery_interval_minutes": "30",
+        "custom_caption": "",
         "vc_bot_token": os.environ.get("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc"),
         "vc_bot_username": os.environ.get("VC_BOT_USERNAME", "newideos_bot")
     }
@@ -877,12 +915,19 @@ def video_collector():
     stat_row = _query("SELECT stat_value FROM vc_stats WHERE stat_name='total_forwarded'", fetchone=True)
     total_forwarded = stat_row["stat_value"] if stat_row else 0
 
+    queue_count_row = _query("SELECT COUNT(*) as cnt FROM vc_queue", fetchone=True)
+    queue_count = queue_count_row["cnt"] if queue_count_row else 0
+
+    queue_items = _query("SELECT * FROM vc_queue ORDER BY id ASC LIMIT 10", fetchall=True) or []
+
     return render_template(
         "video_collector.html",
         sources=sources,
         deliveries=deliveries,
         settings=settings,
         total_forwarded=total_forwarded,
+        queue_count=queue_count,
+        queue_items=queue_items,
         active="video_collector"
     )
 
@@ -899,9 +944,9 @@ def video_collector_add():
         flash("❌ সঠিক চ্যানেল টাইপ নির্বাচন করুন।", "error")
         return redirect(url_for("video_collector"))
 
-    # Extract username if link was provided (e.g. https://t.me/darkromance4u)
-    username = raw_user.lstrip("@")
-    cid = 0
+    # Extract username if link was provided
+    username = raw_user.lstrip("@").strip()
+    cid = None
 
     target_str = raw_id
     if "t.me/" in target_str:
@@ -912,15 +957,16 @@ def video_collector_add():
         username = target_str.lstrip("@").strip()
     elif target_str.lstrip("-").isdigit():
         cid = int(target_str)
+    elif target_str and not username:
+        username = target_str.strip()
 
-    if not username and cid == 0:
-        flash("❌ সঠিক চ্যানেল আইডি বা ইউজারনেম (e.g. @darkromance4u) দিন।", "error")
+    if not username and cid is None:
+        flash("❌ সঠিক চ্যানেল লিংক, আইডি বা ইউজারনেম (e.g. @darkromance4u) দিন।", "error")
         return redirect(url_for("video_collector"))
 
     title = channel_title or (f"@{username}" if username else f"Channel {cid}")
 
     try:
-        # Check if already exists by username or channel_id
         if username:
             existing = _query(
                 "SELECT id FROM vc_channels WHERE channel_username = %s AND channel_type = %s",
@@ -937,12 +983,12 @@ def video_collector_add():
         if existing:
             _execute("""
                 UPDATE vc_channels 
-                SET channel_id = CASE WHEN %s != 0 THEN %s ELSE channel_id END,
+                SET channel_id = COALESCE(%s, channel_id),
                     channel_title = %s,
                     channel_username = %s,
                     is_active = 1
                 WHERE id = %s
-            """, (cid, cid, title, username, existing["id"]))
+            """, (cid, title, username, existing["id"]))
         else:
             _execute("""
                 INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
@@ -968,18 +1014,41 @@ def video_collector_delete(channel_id_pk):
     return redirect(url_for("video_collector"))
 
 
+@app.route("/video-collector/send-now", methods=["POST"])
+@login_required
+def video_collector_send_now():
+    try:
+        _execute("""
+            INSERT INTO vc_settings (key_name, value)
+            VALUES ('trigger_immediate_send', '1')
+            ON DUPLICATE KEY UPDATE value = '1'
+        """)
+        flash("⚡ অবিলম্বে পরবর্তী ১টি ভিডিও ডেলিভারি করার সিগন্যাল পাঠানো হয়েছে!", "success")
+    except Exception as e:
+        flash(f"❌ সিগন্যাল পাঠাতে ব্যর্থ: {e}", "error")
+    return redirect(url_for("video_collector"))
+
+
 @app.route("/video-collector/settings", methods=["POST"])
 @login_required
 def video_collector_settings():
     delete_source = "1" if request.form.get("delete_source_message") == "on" else "0"
     is_active = "1" if request.form.get("is_collector_active") == "on" else "0"
+    delivery_interval = request.form.get("delivery_interval_minutes", "30").strip()
+    custom_caption = request.form.get("custom_caption", "").strip()
     bot_token = request.form.get("vc_bot_token", "").strip()
     bot_username = request.form.get("vc_bot_username", "").strip().lstrip("@")
+
+    # Validate interval integer
+    if not delivery_interval.isdigit() or int(delivery_interval) < 1:
+        delivery_interval = "30"
 
     try:
         for k, v in [
             ("delete_source_message", delete_source),
             ("is_collector_active", is_active),
+            ("delivery_interval_minutes", delivery_interval),
+            ("custom_caption", custom_caption),
             ("vc_bot_token", bot_token),
             ("vc_bot_username", bot_username)
         ]:
