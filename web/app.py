@@ -897,11 +897,17 @@ def video_collector():
             )
         """, (t, u, u))
 
-    # Clean up any discussion group accidentally marked as delivery channel
+    # Clean up any discussion group accidentally marked as delivery channel or source
     _execute("""
         DELETE FROM vc_channels 
         WHERE channel_type = 'delivery' 
           AND (channel_id IN (4446159364, -1004446159364) OR LOWER(channel_title) LIKE '%discussion%')
+    """)
+    _execute("""
+        DELETE FROM vc_channels 
+        WHERE channel_type = 'source' 
+          AND (channel_id IN (4446159364, -1004446159364, 4342232814, -1004342232814) 
+               OR LOWER(channel_title) LIKE '%dark romance%')
     """)
 
     sources = _query("SELECT * FROM vc_channels WHERE channel_type='source' ORDER BY id DESC", fetchall=True) or []
@@ -912,7 +918,7 @@ def video_collector():
         "delete_source_message": "0",
         "is_collector_active": "1",
         "collect_from_all_joined": "1",
-        "delivery_interval_minutes": "30",
+        "delivery_interval_minutes": "15",
         "custom_caption": "",
         "vc_bot_token": os.environ.get("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc"),
         "vc_bot_username": os.environ.get("VC_BOT_USERNAME", "newideos_bot")

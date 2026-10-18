@@ -4,12 +4,16 @@ Tables: vc_channels, vc_queue, vc_settings, vc_stats, vc_processed
 """
 
 import logging
+import warnings
 from typing import Optional, List, Dict, Any, Set
 import aiomysql
 from video_collector.config import (
     MYSQL_HOST, MYSQL_PORT, MYSQL_USER,
     MYSQL_PASSWORD, MYSQL_DB
 )
+
+# Suppress harmless MySQL warning notices from aiomysql
+warnings.filterwarnings("ignore", category=Warning, module="aiomysql")
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +49,8 @@ async def init_db() -> None:
                     channel_id BIGINT DEFAULT NULL,
                     channel_title VARCHAR(255) DEFAULT '',
                     channel_username VARCHAR(255) DEFAULT '',
-                    channel_type ENUM('source', 'delivery') NOT NULL,
+                    channel_type VARCHAR(50) NOT NULL DEFAULT 'source',
+                    last_scanned_id INT DEFAULT 0,
                     is_active TINYINT(1) DEFAULT 1,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     INDEX idx_chan_type (channel_id, channel_type),
@@ -61,6 +66,18 @@ async def init_db() -> None:
 
             try:
                 await cur.execute("ALTER TABLE vc_channels MODIFY channel_id BIGINT DEFAULT NULL")
+            except Exception:
+                pass
+
+            # Ensure channel_type supports VARCHAR(50) so 'delivery_linked_group' is never truncated
+            try:
+                await cur.execute("ALTER TABLE vc_channels MODIFY channel_type VARCHAR(50) NOT NULL DEFAULT 'source'")
+            except Exception:
+                pass
+
+            # Ensure last_scanned_id column exists for backlog pagination
+            try:
+                await cur.execute("ALTER TABLE vc_channels ADD COLUMN last_scanned_id INT DEFAULT 0")
             except Exception:
                 pass
 
@@ -128,6 +145,14 @@ async def init_db() -> None:
             except Exception:
                 pass
 
+            # Clean up discussion groups / delivery chats accidentally marked as 'source'
+            await cur.execute("""
+                DELETE FROM vc_channels 
+                WHERE channel_type = 'source' 
+                  AND (channel_id IN (4446159364, -1004446159364, 4342232814, -1004342232814) 
+                       OR LOWER(channel_title) LIKE '%dark romance%')
+            """)
+
             # Clean up discussion groups accidentally marked as 'delivery'
             await cur.execute("""
                 DELETE FROM vc_channels 
@@ -135,16 +160,23 @@ async def init_db() -> None:
                   AND (channel_id IN (4446159364, -1004446159364) OR LOWER(channel_title) LIKE '%discussion%')
             """)
 
-            # Insert default settings if not exists
+            # Purge any self-messages from vc_queue
             await cur.execute("""
-                INSERT IGNORE INTO vc_settings (key_name, value)
+                DELETE FROM vc_queue 
+                WHERE source_chat_id IN (4446159364, -1004446159364, 4342232814, -1004342232814)
+            """)
+
+            # Insert default settings if not exists, and enforce 15-minute delivery interval
+            await cur.execute("""
+                INSERT INTO vc_settings (key_name, value)
                 VALUES 
                 ('delete_source_message', '0'),
                 ('is_collector_active', '1'),
                 ('collect_from_all_joined', '1'),
                 ('custom_caption', ''),
-                ('delivery_interval_minutes', '30'),
+                ('delivery_interval_minutes', '15'),
                 ('trigger_immediate_send', '0')
+                ON DUPLICATE KEY UPDATE value = IF(key_name = 'delivery_interval_minutes', '15', value)
             """)
 
             await cur.execute("""
@@ -253,6 +285,32 @@ async def record_excluded_delivery_group(group_id: int, title: str = "") -> None
             """, (cid, title or "Linked Discussion Group", cid))
 
 
+async def get_channel_last_scanned_id(channel_id: int) -> int:
+    """Get the oldest scanned message ID for backlog crawling."""
+    pool = await get_pool()
+    cid = abs(channel_id)
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT last_scanned_id FROM vc_channels WHERE channel_id IN (%s, %s, %s, %s) LIMIT 1",
+                (channel_id, cid, -cid, -abs(channel_id))
+            )
+            row = await cur.fetchone()
+            return int(row[0]) if (row and row[0]) else 0
+
+
+async def update_channel_last_scanned_id(channel_id: int, last_id: int) -> None:
+    """Update oldest scanned message ID for a channel to paginate deeper on next crawl."""
+    pool = await get_pool()
+    cid = abs(channel_id)
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "UPDATE vc_channels SET last_scanned_id = %s WHERE channel_id IN (%s, %s, %s, %s)",
+                (last_id, channel_id, cid, -cid, -abs(channel_id))
+            )
+
+
 async def update_channel_id_by_username(username: str, channel_id: int) -> None:
     """Update numeric channel_id for a username once resolved by Telethon."""
     pool = await get_pool()
@@ -352,10 +410,18 @@ async def is_channel_deactivated(channel_id: Optional[int], channel_username: st
 
 async def auto_register_source_channel(channel_id: Optional[int], channel_title: str, channel_username: str) -> None:
     """Auto-register newly discovered channel from user's account if not already in DB."""
-    pool = await get_pool()
     clean_user = channel_username.lower().strip().lstrip("@") if channel_username else ""
     cid = channel_id if channel_id and channel_id != 0 else None
 
+    # Never auto-register delivery channels or discussion groups as source
+    if cid and await is_delivery_chat(cid, clean_user, channel_title):
+        return
+    if clean_user and await is_delivery_chat(cid or 0, clean_user, channel_title):
+        return
+    if "dark romance" in (channel_title or "").lower():
+        return
+
+    pool = await get_pool()
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             if clean_user:
@@ -417,6 +483,12 @@ async def purge_delivery_items_from_queue() -> None:
             await cur.execute("""
                 DELETE FROM vc_queue 
                 WHERE source_chat_id IN (4446159364, -1004446159364, 4342232814, -1004342232814)
+            """)
+            await cur.execute("""
+                DELETE FROM vc_channels 
+                WHERE channel_type = 'source' 
+                  AND (channel_id IN (4446159364, -1004446159364, 4342232814, -1004342232814) 
+                       OR LOWER(channel_title) LIKE '%dark romance%')
             """)
 
 

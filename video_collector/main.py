@@ -10,7 +10,11 @@ import sys
 import os
 import asyncio
 import logging
+import warnings
 from typing import Optional, Any, List, Dict, Set
+
+# Suppress harmless MySQL warning notices from aiomysql
+warnings.filterwarnings("ignore", category=Warning, module="aiomysql")
 
 # Ensure project root is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,7 +33,8 @@ from video_collector.database import (
     mark_message_processed, increment_forwarded_count, get_collector_stats,
     get_setting, set_setting, is_channel_deactivated, auto_register_source_channel,
     is_delivery_chat, purge_delivery_items_from_queue, is_media_processed,
-    record_excluded_delivery_group
+    record_excluded_delivery_group, get_channel_last_scanned_id,
+    update_channel_last_scanned_id
 )
 
 logging.basicConfig(
@@ -82,8 +87,8 @@ async def auto_join_channel(channel_target) -> Optional[Any]:
 
 async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: int = 80) -> int:
     """
-    Crawl past messages across active channels to keep a healthy FIFO queue (up to max_queue_buffer).
-    Supports Option A: All joined channels/groups, or Option B: Specific registered channels.
+    Crawl past messages across active channels to find previously undelivered videos
+    whenever no new videos are available.
     """
     stats = await get_collector_stats()
     current_queue = stats.get("queue_count", 0)
@@ -95,9 +100,9 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
     total_added = 0
 
     if collect_all == "1":
-        logger.info("🔍 Auto-crawling across ALL joined channels and groups on this user account...")
+        logger.info("🔍 Auto-crawling across joined channels & groups for previous undelivered videos...")
         try:
-            async for dialog in client.iter_dialogs(limit=50):
+            async for dialog in client.iter_dialogs(limit=60):
                 if current_queue + total_added >= max_queue_buffer:
                     break
                 if not (dialog.is_channel or dialog.is_group):
@@ -108,7 +113,7 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                 chat_username = (getattr(chat_entity, "username", "") or "").lower()
                 chat_title = getattr(dialog, "name", "") or getattr(chat_entity, "title", "Unknown")
 
-                # Strictly exclude delivery channels to prevent recursive loops
+                # Strictly exclude delivery channels and discussion groups
                 if await is_delivery_chat(chat_id, chat_username, chat_title):
                     continue
 
@@ -119,15 +124,31 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                 # Auto register channel in DB for dashboard visibility
                 await auto_register_source_channel(chat_id, chat_title, chat_username)
 
-                # Fetch chronological messages (oldest to newest)
-                async for msg in client.iter_messages(chat_entity, limit=limit_per_source, reverse=True):
+                # Backlog pagination: scan backwards from last_scanned_id if set
+                last_offset = await get_channel_last_scanned_id(chat_id)
+                kwargs = {"limit": limit_per_source}
+                if last_offset > 0:
+                    kwargs["offset_id"] = last_offset
+
+                min_seen_id = None
+                async for msg in client.iter_messages(chat_entity, **kwargs):
                     if current_queue + total_added >= max_queue_buffer:
                         break
+                    if min_seen_id is None or msg.id < min_seen_id:
+                        min_seen_id = msg.id
+
                     if _is_video_message(msg):
                         media_id = get_media_unique_id(msg)
                         qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "", media_id=media_id)
                         if qid:
                             total_added += 1
+
+                # Update pagination pointer to continue from older messages next time
+                if min_seen_id is not None:
+                    if min_seen_id <= 1:
+                        await update_channel_last_scanned_id(chat_id, 0)
+                    else:
+                        await update_channel_last_scanned_id(chat_id, min_seen_id)
 
         except Exception as e_dialogs:
             logger.error(f"Error during all-dialogs crawl: {e_dialogs}")
@@ -136,7 +157,7 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
         # Crawl only specific registered channels
         sources_data = await get_source_channel_targets()
         rows = sources_data.get("rows", [])
-        logger.info(f"🔍 Crawling registered {len(rows)} source channels...")
+        logger.info(f"🔍 Crawling registered {len(rows)} source channels for previous undelivered videos...")
 
         for row in rows:
             if current_queue + total_added >= max_queue_buffer:
@@ -154,20 +175,37 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                     await update_channel_id_by_username(str(target), entity.id)
 
                 chat_id = getattr(entity, "id", 0)
+                if await is_delivery_chat(chat_id, row.get("channel_username", ""), row.get("channel_title", "")):
+                    continue
 
-                async for msg in client.iter_messages(entity, limit=limit_per_source, reverse=True):
+                last_offset = await get_channel_last_scanned_id(chat_id)
+                kwargs = {"limit": limit_per_source}
+                if last_offset > 0:
+                    kwargs["offset_id"] = last_offset
+
+                min_seen_id = None
+                async for msg in client.iter_messages(entity, **kwargs):
                     if current_queue + total_added >= max_queue_buffer:
                         break
+                    if min_seen_id is None or msg.id < min_seen_id:
+                        min_seen_id = msg.id
+
                     if _is_video_message(msg):
                         media_id = get_media_unique_id(msg)
                         qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "", media_id=media_id)
                         if qid:
                             total_added += 1
 
+                if min_seen_id is not None:
+                    if min_seen_id <= 1:
+                        await update_channel_last_scanned_id(chat_id, 0)
+                    else:
+                        await update_channel_last_scanned_id(chat_id, min_seen_id)
+
             except Exception as e:
                 logger.error(f"Error crawling source channel '{target}': {e}")
 
-    logger.info(f"✅ Crawl complete. Added {total_added} new sequential videos to MySQL queue (Total queue: {current_queue + total_added}).")
+    logger.info(f"✅ Crawl complete. Added {total_added} undelivered videos to MySQL queue (Total queue: {current_queue + total_added}).")
     return total_added
 
 
@@ -357,11 +395,11 @@ async def delivery_worker_loop() -> None:
                     await increment_forwarded_count()
                     logger.info(f"🗑️ Video #{queue_id} immediately deleted from MySQL. Total forwarded incremented.")
 
-                    # Calculate sleep time based on interval setting (default: 30 minutes)
+                    # Calculate sleep time based on interval setting (default: 15 minutes)
                     try:
-                        interval_min = int(await get_setting("delivery_interval_minutes", "30"))
+                        interval_min = int(await get_setting("delivery_interval_minutes", "15"))
                     except Exception:
-                        interval_min = 30
+                        interval_min = 15
 
                     wait_seconds = max(10, interval_min * 60)
                     logger.info(f"⏳ 1 video delivered! Waiting {interval_min} minutes ({wait_seconds}s) for next video delivery...")
@@ -460,10 +498,10 @@ async def main() -> None:
     # Initial crawl of source channels into MySQL queue
     asyncio.create_task(crawl_source_channels(limit_per_source=80))
 
-    # Start 30-minute sequential delivery worker
+    # Start 15-minute sequential delivery worker
     asyncio.create_task(delivery_worker_loop())
 
-    logger.info("🎯 Video Collector is now running! (1 video every 30 mins -> @darkromance4u)")
+    logger.info("🎯 Video Collector is now running! (1 video every 15 mins -> @darkromance4u)")
     await client.run_until_disconnected()
 
 
