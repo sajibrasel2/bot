@@ -150,6 +150,49 @@ async def handle_new_message(event: events.NewMessage.Event) -> None:
         logger.info(f"📝 Video queued in MySQL with ID: #{qid}")
 
 
+async def deliver_video_message(orig_msg, target: Any, caption: str) -> bool:
+    """Deliver a video to target channel, automatically bypassing protected chat restrictions if needed."""
+    try:
+        # Fast path: direct media reference
+        await client.send_file(
+            target,
+            file=orig_msg.media,
+            caption=caption,
+            supports_streaming=True
+        )
+        return True
+    except Exception as e_send:
+        err_msg = str(e_send).lower()
+        if "protected chat" in err_msg or "forward" in err_msg or "restricted" in err_msg:
+            logger.info("🛡️ Protected content detected! Downloading video locally to bypass forwarding restriction...")
+            temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_downloads")
+            os.makedirs(temp_dir, exist_ok=True)
+            downloaded = await client.download_media(orig_msg, file=temp_dir)
+            if downloaded and os.path.exists(downloaded):
+                try:
+                    logger.info(f"📤 Uploading bypass video ({os.path.basename(downloaded)}) to {target}...")
+                    await client.send_file(
+                        target,
+                        file=downloaded,
+                        caption=caption,
+                        supports_streaming=True
+                    )
+                    return True
+                finally:
+                    try:
+                        if os.path.exists(downloaded):
+                            os.remove(downloaded)
+                            logger.info(f"🧹 Temporary video cleaned up: {os.path.basename(downloaded)}")
+                    except Exception:
+                        pass
+            else:
+                logger.error("❌ Failed to download protected video locally.")
+                return False
+        else:
+            logger.error(f"❌ Delivery error for target {target}: {e_send}")
+            return False
+
+
 async def delivery_worker_loop() -> None:
     """
     Sequential Delivery Worker:
@@ -198,16 +241,12 @@ async def delivery_worker_loop() -> None:
                         for target in deliveries:
                             try:
                                 logger.info(f"🚀 Delivering video #{queue_id} to channel: {target}...")
-                                await client.send_file(
-                                    target,
-                                    file=orig_msg.media,
-                                    caption=caption,
-                                    supports_streaming=True
-                                )
-                                delivery_success = True
-                                logger.info(f"✅ Video #{queue_id} successfully delivered to: {target}")
-                                if FORWARD_DELAY_SECONDS > 0:
-                                    await asyncio.sleep(FORWARD_DELAY_SECONDS)
+                                res = await deliver_video_message(orig_msg, target, caption)
+                                if res:
+                                    delivery_success = True
+                                    logger.info(f"✅ Video #{queue_id} successfully delivered to: {target}")
+                                    if FORWARD_DELAY_SECONDS > 0:
+                                        await asyncio.sleep(FORWARD_DELAY_SECONDS)
                             except Exception as e_deliv:
                                 logger.error(f"❌ Failed to send video to delivery target '{target}': {e_deliv}")
                     else:

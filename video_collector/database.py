@@ -287,9 +287,8 @@ async def mark_message_processed(source_chat_id: int, message_id: int) -> None:
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
-                INSERT INTO vc_processed (source_chat_id, message_id)
+                INSERT IGNORE INTO vc_processed (source_chat_id, message_id)
                 VALUES (%s, %s)
-                ON DUPLICATE KEY UPDATE message_id = VALUES(message_id)
             """, (source_chat_id, message_id))
 
 
