@@ -852,6 +852,15 @@ def video_collector():
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """)
 
+    # Pre-seed default delivery channel @darkromance4u if not exists
+    _execute("""
+        INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+        SELECT 0, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
+        WHERE NOT EXISTS (
+            SELECT 1 FROM vc_channels WHERE channel_username = 'darkromance4u' AND channel_type = 'delivery'
+        )
+    """)
+
     sources = _query("SELECT * FROM vc_channels WHERE channel_type='source' ORDER BY id DESC", fetchall=True) or []
     deliveries = _query("SELECT * FROM vc_channels WHERE channel_type='delivery' ORDER BY id DESC", fetchall=True) or []
 
@@ -881,27 +890,67 @@ def video_collector():
 @app.route("/video-collector/add", methods=["POST"])
 @login_required
 def video_collector_add():
-    channel_id = request.form.get("channel_id", "").strip()
+    raw_id = request.form.get("channel_id", "").strip()
     channel_title = request.form.get("channel_title", "").strip()
-    channel_username = request.form.get("channel_username", "").strip().lstrip("@")
+    raw_user = request.form.get("channel_username", "").strip()
     channel_type = request.form.get("channel_type", "").strip().lower()
 
-    if not channel_id or channel_type not in ("source", "delivery"):
-        flash("❌ সঠিক চ্যানেল আইডি এবং টাইপ নির্বাচন করুন।", "error")
+    if channel_type not in ("source", "delivery"):
+        flash("❌ সঠিক চ্যানেল টাইপ নির্বাচন করুন।", "error")
         return redirect(url_for("video_collector"))
 
+    # Extract username if link was provided (e.g. https://t.me/darkromance4u)
+    username = raw_user.lstrip("@")
+    cid = 0
+
+    target_str = raw_id
+    if "t.me/" in target_str:
+        parts = target_str.rstrip("/").split("t.me/")
+        if len(parts) > 1:
+            username = parts[1].lstrip("@").strip()
+    elif target_str.startswith("@"):
+        username = target_str.lstrip("@").strip()
+    elif target_str.lstrip("-").isdigit():
+        cid = int(target_str)
+
+    if not username and cid == 0:
+        flash("❌ সঠিক চ্যানেল আইডি বা ইউজারনেম (e.g. @darkromance4u) দিন।", "error")
+        return redirect(url_for("video_collector"))
+
+    title = channel_title or (f"@{username}" if username else f"Channel {cid}")
+
     try:
-        cid = int(channel_id)
-        _execute("""
-            INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
-            VALUES (%s, %s, %s, %s, 1)
-            ON DUPLICATE KEY UPDATE 
-                channel_title = VALUES(channel_title),
-                channel_username = VALUES(channel_username),
-                is_active = 1
-        """, (cid, channel_title or f"Channel {cid}", channel_username, channel_type))
+        # Check if already exists by username or channel_id
+        if username:
+            existing = _query(
+                "SELECT id FROM vc_channels WHERE channel_username = %s AND channel_type = %s",
+                (username, channel_type),
+                fetchone=True
+            )
+        else:
+            existing = _query(
+                "SELECT id FROM vc_channels WHERE channel_id = %s AND channel_type = %s",
+                (cid, channel_type),
+                fetchone=True
+            )
+
+        if existing:
+            _execute("""
+                UPDATE vc_channels 
+                SET channel_id = CASE WHEN %s != 0 THEN %s ELSE channel_id END,
+                    channel_title = %s,
+                    channel_username = %s,
+                    is_active = 1
+                WHERE id = %s
+            """, (cid, cid, title, username, existing["id"]))
+        else:
+            _execute("""
+                INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+                VALUES (%s, %s, %s, %s, 1)
+            """, (cid, title, username, channel_type))
+
         type_str = "সোর্স চ্যানেল" if channel_type == "source" else "ডেলিভারি চ্যানেল"
-        flash(f"✅ সফলভাবে {type_str} যুক্ত করা হয়েছে!", "success")
+        flash(f"✅ সফলভাবে {type_str} ({title}) যুক্ত করা হয়েছে!", "success")
     except Exception as e:
         flash(f"❌ চ্যানেল যুক্ত করতে ব্যর্থ: {e}", "error")
 

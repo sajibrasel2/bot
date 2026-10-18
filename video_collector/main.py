@@ -174,6 +174,16 @@ async def main() -> None:
 
     me = await client.get_me()
     logger.info(f"✅ Logged in successfully as: {me.first_name} (@{me.username or me.phone}) [ID: {me.id}]")
+
+    # Auto-resolve delivery channel @darkromance4u
+    try:
+        from video_collector.database import update_channel_id_by_username
+        del_ent = await client.get_entity("darkromance4u")
+        logger.info(f"🎯 Delivery channel resolved: {getattr(del_ent, 'title', 'Dark Romance')} [ID: {del_ent.id}]")
+        await update_channel_id_by_username("darkromance4u", del_ent.id)
+    except Exception as e_del:
+        logger.info(f"Delivery channel @darkromance4u will be resolved on first delivery ({e_del})")
+
     logger.info("🎯 Video Collector is now actively monitoring all registered source channels!")
 
     await client.run_until_disconnected()

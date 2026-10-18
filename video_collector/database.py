@@ -95,6 +95,15 @@ async def init_db() -> None:
                 INSERT IGNORE INTO vc_stats (stat_name, stat_value)
                 VALUES ('total_forwarded', 0)
             """)
+
+            # Pre-seed default delivery channel darkromance4u if not exists
+            await cur.execute("""
+                INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+                SELECT 0, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM vc_channels WHERE channel_username = 'darkromance4u' AND channel_type = 'delivery'
+                )
+            """)
     logger.info("✅ Video Collector database tables initialized successfully.")
 
 
@@ -154,11 +163,25 @@ async def get_delivery_channel_targets() -> List[Any]:
             rows = await cur.fetchall()
             targets = []
             for r in rows:
-                if r.get("channel_id") and int(r["channel_id"]) != 0:
-                    targets.append(int(r["channel_id"]))
-                elif r.get("channel_username"):
+                if r.get("channel_username") and r["channel_username"].strip():
                     targets.append(r["channel_username"].strip().lstrip("@"))
+                elif r.get("channel_id") and int(r["channel_id"]) != 0:
+                    targets.append(int(r["channel_id"]))
+            # Fallback default if none configured
+            if not targets:
+                targets.append("darkromance4u")
             return targets
+
+
+async def update_channel_id_by_username(username: str, channel_id: int) -> None:
+    """Update numeric channel_id for a username once resolved by Telethon."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "UPDATE vc_channels SET channel_id = %s WHERE channel_username = %s AND (channel_id = 0 OR channel_id IS NULL)",
+                (channel_id, username.lower().strip().lstrip("@"))
+            )
 
 
 async def get_all_channels() -> List[Dict[str, Any]]:
