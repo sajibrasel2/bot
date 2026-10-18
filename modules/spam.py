@@ -23,6 +23,7 @@ import asyncio
 import logging
 import urllib.parse
 import html
+import unicodedata
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -470,8 +471,8 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 "ছেলে,ও ছেলে,স্কেমার,বাটপার,প্রতারক,chele,o chele,sele,o sele,chala,scammer,skeimer,skemer,scamer,skeimar,"
                 "গ্রুপ লাগলে,ইনবক্স করো,ইনবক্সে আসো,ইনবক্স নক,ভিডিও সেল,সেল হবে,চ্যানেল সাবস্ক্রাইব,dm me,pm me,contact me,paid group,ভিডিও গ্রুপ"
             )
-        bad_words = [w.strip().lower() for w in bw_raw.split(",") if w.strip()]
-        text_lower = check_text.lower()
+        bad_words = [unicodedata.normalize("NFC", w.strip().lower()) for w in bw_raw.split(",") if w.strip()]
+        text_lower = unicodedata.normalize("NFC", check_text.lower())
 
         matched = False
         for bw in bad_words:
@@ -479,18 +480,32 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 continue
             
             # Check if badword contains non-ASCII characters (e.g. Bengali script)
-            is_ascii = all(ord(c) < 128 for c in bw)
-            if is_ascii:
-                # Use word boundaries for English to avoid matching parts of other words (e.g. "ass" in "class")
-                pattern = rf"\b{re.escape(bw)}\b"
-            else:
-                # For non-ASCII (Bengali), standard \b word boundaries do not work in Python.
-                # Check for simple substring presence
-                pattern = re.escape(bw)
+            chars_only = bw.replace("*", "")
+            is_ascii = all(ord(c) < 128 for c in chars_only) if chars_only else True
 
-            if re.search(pattern, text_lower):
-                matched = True
-                break
+            if "*" in bw:
+                parts = [re.escape(p) for p in bw.split("*") if p]
+                core_pat = r"[\s\W_]*".join(parts) if parts else r"\*"
+                if is_ascii:
+                    pattern = rf"\b{core_pat}\b"
+                else:
+                    pattern = core_pat
+            else:
+                if is_ascii:
+                    # Use word boundaries for English to avoid matching parts of other words (e.g. "ass" in "class")
+                    pattern = rf"\b{re.escape(bw)}\b"
+                else:
+                    # For non-ASCII (Bengali), substring presence
+                    pattern = re.escape(bw)
+
+            try:
+                if re.search(pattern, text_lower, re.IGNORECASE):
+                    matched = True
+                    break
+            except Exception:
+                if bw in text_lower:
+                    matched = True
+                    break
 
         if matched:
             try:
