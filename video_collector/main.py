@@ -8,6 +8,7 @@ delivered videos from the MySQL queue database.
 
 import sys
 import os
+import re
 import asyncio
 import logging
 import warnings
@@ -105,6 +106,72 @@ def get_media_unique_id(message) -> Optional[int]:
     return None
 
 
+def clean_source_caption(text: str) -> str:
+    """
+    Cleans caption by removing source channel names, mentions (@channel),
+    all links/URLs, and promotional phrases to ensure delivered videos are completely clean.
+    If no meaningful content remains, returns empty string so video sends with no caption.
+    """
+    if not text:
+        return ""
+
+    url_pattern = re.compile(
+        r'(?:https?://\S+|www\.\S+|(?:t|telegram)\.me/\S+|\b[a-zA-Z0-9-]+\.(?:com|net|org|io|me|ru|site|xyz|info|vip|club|top|link|online|cc|to|tv|co|in|app|biz|pro|live|shop|tube|sexy|adult|porn|xxx)\b\S*)',
+        re.IGNORECASE
+    )
+    mention_pattern = re.compile(r'@[A-Za-z0-9_]+')
+
+    # Promotional / attribution call-to-actions (English + Bengali)
+    promo_words_pattern = re.compile(
+        r'(?i)\b(?:source|comments?|channel|subscribe|join|follow|watch|click|videos?|credits?|sponsored|download|backup|links?|leaks?|contact|admin|direct|invite|group|vip|exclusive)\b|'
+        r'(?:চ্যানেল|জয়েন|সাবস্ক্রাইব|লিংক|ভিডিও|সোর্স|ক্লিক|গ্রুপ)'
+    )
+
+    lines = text.splitlines()
+    cleaned_lines = []
+
+    for line in lines:
+        line_str = line.strip()
+        if not line_str:
+            continue
+
+        # Rule 1: ANY line containing an external URL or Telegram link is promo/source attribution -> Drop completely
+        if url_pattern.search(line_str):
+            continue
+
+        # Rule 2: If a line has a mention (@channel) and promo words, drop completely
+        has_mention = bool(mention_pattern.search(line_str))
+        has_promo = bool(promo_words_pattern.search(line_str))
+        if has_mention and has_promo:
+            continue
+
+        # Strip mentions and symbols to inspect remaining text
+        stripped = mention_pattern.sub('', line_str)
+        stripped = re.sub(r'[-—:>=><~|•_#\*\.\s\?&/\\\(\)\[\]{}!@$%^+=]+', ' ', stripped).strip()
+
+        # Rule 3: If what remains has no real letters/words, drop it
+        letters_only = re.sub(r'[^\w]|_', '', stripped)
+        if len(letters_only) < 3:
+            continue
+
+        # Rule 4: If what remains is predominantly promotional keywords (e.g. "Direct Link", "Join Channel")
+        non_promo = promo_words_pattern.sub('', stripped)
+        non_promo_letters = re.sub(r'[^\w]|_', '', non_promo)
+        if len(non_promo_letters) < 3:
+            continue
+
+        # Clean trailing/leading symbols from valid title line
+        cleaned = mention_pattern.sub('', line_str)
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        cleaned = re.sub(r'^[-—:>=><~|•_#\*\.\s/]+', '', cleaned)
+        cleaned = re.sub(r'[-—:>=><~|•_#\*\.\s/]+$', '', cleaned).strip()
+
+        if cleaned:
+            cleaned_lines.append(cleaned)
+
+    return '\n'.join(cleaned_lines).strip()
+
+
 async def auto_join_channel(channel_target) -> Optional[Any]:
     """Resolve channel entity and attempt to join if public."""
     try:
@@ -173,7 +240,8 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
 
                     if _is_video_message(msg):
                         media_id = get_media_unique_id(msg)
-                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "", media_id=media_id)
+                        clean_caption = clean_source_caption(msg.text or "")
+                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), clean_caption, media_id=media_id)
                         if qid:
                             total_added += 1
 
@@ -226,7 +294,8 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
 
                     if _is_video_message(msg):
                         media_id = get_media_unique_id(msg)
-                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "", media_id=media_id)
+                        clean_caption = clean_source_caption(msg.text or "")
+                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), clean_caption, media_id=media_id)
                         if qid:
                             total_added += 1
 
@@ -290,7 +359,8 @@ async def handle_new_message(event: events.NewMessage.Event) -> None:
         return
 
     media_id = get_media_unique_id(msg)
-    qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "", media_id=media_id)
+    clean_caption = clean_source_caption(msg.text or "")
+    qid = await add_queue_item(chat_id, msg.id, str(msg.id), clean_caption, media_id=media_id)
     if qid:
         logger.info(f"📝 Video queued in MySQL with ID: #{qid} (Media ID: {media_id})")
 
@@ -423,7 +493,11 @@ async def delivery_worker_loop() -> None:
                         continue
 
                     custom_caption = await get_setting("custom_caption", "")
-                    caption = custom_caption if custom_caption else (orig_msg.text or item.get("caption") or "")
+                    if custom_caption and custom_caption.strip():
+                        caption = custom_caption.strip()
+                    else:
+                        raw_caption = orig_msg.text or item.get("caption") or ""
+                        caption = clean_source_caption(raw_caption)
 
                     for target in deliveries:
                         try:
