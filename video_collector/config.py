@@ -12,6 +12,11 @@ def _get_int(key: str, default: int) -> int:
     except ValueError:
         return default
 
+# ── Telegram MTProto (Userbot) Config ─────────────
+TG_API_ID: int = _get_int("TG_API_ID", 37114956)
+TG_API_HASH: str = os.getenv("TG_API_HASH", "a0f545049ee3c05ccaedea2566fd18e1")
+SESSION_NAME: str = os.getenv("VC_SESSION_NAME", "collector_userbot")
+
 # ── Video Collector Bot Config ───────────────────
 # You can set this in .env or update it via Web Admin Panel
 VC_BOT_TOKEN: str = os.getenv("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc")

@@ -3,3 +3,4 @@ python-dotenv==1.0.0
 aiomysql==0.2.0
 PyMySQL==1.2.0
 flask==3.0.0
+telethon>=1.36.0

@@ -110,6 +110,31 @@ async def get_source_channel_ids() -> Set[int]:
             return {int(r[0]) for r in rows}
 
 
+async def get_source_channel_targets() -> Dict[str, Any]:
+    """Return dict of IDs set and usernames set for active source channels."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT channel_id, channel_username FROM vc_channels WHERE channel_type = 'source' AND is_active = 1")
+            rows = await cur.fetchall()
+            ids = set()
+            usernames = set()
+            for r in rows:
+                if r.get("channel_id"):
+                    cid = int(r["channel_id"])
+                    ids.add(cid)
+                    # Support variations of Telegram channel/supergroup ID prefixes
+                    raw = abs(cid)
+                    if str(raw).startswith("100"):
+                        bare = int(str(raw)[3:])
+                        ids.add(bare)
+                        ids.add(-bare)
+                        ids.add(-raw)
+                if r.get("channel_username"):
+                    usernames.add(r["channel_username"].lower().strip().lstrip("@"))
+            return {"ids": ids, "usernames": usernames}
+
+
 async def get_delivery_channel_ids() -> List[int]:
     """Return list of all active delivery channel IDs."""
     pool = await get_pool()
@@ -118,6 +143,22 @@ async def get_delivery_channel_ids() -> List[int]:
             await cur.execute("SELECT channel_id FROM vc_channels WHERE channel_type = 'delivery' AND is_active = 1")
             rows = await cur.fetchall()
             return [int(r[0]) for r in rows]
+
+
+async def get_delivery_channel_targets() -> List[Any]:
+    """Return list of targets (integers or usernames) for active delivery channels."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT channel_id, channel_username FROM vc_channels WHERE channel_type = 'delivery' AND is_active = 1")
+            rows = await cur.fetchall()
+            targets = []
+            for r in rows:
+                if r.get("channel_id") and int(r["channel_id"]) != 0:
+                    targets.append(int(r["channel_id"]))
+                elif r.get("channel_username"):
+                    targets.append(r["channel_username"].strip().lstrip("@"))
+            return targets
 
 
 async def get_all_channels() -> List[Dict[str, Any]]:

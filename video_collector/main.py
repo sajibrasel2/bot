@@ -1,8 +1,8 @@
 """
-Video Collector Bot — Main Service
-Collects videos from registered source channels/groups,
-delivers them to designated delivery channels,
-and immediately deletes the task from MySQL database.
+Video Collector Userbot — Powered by Telethon & MTProto
+Monitors source channels/groups (WITHOUT requiring admin permissions),
+extracts incoming videos, delivers them cleanly to your delivery channel(s),
+and immediately deletes the processing task from the MySQL database.
 """
 
 import sys
@@ -13,19 +13,16 @@ import logging
 # Ensure project root is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from telegram import Update, BotCommand, BotCommandScopeDefault
-from telegram.ext import (
-    Application, ContextTypes, MessageHandler, CommandHandler, filters
-)
-from telegram.request import HTTPXRequest
+from telethon import TelegramClient, events
+from telethon.tl.types import Channel, Chat
 
 from video_collector.config import (
-    VC_BOT_TOKEN, VC_BOT_USERNAME, VC_OWNER_ID, FORWARD_DELAY_SECONDS
+    TG_API_ID, TG_API_HASH, SESSION_NAME, FORWARD_DELAY_SECONDS
 )
 from video_collector.database import (
-    init_db, get_source_channel_ids, get_delivery_channel_ids,
+    init_db, get_source_channel_targets, get_delivery_channel_targets,
     add_queue_item, delete_queue_item, increment_forwarded_count,
-    get_collector_stats, get_setting, add_channel, get_all_channels
+    get_collector_stats, get_setting
 )
 
 logging.basicConfig(
@@ -34,239 +31,153 @@ logging.basicConfig(
 )
 logger = logging.getLogger("video_collector")
 
+# Path to session file in video_collector folder
+session_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), SESSION_NAME)
+client = TelegramClient(session_path, TG_API_ID, TG_API_HASH)
 
-async def handle_incoming_video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Triggered when a video is posted in a channel or group."""
-    msg = update.effective_message
-    chat = update.effective_chat
-    if not msg or not chat:
+
+def _is_video_message(message) -> bool:
+    """Check if a Telethon message contains a video or animation."""
+    if not message or not message.media:
+        return False
+    if getattr(message, "video", None):
+        return True
+    if getattr(message, "document", None):
+        mime = getattr(message.document, "mime_type", "") or ""
+        if mime.startswith("video/"):
+            return True
+    return False
+
+
+@client.on(events.NewMessage)
+async def handle_new_message(event: events.NewMessage.Event) -> None:
+    """Triggered on every new message in joined channels/groups."""
+    msg = event.message
+    if not msg:
         return
 
-    # Check if collector is globally enabled
+    # 1. Quick check: must have video media
+    if not _is_video_message(msg):
+        return
+
+    # 2. Check if collector is enabled
     is_active = await get_setting("is_collector_active", "1")
     if is_active != "1":
         return
 
-    # Check if chat is in registered source channels
-    source_ids = await get_source_channel_ids()
-    if chat.id not in source_ids:
+    # 3. Check if chat is in registered source channels
+    chat_id = event.chat_id
+    try:
+        chat = await event.get_chat()
+        chat_title = getattr(chat, "title", "Unknown")
+        chat_username = (getattr(chat, "username", "") or "").lower()
+    except Exception:
+        chat_title = "Unknown"
+        chat_username = ""
+
+    sources = await get_source_channel_targets()
+    matched = False
+    if chat_id in sources["ids"]:
+        matched = True
+    elif chat_username and chat_username in sources["usernames"]:
+        matched = True
+
+    if not matched:
         return
 
-    # Determine file_id and media type
-    file_id = None
-    if msg.video:
-        file_id = msg.video.file_id
-    elif msg.animation:
-        file_id = msg.animation.file_id
-    elif msg.document and msg.document.mime_type and msg.document.mime_type.startswith("video/"):
-        file_id = msg.document.file_id
+    logger.info(f"📥 New video detected from source: {chat_title} (ID: {chat_id}) - Msg ID: {msg.id}")
 
-    if not file_id:
+    # 4. Insert into MySQL queue
+    caption = msg.text or ""
+    file_repr = str(msg.id)
+    try:
+        queue_id = await add_queue_item(chat_id, msg.id, file_repr, caption)
+        logger.info(f"📝 Video queued in MySQL with ID: #{queue_id}")
+    except Exception as e_db:
+        logger.error(f"❌ Failed to insert into MySQL queue: {e_db}")
+        queue_id = None
+
+    # 5. Fetch delivery targets
+    deliveries = await get_delivery_channel_targets()
+    if not deliveries:
+        logger.warning("⚠️ No active delivery channels configured in admin panel! Video skipped.")
         return
 
-    logger.info(f"📥 New video detected from source: {chat.title} ({chat.id}) - Msg ID: {msg.message_id}")
-
-    # 1. Store in MySQL queue
-    caption = msg.caption_html or msg.caption or ""
-    queue_id = await add_queue_item(chat.id, msg.message_id, file_id, caption)
-    logger.info(f"📝 Video queued in MySQL with ID: {queue_id}")
-
-    # 2. Get delivery channels
-    delivery_ids = await get_delivery_channel_ids()
-    if not delivery_ids:
-        logger.warning("⚠️ No active delivery channels configured! Video queued but not delivered.")
-        return
-
-    # 3. Send video to all delivery channels
+    # 6. Deliver video to all target delivery channels
     successful_deliveries = 0
     custom_caption = await get_setting("custom_caption", "")
+    final_caption = custom_caption if custom_caption else caption
 
-    for target_id in delivery_ids:
-        delivered = False
+    for target in deliveries:
         try:
-            # 1st attempt: copy_message preserves stream quality, original formatting and caption
-            kwargs = {
-                "chat_id": target_id,
-                "from_chat_id": chat.id,
-                "message_id": msg.message_id
-            }
-            if custom_caption:
-                kwargs["caption"] = custom_caption
-                kwargs["parse_mode"] = "HTML"
-            await context.bot.copy_message(**kwargs)
-            delivered = True
-        except Exception as e_copy:
-            logger.warning(f"copy_message failed for {target_id}: {e_copy}. Attempting direct send_video fallback...")
-            try:
-                # 2nd attempt: send_video using file_id
-                cap = custom_caption if custom_caption else (msg.caption_html or msg.caption or None)
-                await context.bot.send_video(
-                    chat_id=target_id,
-                    video=file_id,
-                    caption=cap,
-                    parse_mode="HTML" if cap else None
-                )
-                delivered = True
-            except Exception as e_send:
-                logger.error(f"❌ Failed to forward video to {target_id}: {e_send}")
-
-        if delivered:
+            logger.info(f"🚀 Sending video to delivery channel: {target}...")
+            # send_file delivers the video cleanly without 'Forwarded from' tag
+            await client.send_file(
+                target,
+                file=msg.media,
+                caption=final_caption,
+                supports_streaming=True
+            )
             successful_deliveries += 1
-            logger.info(f"🚀 Video forwarded to delivery channel {target_id}")
+            logger.info(f"✅ Successfully delivered video to: {target}")
             if FORWARD_DELAY_SECONDS > 0:
                 await asyncio.sleep(FORWARD_DELAY_SECONDS)
+        except Exception as e:
+            logger.error(f"❌ Delivery failed for {target}: {e}")
 
-    # 4. Immediately delete from MySQL database once delivered
-    if successful_deliveries > 0:
-        await delete_queue_item(queue_id)
-        await increment_forwarded_count()
-        logger.info(f"🗑️ Video task #{queue_id} immediately deleted from MySQL database. Total forwarded updated.")
+    # 7. Immediately delete task from MySQL database once delivered
+    if successful_deliveries > 0 and queue_id:
+        try:
+            await delete_queue_item(queue_id)
+            await increment_forwarded_count()
+            logger.info(f"🗑️ Video task #{queue_id} immediately deleted from MySQL database. Total count incremented.")
+        except Exception as e:
+            logger.error(f"Failed to delete queue item #{queue_id}: {e}")
 
-        # 5. Optionally delete the video from source channel if enabled in settings
+        # 8. Optional: Delete source message if admin permissions exist in source
         delete_source = await get_setting("delete_source_message", "0")
         if delete_source == "1":
             try:
-                await msg.delete()
-                logger.info(f"🧹 Source message {msg.message_id} deleted from {chat.id}")
-            except Exception as e:
-                logger.warning(f"Could not delete source message: {e}")
+                await event.delete()
+                logger.info(f"🧹 Source message {msg.id} deleted from {chat_id}")
+            except Exception:
+                pass
 
 
-# ── Bot Admin Commands ─────────────────────────────
+# ── Owner Command Listener in Private / Saved Messages ──
 
-async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user = update.effective_user
-    chat = update.effective_chat
-    stats = await get_collector_stats()
-    text = (
-        f"🤖 <b>ভিডিও অটো-কালেক্টর ও ডেলিভারি বট</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"👋 স্বাগতম {user.first_name if user else ''}!\n\n"
-        f"📊 <b>বর্তমান পরিসংখ্যান:</b>\n"
-        f"  • সোর্স চ্যানেল: <b>{stats['source_count']} টি</b>\n"
-        f"  • ডেলিভারি চ্যানেল: <b>{stats['delivery_count']} টি</b>\n"
-        f"  • মোট সফল ডেলিভারি: <b>{stats['total_forwarded']} টি</b>\n\n"
-        f"⚙️ ওয়েব অ্যাডমিন প্যানেল থেকে সোর্স ও ডেলিভারি চ্যানেল যুক্ত বা ডিলিট করুন।"
-    )
-    await update.message.reply_html(text)
-
-
-async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+@client.on(events.NewMessage(pattern=r"^/status$"))
+async def cmd_status(event: events.NewMessage.Event) -> None:
+    """Send stats when /status is typed to the client (e.g. in Saved Messages)."""
     stats = await get_collector_stats()
     is_active = await get_setting("is_collector_active", "1")
-    del_source = await get_setting("delete_source_message", "0")
+    status_str = "সক্রিয় 🟢" if is_active == "1" else "বন্ধ 🔴"
 
-    status_str = "সক্রিয় (Active) 🟢" if is_active == "1" else "স্থগিত (Paused) 🔴"
-    del_str = "হ্যাঁ (Yes) 🗑️" if del_source == "1" else "না (No) ❌"
-
-    channels = await get_all_channels()
-    sources = [c for c in channels if c.get("channel_type") == "source"]
-    deliveries = [c for c in channels if c.get("channel_type") == "delivery"]
-
-    lines = [
-        f"📊 <b>ভিডিও কালেক্টর স্ট্যাটাস:</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━",
-        f"🔘 বটের অবস্থা: <b>{status_str}</b>",
-        f"🧹 সোর্স মেসেজ ডিলিট: <b>{del_str}</b>",
-        f"🚀 মোট ফরওয়ার্ডকৃত: <b>{stats['total_forwarded']} টি</b>",
-        f"⏳ অপেক্ষমান কিউ: <b>{stats['queue_count']} টি</b>\n",
-        f"📥 <b>সোর্স চ্যানেল ({len(sources)}):</b>"
-    ]
-
-    if sources:
-        for s in sources:
-            name = s.get("channel_title") or s.get("channel_username") or "চ্যানেল"
-            lines.append(f"  • {name} (<code>{s['channel_id']}</code>)")
-    else:
-        lines.append("  <i>কোনো সোর্স চ্যানেল নেই</i>")
-
-    lines.append(f"\n📤 <b>ডেলিভারি চ্যানেল ({len(deliveries)}):</b>")
-    if deliveries:
-        for d in deliveries:
-            name = d.get("channel_title") or d.get("channel_username") or "চ্যানেল"
-            lines.append(f"  • {name} (<code>{d['channel_id']}</code>)")
-    else:
-        lines.append("  <i>কোনো ডেলিভারি চ্যানেল নেই</i>")
-
-    await update.message.reply_html("\n".join(lines))
-
-
-async def cmd_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat = update.effective_chat
-    user = update.effective_user
-    await update.message.reply_html(
-        f"🆔 <b>তথ্য:</b>\n"
-        f"💬 চ্যাট ID: <code>{chat.id}</code>\n"
-        f"👤 আপনার ID: <code>{user.id if user else ''}</code>\n"
-        f"📋 চ্যাট টাইপ: {chat.type}"
+    text = (
+        f"📊 <b>ভিডিও অটো-কালেক্টর স্ট্যাটাস:</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔘 অবস্থা: <b>{status_str}</b>\n"
+        f"📥 সোর্স চ্যানেল: <b>{stats['source_count']} টি</b>\n"
+        f"📤 ডেলিভারি চ্যানেল: <b>{stats['delivery_count']} টি</b>\n"
+        f"🚀 মোট ফরওয়ার্ডকৃত: <b>{stats['total_forwarded']} টি</b>\n"
+        f"⏳ ডাটাবেজ কিউ: <b>{stats['queue_count']} টি</b>"
     )
+    await event.reply(text, parse_mode="html")
 
 
-async def post_init(app: Application) -> None:
+async def main() -> None:
+    logger.info("Initializing Video Collector database tables...")
     await init_db()
-    commands = [
-        BotCommand("start", "বটের পরিচিতি ও মেনু"),
-        BotCommand("status", "সোর্স ও ডেলিভারি চ্যানেলের স্ট্যাটাস"),
-        BotCommand("id", "চ্যানেল বা ইউজারের আইডি দেখুন"),
-    ]
-    await app.bot.set_my_commands(commands, scope=BotCommandScopeDefault())
-    logger.info("✅ Video Collector Bot initialized and commands registered.")
 
+    logger.info("Starting Telethon Client...")
+    await client.start()
 
-def main() -> None:
-    token = VC_BOT_TOKEN
-    if not token:
-        try:
-            import pymysql
-            from video_collector.config import MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB
-            conn = pymysql.connect(
-                host=MYSQL_HOST, port=MYSQL_PORT, user=MYSQL_USER,
-                password=MYSQL_PASSWORD, database=MYSQL_DB
-            )
-            with conn.cursor() as cur:
-                cur.execute("SELECT value FROM vc_settings WHERE key_name = 'vc_bot_token'")
-                row = cur.fetchone()
-                if row and row[0]:
-                    token = row[0].strip()
-            conn.close()
-        except Exception:
-            pass
+    me = await client.get_me()
+    logger.info(f"✅ Logged in successfully as: {me.first_name} (@{me.username or me.phone}) [ID: {me.id}]")
+    logger.info("🎯 Video Collector is now actively monitoring all registered source channels!")
 
-    if not token:
-        logger.error("❌ VC_BOT_TOKEN is not configured! Please set VC_BOT_TOKEN in .env or via Web Panel.")
-        print("\n" + "="*60)
-        print("⚠️  VC_BOT_TOKEN খালি আছে! দয়া করে .env ফাইলে অথবা")
-        print("    ওয়েব অ্যাডমিন প্যানেলে বটের টোকেন প্রদান করুন।")
-        print("="*60 + "\n")
-        sys.exit(1)
-
-    req = HTTPXRequest(
-        connection_pool_size=16,
-        connect_timeout=20.0,
-        read_timeout=30.0,
-        write_timeout=30.0,
-    )
-
-    app = (
-        Application.builder()
-        .token(token)
-        .request(req)
-        .post_init(post_init)
-        .build()
-    )
-
-    # Video handler for channel posts and group messages
-    video_filter = (filters.VIDEO | filters.ANIMATION | filters.Document.VIDEO)
-    app.add_handler(MessageHandler(video_filter, handle_incoming_video))
-
-    # Basic Commands
-    app.add_handler(CommandHandler(["start", "help"], cmd_start))
-    app.add_handler(CommandHandler("status", cmd_status))
-    app.add_handler(CommandHandler(["id", "chatid"], cmd_id))
-
-    logger.info("🚀 Starting Video Collector Bot polling...")
-    app.run_polling(drop_pending_updates=False)
+    await client.run_until_disconnected()
 
 
 if __name__ == "__main__":
-    main()
+    client.loop.run_until_complete(main())
