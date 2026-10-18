@@ -112,6 +112,7 @@ async def init_db() -> None:
                 VALUES 
                 ('delete_source_message', '0'),
                 ('is_collector_active', '1'),
+                ('collect_from_all_joined', '1'),
                 ('custom_caption', ''),
                 ('delivery_interval_minutes', '30'),
                 ('trigger_immediate_send', '0')
@@ -265,6 +266,74 @@ async def delete_channel_by_id(pk_id: int) -> bool:
         async with conn.cursor() as cur:
             await cur.execute("DELETE FROM vc_channels WHERE id = %s", (pk_id,))
             return cur.rowcount > 0
+
+
+async def is_channel_deactivated(channel_id: Optional[int], channel_username: str = "") -> bool:
+    """Check if a channel was explicitly deactivated/disabled by admin."""
+    pool = await get_pool()
+    clean_user = channel_username.lower().strip().lstrip("@") if channel_username else ""
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            if clean_user:
+                await cur.execute(
+                    "SELECT 1 FROM vc_channels WHERE channel_username = %s AND is_active = 0",
+                    (clean_user,)
+                )
+                if await cur.fetchone():
+                    return True
+            if channel_id:
+                raw = abs(channel_id)
+                await cur.execute(
+                    "SELECT 1 FROM vc_channels WHERE (channel_id = %s OR channel_id = %s) AND is_active = 0",
+                    (channel_id, -raw)
+                )
+                if await cur.fetchone():
+                    return True
+            return False
+
+
+async def auto_register_source_channel(channel_id: Optional[int], channel_title: str, channel_username: str) -> None:
+    """Auto-register newly discovered channel from user's account if not already in DB."""
+    pool = await get_pool()
+    clean_user = channel_username.lower().strip().lstrip("@") if channel_username else ""
+    cid = channel_id if channel_id and channel_id != 0 else None
+
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            if clean_user:
+                await cur.execute("SELECT id FROM vc_channels WHERE channel_username = %s", (clean_user,))
+                if await cur.fetchone():
+                    return
+            if cid:
+                await cur.execute("SELECT id FROM vc_channels WHERE channel_id = %s", (cid,))
+                if await cur.fetchone():
+                    return
+
+            title = channel_title or (f"@{clean_user}" if clean_user else f"Channel {cid}")
+            await cur.execute("""
+                INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+                VALUES (%s, %s, %s, 'source', 1)
+            """, (cid, title, clean_user))
+
+
+async def is_delivery_chat(chat_id: int, chat_username: str = "") -> bool:
+    """Check if a chat is a designated delivery channel to prevent recursive forwarding loops."""
+    deliveries = await get_delivery_channel_targets()
+    clean_user = (chat_username or "").lower().strip().lstrip("@")
+    chat_raw = abs(chat_id)
+
+    for d in deliveries:
+        if isinstance(d, str) and d.lower().strip().lstrip("@") == clean_user:
+            return True
+        if isinstance(d, int):
+            raw = abs(d)
+            if raw == chat_raw:
+                return True
+            if str(raw).startswith("100") and int(str(raw)[3:]) == chat_raw:
+                return True
+            if str(chat_raw).startswith("100") and int(str(chat_raw)[3:]) == raw:
+                return True
+    return False
 
 
 # ── Queue & Deletion (Sequential FIFO) ─────────────

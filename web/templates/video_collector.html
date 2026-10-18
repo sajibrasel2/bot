@@ -102,16 +102,28 @@
       </div>
     </div>
 
-    <div style="display:flex; flex-wrap:wrap; gap:24px; margin-bottom:18px; background:var(--card2); padding:14px 18px; border-radius:8px;">
-      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px;">
-        <input type="checkbox" name="is_collector_active" {% if settings.is_collector_active == '1' %}checked{% endif %} style="width:18px; height:18px; accent-color:var(--accent);">
-        <span>ভিডিও অটো-কালেক্টর ও ডেলিভারি সার্ভিস চালু রাখুন</span>
+    <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:18px; background:var(--card2); padding:16px 18px; border-radius:8px; border:1px solid var(--border);">
+      <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer; font-size:14px;">
+        <input type="checkbox" name="collect_from_all_joined" {% if settings.collect_from_all_joined == '1' %}checked{% endif %} style="width:20px; height:20px; accent-color:var(--accent); margin-top:2px;">
+        <div>
+          <span style="font-weight:700; color:var(--text);">🌟 একাউন্টের সকল জয়েনকৃত চ্যানেল/গ্রুপ থেকে অটো কালেক্ট করুন (Option A - Fully Automatic)</span>
+          <div style="font-size:12px; color:var(--muted); margin-top:2px;">
+            অন থাকলে আপনার টেলিগ্রাম একাউন্টে বর্তমানে থাকা সব চ্যানেল/গ্রুপ এবং ভবিষ্যতে নতুন কোনো চ্যানেল/গ্রুপে জয়েন হওয়া মাত্রই সেখান থেকে স্বয়ংক্রিয়ভাবে ভিডিও কিউতে চলে আসবে। একবার ডেলিভারি হওয়া কোনো ভিডিও কখনই পুনরায় যাবে না।
+          </div>
+        </div>
       </label>
 
-      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px;">
-        <input type="checkbox" name="delete_source_message" {% if settings.delete_source_message == '1' %}checked{% endif %} style="width:18px; height:18px; accent-color:var(--accent);">
-        <span>ডেলিভারি হওয়ার পর সোর্স চ্যানেল/গ্রুপ থেকেও ডিলিট করুন (যদি আপনার অ্যাডমিন এক্সেস থাকে)</span>
-      </label>
+      <div style="display:flex; flex-wrap:wrap; gap:24px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.06);">
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px;">
+          <input type="checkbox" name="is_collector_active" {% if settings.is_collector_active == '1' %}checked{% endif %} style="width:18px; height:18px; accent-color:var(--accent);">
+          <span>ভিডিও অটো-কালেক্টর ও ডেলিভারি সার্ভিস চালু রাখুন</span>
+        </label>
+
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px;">
+          <input type="checkbox" name="delete_source_message" {% if settings.delete_source_message == '1' %}checked{% endif %} style="width:18px; height:18px; accent-color:var(--accent);">
+          <span>ডেলিভারি হওয়ার পর সোর্স চ্যানেল থেকেও ডিলিট করুন (যদি অ্যাডমিন হন)</span>
+        </label>
+      </div>
     </div>
 
     <button type="submit" class="btn btn-primary" style="padding:10px 24px; font-size:13px; font-weight:600; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; cursor:pointer;">

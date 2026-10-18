@@ -904,6 +904,7 @@ def video_collector():
     settings = {
         "delete_source_message": "0",
         "is_collector_active": "1",
+        "collect_from_all_joined": "1",
         "delivery_interval_minutes": "30",
         "custom_caption": "",
         "vc_bot_token": os.environ.get("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc"),
@@ -1034,6 +1035,7 @@ def video_collector_send_now():
 def video_collector_settings():
     delete_source = "1" if request.form.get("delete_source_message") == "on" else "0"
     is_active = "1" if request.form.get("is_collector_active") == "on" else "0"
+    collect_from_all = "1" if request.form.get("collect_from_all_joined") == "on" else "0"
     delivery_interval = request.form.get("delivery_interval_minutes", "30").strip()
     custom_caption = request.form.get("custom_caption", "").strip()
     bot_token = request.form.get("vc_bot_token", "").strip()
@@ -1047,6 +1049,7 @@ def video_collector_settings():
         for k, v in [
             ("delete_source_message", delete_source),
             ("is_collector_active", is_active),
+            ("collect_from_all_joined", collect_from_all),
             ("delivery_interval_minutes", delivery_interval),
             ("custom_caption", custom_caption),
             ("vc_bot_token", bot_token),

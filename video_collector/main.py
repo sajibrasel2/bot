@@ -27,7 +27,8 @@ from video_collector.database import (
     update_channel_id_by_username, add_queue_item, delete_queue_item,
     get_next_queue_item, is_message_processed, is_message_in_queue,
     mark_message_processed, increment_forwarded_count, get_collector_stats,
-    get_setting, set_setting
+    get_setting, set_setting, is_channel_deactivated, auto_register_source_channel,
+    is_delivery_chat
 )
 
 logging.basicConfig(
@@ -67,61 +68,108 @@ async def auto_join_channel(channel_target) -> Optional[Any]:
         return None
 
 
-async def crawl_source_channels(limit_per_source: int = 100) -> int:
+async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: int = 80) -> int:
     """
-    Crawl past messages in active source channels to collect uncollected videos
-    into the FIFO queue in sequential serial order.
+    Crawl past messages across active channels to keep a healthy FIFO queue (up to max_queue_buffer).
+    Supports Option A: All joined channels/groups, or Option B: Specific registered channels.
     """
-    sources_data = await get_source_channel_targets()
-    rows = sources_data.get("rows", [])
+    stats = await get_collector_stats()
+    current_queue = stats.get("queue_count", 0)
+    if current_queue >= max_queue_buffer:
+        logger.info(f"📦 Queue already has {current_queue} videos (Target: {max_queue_buffer}). Backlog crawl skipped.")
+        return 0
+
+    collect_all = await get_setting("collect_from_all_joined", "1")
     total_added = 0
 
-    logger.info(f"🔍 Starting backlog crawl across {len(rows)} active source channels...")
-
-    for row in rows:
-        target = row.get("channel_username") or row.get("channel_id")
-        if not target:
-            continue
-
+    if collect_all == "1":
+        logger.info("🔍 Auto-crawling across ALL joined channels and groups on this user account...")
         try:
-            entity = await auto_join_channel(target)
-            if not entity:
+            async for dialog in client.iter_dialogs(limit=50):
+                if current_queue + total_added >= max_queue_buffer:
+                    break
+                if not (dialog.is_channel or dialog.is_group):
+                    continue
+
+                chat_id = dialog.id
+                chat_entity = dialog.entity
+                chat_username = (getattr(chat_entity, "username", "") or "").lower()
+                chat_title = getattr(dialog, "name", "") or getattr(chat_entity, "title", "Unknown")
+
+                # Strictly exclude delivery channels to prevent recursive loops
+                if await is_delivery_chat(chat_id, chat_username):
+                    continue
+
+                # Check if admin deactivated this channel
+                if await is_channel_deactivated(chat_id, chat_username):
+                    continue
+
+                # Auto register channel in DB for dashboard visibility
+                await auto_register_source_channel(chat_id, chat_title, chat_username)
+
+                # Fetch chronological messages (oldest to newest)
+                async for msg in client.iter_messages(chat_entity, limit=limit_per_source, reverse=True):
+                    if current_queue + total_added >= max_queue_buffer:
+                        break
+                    if _is_video_message(msg):
+                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "")
+                        if qid:
+                            total_added += 1
+
+        except Exception as e_dialogs:
+            logger.error(f"Error during all-dialogs crawl: {e_dialogs}")
+
+    else:
+        # Crawl only specific registered channels
+        sources_data = await get_source_channel_targets()
+        rows = sources_data.get("rows", [])
+        logger.info(f"🔍 Crawling registered {len(rows)} source channels...")
+
+        for row in rows:
+            if current_queue + total_added >= max_queue_buffer:
+                break
+            target = row.get("channel_username") or row.get("channel_id")
+            if not target:
                 continue
 
-            # Update channel_id in DB if missing
-            if (not row.get("channel_id") or row["channel_id"] == 0) and getattr(entity, "id", None):
-                await update_channel_id_by_username(str(target), entity.id)
+            try:
+                entity = await auto_join_channel(target)
+                if not entity:
+                    continue
 
-            chat_id = getattr(entity, "id", 0)
+                if (not row.get("channel_id") or row["channel_id"] == 0) and getattr(entity, "id", None):
+                    await update_channel_id_by_username(str(target), entity.id)
 
-            # Telethon reverse=True fetches from oldest to newest (serial order)
-            videos_found = []
-            async for msg in client.iter_messages(entity, limit=limit_per_source, reverse=True):
-                if _is_video_message(msg):
-                    videos_found.append(msg)
+                chat_id = getattr(entity, "id", 0)
 
-            for msg in videos_found:
-                if not await is_message_processed(chat_id, msg.id) and not await is_message_in_queue(chat_id, msg.id):
-                    qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "")
-                    if qid:
-                        total_added += 1
+                async for msg in client.iter_messages(entity, limit=limit_per_source, reverse=True):
+                    if current_queue + total_added >= max_queue_buffer:
+                        break
+                    if _is_video_message(msg):
+                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "")
+                        if qid:
+                            total_added += 1
 
-        except Exception as e:
-            logger.error(f"Error crawling source channel '{target}': {e}")
+            except Exception as e:
+                logger.error(f"Error crawling source channel '{target}': {e}")
 
-    logger.info(f"✅ Crawl complete. Added {total_added} new sequential videos to MySQL queue.")
+    logger.info(f"✅ Crawl complete. Added {total_added} new sequential videos to MySQL queue (Total queue: {current_queue + total_added}).")
     return total_added
 
 
 @client.on(events.NewMessage)
 async def handle_new_message(event: events.NewMessage.Event) -> None:
-    """Real-time listener for incoming new videos from registered source channels."""
+    """Real-time listener for incoming new videos from joined channels/groups."""
     msg = event.message
     if not msg or not _is_video_message(msg):
         return
 
     is_active = await get_setting("is_collector_active", "1")
     if is_active != "1":
+        return
+
+    # Do not collect from private 1-on-1 chats or DMs
+    if event.is_private:
         return
 
     chat_id = event.chat_id
@@ -133,18 +181,31 @@ async def handle_new_message(event: events.NewMessage.Event) -> None:
         chat_title = "Unknown"
         chat_username = ""
 
-    sources = await get_source_channel_targets()
+    # Strictly protect delivery channel(s) from self-collection
+    if await is_delivery_chat(chat_id, chat_username):
+        return
+
+    collect_all = await get_setting("collect_from_all_joined", "1")
     matched = False
-    if chat_id in sources["ids"]:
-        matched = True
-    elif chat_username and chat_username in sources["usernames"]:
-        matched = True
+
+    if collect_all == "1":
+        # Mode A: All joined channels & groups
+        if not await is_channel_deactivated(chat_id, chat_username):
+            matched = True
+            # Auto-register source channel into DB
+            await auto_register_source_channel(chat_id, chat_title, chat_username)
+    else:
+        # Mode B: Explicit registered source channels only
+        sources = await get_source_channel_targets()
+        if chat_id in sources["ids"] or (chat_username and chat_username in sources["usernames"]):
+            matched = True
 
     if not matched:
         return
 
-    logger.info(f"📥 New video posted in source channel: {chat_title} (ID: {chat_id}, Msg: {msg.id})")
+    logger.info(f"📥 New video detected from {chat_title} (ID: {chat_id}, Msg: {msg.id})")
 
+    # add_queue_item guarantees deduplication against both vc_processed and vc_queue
     qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "")
     if qid:
         logger.info(f"📝 Video queued in MySQL with ID: #{qid}")
