@@ -90,20 +90,18 @@ except Exception:
     _DISABLE_PREVIEW = {"disable_web_page_preview": True}
 
 def _build_action_buttons(chat_id: int, user_id: int, chat_title: str) -> InlineKeyboardMarkup:
-    """সকল গ্রুপে পাঠানো সতর্কবার্তা থেকে মূল Dark Romance গ্রুপে মেম্বার ড্রাইভ করার বাটন।"""
-    share_text = urllib.parse.quote(f"🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
+    """Action buttons to drive engagement and show member invite stats."""
+    share_text = urllib.parse.quote(f"🔥 Join our exclusive group & live video chat! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
     share_url = f"https://t.me/share/url?url={MAIN_DARK_ROMANCE_GROUP}&text={share_text}"
 
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=MAIN_DARK_ROMANCE_GROUP)
+            InlineKeyboardButton(text="👥 Add Members", url=share_url),
+            InlineKeyboardButton(text="🔥 Main Group", url=MAIN_DARK_ROMANCE_GROUP)
         ],
         [
-            InlineKeyboardButton(text="👥 মেম্বার অ্যাড / ইনভাইট করুন", url=share_url)
-        ],
-        [
-            InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user_id}"),
-            InlineKeyboardButton(text="🏆 সেরা ইনভাইটার", callback_data=f"topinv_{chat_id}")
+            InlineKeyboardButton(text="📊 My Progress", callback_data=f"myinv_{user_id}"),
+            InlineKeyboardButton(text="🏆 Top Inviters", callback_data=f"topinv_{chat_id}")
         ]
     ])
 
@@ -234,14 +232,14 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             except Exception as e:
                 logger.debug(f"Could not ban sender chat: {e}")
 
-            channel_title = html.escape(getattr(msg.sender_chat, "title", "চ্যানেল") or "চ্যানেল")
+            channel_title = html.escape(getattr(msg.sender_chat, "title", "Channel") or "Channel")
             alert_text = (
-                f"📵 <b>চ্যানেল পোস্ট সম্পূর্ণ নিষিদ্ধ!</b>\n"
+                f"📵 <b>Channel Posts Prohibited!</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"📢 <b>চ্যানেল:</b> {channel_title}\n"
-                f"🆔 <b>চ্যানেল আইডি:</b> <code>{msg.sender_chat.id}</code>\n"
+                f"📢 <b>Channel:</b> {channel_title}\n"
+                f"🆔 <b>Channel ID:</b> <code>{msg.sender_chat.id}</code>\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"🔒 এই গ্রুপে কোনো প্রকার চ্যানেলের পোস্ট ফরোয়ার্ড করা বা চ্যানেলের মাধ্যমে মেসেজ দেওয়া সম্পূর্ণ নিষিদ্ধ!"
+                f"🔒 Posting as a channel or sending channel messages is not permitted."
             )
             await _send_and_delete(context, chat.id, alert_text, delay=BOT_MSG_AUTO_DELETE)
             return
@@ -267,16 +265,15 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 except Exception:
                     pass
 
-                action_desc = "চ্যানেলের পোস্ট ফরোয়ার্ড" if fwd_reason == "channel_forward" else "মেসেজ বা মিডিয়া ফরোয়ার্ড"
+                action_desc = "channel posts" if fwd_reason == "channel_forward" else "forwarded messages"
                 mute_alert = (
-                    f"🚨 <b>মিউট করা হয়েছে! (১ ঘণ্টা)</b>\n"
+                    f"🚨 <b>Muted for 1 Hour!</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
-                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
-                    f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
+                    f"👤 <b>User:</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+                    f"🚫 <b>Violations:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code> (Strike Limit Exceeded)\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"⚠️ <i>গ্রুপে <b>{action_desc} করা সম্পূর্ণ নিষিদ্ধ</b>। বারবার <b>৩ বার ফরোয়ার্ড</b> করার অপরাধে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
-                    f"👉 <i>আনমিউট হওয়ার পর সতর্ক থাকবেন, পুনরায় ফরোয়ার্ড করলে আবারও মিউট করা হবে।</i>"
+                    f"⚠️ <i>You have been muted for <b>1 hour</b> due to repeatedly forwarding {action_desc}.</i>\n\n"
+                    f"👉 <i>Please follow group rules after unmuting to avoid permanent penalties.</i>"
                 )
                 await _send_and_delete(
                     context, chat.id,
@@ -287,21 +284,20 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             else:
                 strikes_left = ANTIFORWARD_STRIKE_LIMIT - strike_count
                 if fwd_reason == "channel_forward":
-                    warning_title = "📵 <b>চ্যানেল ফরোয়ার্ড সম্পূর্ণ নিষিদ্ধ!</b>"
-                    warning_desc = "এই গ্রুপে কোনো <b>চ্যানেলের পোস্ট বা মিডিয়া ফরোয়ার্ড করা কঠোরভাবে নিষেধ</b>। আপনার ফরোয়ার্ডকৃত পোস্টটি মুছে ফেলা হয়েছে।"
+                    warning_title = "📵 <b>Channel Forwards Prohibited!</b>"
+                    warning_desc = "Forwarding posts or media from channels is strictly prohibited. Your message has been removed."
                 else:
-                    warning_title = "📵 <b>ফরোয়ার্ড মেসেজ সম্পূর্ণ নিষিদ্ধ!</b>"
-                    warning_desc = "এই গ্রুপে কোনো প্রকার <b>মেসেজ, মিডিয়া বা স্টোরি ফরোয়ার্ড করা কঠোরভাবে নিষেধ</b>। আপনার ফরোয়ার্ডকৃত মেসেজটি মুছে ফেলা হয়েছে।"
+                    warning_title = "📵 <b>Forwarded Messages Prohibited!</b>"
+                    warning_desc = "Forwarding messages, media, or stories is strictly prohibited. Your message has been removed."
 
                 alert_text = (
                     f"{warning_title}\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
-                    f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
-                    f"⚠️ <b>সতর্কতা / স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code>\n"
+                    f"👤 <b>User:</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+                    f"⚠️ <b>Warning:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"🔒 {warning_desc}\n\n"
-                    f"⚠️ <i>সতর্কতা: ৩ বার ফরোয়ার্ড করলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
+                    f"⚠️ <i>Note: 3 violations will result in a <b>1-hour mute</b>. (Remaining: <b>{strikes_left}</b>)</i>"
                 )
                 await _send_and_delete(
                     context, chat.id,
@@ -339,12 +335,12 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     pass
                 await _send_and_delete(
                     context, chat.id,
-                    f"🚨 <b>ফ্লাড সতর্কতা!</b>\n"
+                    f"🚨 <b>Flood Warning!</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
-                    f"⚡ অতিরিক্ত দ্রুত মেসেজ পাঠাচ্ছেন!\n"
+                    f"⚡ <i>Sending messages too quickly!</i>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"🔇 <b>১ মিনিট</b> মিউট করা হয়েছে।"
+                    f"🔇 Muted for <b>1 minute</b>."
                 )
             except Exception:
                 pass
@@ -420,14 +416,12 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                         pass
 
                     mute_alert = (
-                        f"🚨 <b>মিউট করা হয়েছে! (১ ঘণ্টা)</b>\n"
+                        f"🚨 <b>Muted for 1 Hour!</b>\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
-                        f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
-                        f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
+                        f"👤 <b>User:</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+                        f"🚫 <b>Violations:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code> (Strike Limit Exceeded)\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        f"⚠️ <i>শর্ত ({required_invites} জন মেম্বার এড) পূরণ না করে বারবার <b>৩ বার লিংক বা চ্যানেল/বট প্রমোশন</b> করার কারণে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
-                        f"👉 <i>আনমিউট হওয়ার পর লিংক বা প্রমোশন দিতে চাইলে আগে অবশ্যই ১০ জন মেম্বার এড করবেন।</i>"
+                        f"⚠️ <i>You have been muted for <b>1 hour</b> for sharing unauthorized links or promotions without meeting member add requirements ({required_invites} members).</i>"
                     )
 
                     await _send_and_delete(
@@ -439,16 +433,15 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 else:
                     strikes_left = ANTILINK_STRIKE_LIMIT - strike_count
                     alert_text = (
-                        f"🔗 <b>লিংক ও চ্যানেল/বট প্রমোশন লক!</b>\n"
+                        f"🔗 <b>Links & Promotions Restricted!</b>\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        f"👤 <b>ইউজার:</b> {mention_html(user.id, user.first_name)}\n"
-                        f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
-                        f"⚠️ <b>সতর্কতা / স্ট্রাইক:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code>\n"
+                        f"👤 <b>User:</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+                        f"⚠️ <b>Warning:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code>\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        f"🔒 এই গ্রুপে লিংক, চ্যানেল বা বট ইউজারনেম শেয়ার করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
-                        f"📊 <b>আপনার বর্তমান অগ্রগতি:</b> <code>{user_invites}/{required_invites}</code> জন\n"
-                        f"👉 <i>আরও <b>{remaining_invites} জন</b> মেম্বার অ্যাড করলে সুবিধাটি অটোমেটিক আনলক হবে!</i>\n\n"
-                        f"⚠️ <i>সতর্কতা: ৩ বার লিংক বা প্রমোশন দিলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
+                        f"🔒 Sharing links, channels, or usernames requires adding <b>{required_invites} members</b>.\n\n"
+                        f"📊 <b>Your Progress:</b> <code>{user_invites}/{required_invites}</code> members\n"
+                        f"👉 <i>Add <b>{remaining_invites} more member(s)</b> to unlock link sharing automatically!</i>\n\n"
+                        f"⚠️ <i>Note: 3 violations will result in a <b>1-hour mute</b>. (Remaining: <b>{strikes_left}</b>)</i>"
                     )
 
                     await _send_and_delete(
@@ -528,31 +521,30 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 # strike_limit বারে মিউট
                 _badword_strikes[chat.id][user.id] = 0
                 mute_min = mute_duration // 60
-                mute_text = f"{mute_min} মিনিট" if mute_duration >= 60 else f"{mute_duration} সেকেন্ড"
+                mute_text = f"{mute_min} minute(s)" if mute_duration >= 60 else f"{mute_duration} seconds"
                 try:
                     await _mute_user(context, chat.id, user, mute_duration)
                 except Exception:
                     pass
                 await _send_and_delete(
                     context, chat.id,
-                    f"🔇 <b>মিউট!</b>\n"
+                    f"🔇 <b>User Muted!</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"👤 {mention_html(user.id, user.first_name)}\n"
-                    f"🚫 {strike_limit}বার নিষিদ্ধ শব্দ ব্যবহারের কারণে\n"
-                    f"🔕 <b>{mute_text}</b> মিউট করা হয়েছে।\n"
+                    f"🚫 Muted for <b>{mute_text}</b> due to prohibited language.\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"<i>সংযত ভাষা ব্যবহার করুন।</i>"
+                    f"<i>Please adhere to community standards.</i>"
                 )
             else:
                 remaining = strike_limit - strike_count
                 await _send_and_delete(
                     context, chat.id,
-                    f"🤬 <b>অনুপযুক্ত শব্দ!</b>\n"
+                    f"⚠️ <b>Inappropriate Language Warning!</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"👤 {mention_html(user.id, user.first_name)}\n"
-                    f"⚠️ স্ট্রাইক: <b>{strike_count}/{strike_limit}</b>\n"
+                    f"🚫 Strike: <b>{strike_count}/{strike_limit}</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"আরও <b>{remaining}বার</b> করলে মিউট হবেন।"
+                    f"<i>Please be respectful. Further violations will result in a temporary mute.</i>"
                 )
             return
 
@@ -572,10 +564,10 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 pass
             await _send_and_delete(
                 context, chat.id,
-                f"🖼️ <b>মিডিয়া নিষিদ্ধ!</b>\n"
+                f"🖼️ <b>Media Restricted!</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"👤 {mention_html(user.id, user.first_name)}\n"
-                f"🚫 এই গ্রুপে ছবি/ভিডিও/ফাইল পাঠানো যাবে না।"
+                f"🚫 Sending photos, videos, or files is restricted in this group."
             )
             return
 

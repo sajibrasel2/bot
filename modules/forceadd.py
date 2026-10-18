@@ -94,11 +94,11 @@ async def handle_member_invites(update: Update, context: ContextTypes.DEFAULT_TY
             await unlock_user_forceadd(chat.id, inviter.id)
             try:
                 congrats_markup = InlineKeyboardMarkup([
-                    [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=MAIN_DARK_ROMANCE_GROUP)]
+                    [InlineKeyboardButton(text="🔥 Join Main Group", url=MAIN_DARK_ROMANCE_GROUP)]
                 ])
                 congrats = await msg.reply_html(
-                    f"🎉 <b>অভিনন্দন {mention_html(inviter.id, inviter.first_name)}!</b>\n"
-                    f"✅ <b>{total_invites} জন</b> বন্ধু অ্যাড করেছেন। চ্যাট আজীবন আনলক করা হয়েছে! 🔓",
+                    f"🎉 <b>Congratulations {mention_html(inviter.id, inviter.first_name)}!</b>\n"
+                    f"✅ You added <b>{total_invites} members</b>. Messaging access is now permanently unlocked! 🔓",
                     reply_markup=congrats_markup,
                     **_DISABLE_PREVIEW
                 )
@@ -182,22 +182,22 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
 
     remaining = req_count - user_invites
     alert_text = (
-        f"⛔ <b>চ্যাট লক!</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
-        f"🔒 মেসেজ লিখতে আরও <b>{remaining} জন</b> বন্ধুকে অ্যাড করুন।\n"
-        f"📊 আপনার অগ্রগতি: <code>{user_invites}/{req_count}</code> জন"
+        f"⛔ <b>Chat Locked!</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+        f"🔒 Please add <b>{remaining} more member(s)</b> to unlock messaging.\n"
+        f"📊 Your Progress: <code>{user_invites}/{req_count}</code> members"
     )
 
-    share_text = urllib.parse.quote(f"🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
+    share_text = urllib.parse.quote(f"🔥 Join our exclusive group & live video chat! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
     share_url = f"https://t.me/share/url?url={MAIN_DARK_ROMANCE_GROUP}&text={share_text}"
 
     buttons = [
         [
-            InlineKeyboardButton(text="👥 মেম্বার অ্যাড করুন", url=share_url),
-            InlineKeyboardButton(text="🔥 মূল গ্রুপ", url=MAIN_DARK_ROMANCE_GROUP),
+            InlineKeyboardButton(text="👥 Add Members", url=share_url),
+            InlineKeyboardButton(text="🔥 Main Group", url=MAIN_DARK_ROMANCE_GROUP),
         ],
         [
-            InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
-            InlineKeyboardButton(text="🏆 সেরা ইনভাইটার", callback_data=f"topinv_{chat.id}"),
+            InlineKeyboardButton(text="📊 My Progress", callback_data=f"myinv_{user.id}"),
+            InlineKeyboardButton(text="🏆 Top Inviters", callback_data=f"topinv_{chat.id}"),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
@@ -234,22 +234,22 @@ async def cmd_myinvites(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     if enabled:
         if is_unlocked:
-            status_text = "✅ <b>স্ট্যাটাস:</b> চ্যাট আজীবন আনলকড (Permanently Unlocked) 🎉"
+            status_text = "✅ <b>Status:</b> Permanently Unlocked 🎉"
         else:
             remaining = max(1, req_count - count)
-            status_text = f"🔒 <b>স্ট্যাটাস:</b> লকড (আরও {remaining} জন অ্যাড বাকি)"
+            status_text = f"🔒 <b>Status:</b> Locked (Need {remaining} more)"
     else:
-        status_text = "ℹ️ এই গ্রুপে বর্তমানে ফোর্স-অ্যাড সিস্টেম নিষ্ক্রিয়।"
+        status_text = "ℹ️ Member invite verification is currently disabled in this group."
 
     text = (
-        f"📊 <b>আপনার ইনভাইট অগ্রগতি</b>\n"
+        f"📊 <b>Your Invite Progress</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
-        f"👥 আপনার মোট অ্যাড: <b>{count} জন</b>\n"
-        f"🎯 প্রয়োজনীয় টার্গেট: <b>{req_count} জন</b>\n"
+        f"👥 Total Invited: <b>{count} members</b>\n"
+        f"🎯 Target Required: <b>{req_count} members</b>\n"
         f"{status_text}\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🏆 সেরা ইনভাইটারদের দেখতে <code>/top</code> লিখুন।"
+        f"🏆 Use <code>/top</code> to view leaderboard."
     )
 
     try:
@@ -270,7 +270,7 @@ async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     top_list = await get_top_inviters(chat.id, limit=10)
     if not top_list:
         try:
-            sent = await update.message.reply_html("📊 <b>এখনও কোনো সদস্য নতুন কাউকে ইনভাইট করেনি।</b>")
+            sent = await update.message.reply_html("📊 <b>No members have invited anyone yet.</b>")
             asyncio.create_task(_auto_delete(sent, 6))
             if update.message:
                 asyncio.create_task(_auto_delete(update.message, 1))
@@ -286,14 +286,14 @@ async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         fname = html.escape(row.get("first_name") or f"User {row['inviter_id']}")
         uname = f" (@{row['username']})" if row.get("username") else ""
         cnt = row.get("invite_count", 0)
-        lines.append(f"{badge} <b>{i+1}. {fname}</b>{uname} ─ <b>{cnt} জন</b>")
+        lines.append(f"{badge} <b>{i+1}. {fname}</b>{uname} ─ <b>{cnt} members</b>")
 
     text = (
-        f"🏆 <b>সেরা ইনভাইটার লিডারবোর্ড</b> 🏆\n"
+        f"🏆 <b>Top Inviters Leaderboard</b> 🏆\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
         + "\n".join(lines) +
         f"\n━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"💡 আপনার অগ্রগতি দেখতে <code>/myinvites</code> লিখুন।"
+        f"💡 Check your progress with <code>/myinvites</code>"
     )
 
     try:
@@ -364,12 +364,12 @@ async def callback_forceadd_query(update: Update, context: ContextTypes.DEFAULT_
             return
 
         if query.from_user.id != target_user_id:
-            await query.answer("⚠️ এটি অন্য মেম্বারের নোটিশ! নিজের অগ্রগতি দেখতে গ্রুপে /myinvites লিখুন।", show_alert=True)
+            await query.answer("⚠️ This notification is for another member. Use /myinvites to check yours.", show_alert=True)
             return
 
         chat_id = query.message.chat_id if query.message else None
         if not chat_id:
-            await query.answer("তথ্য পাওয়া যায়নি।", show_alert=True)
+            await query.answer("Information not found.", show_alert=True)
             return
 
         settings = await get_chat_settings(chat_id)
@@ -378,10 +378,10 @@ async def callback_forceadd_query(update: Update, context: ContextTypes.DEFAULT_
         is_unlocked = await is_user_forceadd_unlocked(chat_id, target_user_id) or (invites >= req_count)
 
         if is_unlocked:
-            await query.answer(f"🎉 অভিনন্দন! আপনার চ্যাট আজীবন আনলকড ({invites} জন অ্যাড করা হয়েছে)।", show_alert=True)
+            await query.answer(f"🎉 Congratulations! Your chat access is permanently unlocked ({invites} members added).", show_alert=True)
         else:
             remaining = max(0, req_count - invites)
-            await query.answer(f"📊 আপনার অগ্রগতি: {invites}/{req_count} জন\n👉 চ্যাট আনলক করতে আরও {remaining} জন বন্ধুকে গ্রুপে অ্যাড করুন!", show_alert=True)
+            await query.answer(f"📊 Your Progress: {invites}/{req_count} members\n👉 Please add {remaining} more member(s) to unlock chat access.", show_alert=True)
 
     elif data.startswith("topinv_"):
         chat_id = query.message.chat_id if query.message else None
@@ -389,14 +389,14 @@ async def callback_forceadd_query(update: Update, context: ContextTypes.DEFAULT_
             return
         top_list = await get_top_inviters(chat_id, limit=5)
         if not top_list:
-            await query.answer("এখনও কোনো সদস্য ইনভাইট করেনি।", show_alert=True)
+            await query.answer("No members have invited anyone yet.", show_alert=True)
             return
         lines = []
         for i, row in enumerate(top_list):
             fname = row.get("first_name") or f"User {row['inviter_id']}"
             cnt = row.get("invite_count", 0)
-            lines.append(f"{i+1}. {fname}: {cnt} জন")
-        await query.answer("🏆 শীর্ষ ইনভাইটার:\n" + "\n".join(lines), show_alert=True)
+            lines.append(f"{i+1}. {fname}: {cnt} members")
+        await query.answer("🏆 Top Inviters:\n" + "\n".join(lines), show_alert=True)
 
 
 # ── 6. Admin Manual Unlock / Lock Commands ───────────
