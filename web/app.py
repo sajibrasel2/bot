@@ -825,125 +825,150 @@ def bot_admins():
 @app.route("/video-collector", methods=["GET"])
 @login_required
 def video_collector():
-    # Ensure tables exist
-    _execute("""
-        CREATE TABLE IF NOT EXISTS vc_channels (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            channel_id BIGINT DEFAULT NULL,
-            channel_title VARCHAR(255) DEFAULT '',
-            channel_username VARCHAR(255) DEFAULT '',
-            channel_type ENUM('source', 'delivery') NOT NULL,
-            is_active TINYINT(1) DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_chan_type (channel_id, channel_type),
-            INDEX idx_user_type (channel_username, channel_type)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    """)
     try:
-        _execute("ALTER TABLE vc_channels DROP INDEX uq_chan_type")
-    except Exception:
-        pass
-    try:
-        _execute("ALTER TABLE vc_channels MODIFY channel_id BIGINT DEFAULT NULL")
-    except Exception:
-        pass
+        # Ensure tables exist (ignore if already created)
+        try:
+            _execute("""
+                CREATE TABLE IF NOT EXISTS vc_channels (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    channel_id BIGINT DEFAULT NULL,
+                    channel_title VARCHAR(255) DEFAULT '',
+                    channel_username VARCHAR(255) DEFAULT '',
+                    channel_type VARCHAR(50) NOT NULL DEFAULT 'source',
+                    is_active TINYINT(1) DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_chan_type (channel_id, channel_type),
+                    INDEX idx_user_type (channel_username, channel_type)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+        except Exception:
+            pass
 
-    _execute("""
-        CREATE TABLE IF NOT EXISTS vc_settings (
-            key_name VARCHAR(100) PRIMARY KEY,
-            value TEXT,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    """)
-    _execute("""
-        CREATE TABLE IF NOT EXISTS vc_stats (
-            stat_name VARCHAR(100) PRIMARY KEY,
-            stat_value BIGINT DEFAULT 0
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    """)
-    _execute("""
-        CREATE TABLE IF NOT EXISTS vc_queue (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            source_chat_id BIGINT NOT NULL,
-            source_message_id INT NOT NULL,
-            file_id VARCHAR(255) NOT NULL,
-            caption TEXT,
-            status VARCHAR(50) DEFAULT 'pending',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    """)
+        try:
+            _execute("ALTER TABLE vc_channels MODIFY channel_type VARCHAR(50) NOT NULL DEFAULT 'source'")
+        except Exception:
+            pass
 
-    # Pre-seed default delivery channel @darkromance4u if not exists
-    _execute("""
-        INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
-        SELECT NULL, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
-        WHERE NOT EXISTS (
-            SELECT 1 FROM vc_channels WHERE channel_username = 'darkromance4u' AND channel_type = 'delivery'
+        try:
+            _execute("""
+                CREATE TABLE IF NOT EXISTS vc_settings (
+                    key_name VARCHAR(100) PRIMARY KEY,
+                    value TEXT,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+        except Exception:
+            pass
+
+        try:
+            _execute("""
+                CREATE TABLE IF NOT EXISTS vc_stats (
+                    stat_name VARCHAR(100) PRIMARY KEY,
+                    stat_value BIGINT DEFAULT 0
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+        except Exception:
+            pass
+
+        try:
+            _execute("""
+                CREATE TABLE IF NOT EXISTS vc_queue (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    source_chat_id BIGINT NOT NULL,
+                    source_message_id INT NOT NULL,
+                    file_id VARCHAR(255) NOT NULL,
+                    caption TEXT,
+                    status VARCHAR(50) DEFAULT 'pending',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """)
+        except Exception:
+            pass
+
+        # Pre-seed default delivery channel @darkromance4u if not exists
+        try:
+            _execute("""
+                INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+                SELECT NULL, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM vc_channels WHERE channel_username = 'darkromance4u' AND channel_type = 'delivery'
+                )
+            """)
+        except Exception:
+            pass
+
+        # Pre-seed initial source channels requested by user
+        initial_sources = [
+            ("ayssorbonas420", "Ays Sorbonas"),
+            ("pfff_boom", "Pfff Boom"),
+            ("adult_desi30", "Adult Desi 30")
+        ]
+        for u, t in initial_sources:
+            try:
+                _execute("""
+                    INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+                    SELECT NULL, %s, %s, 'source', 1
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM vc_channels WHERE channel_username = %s AND channel_type = 'source'
+                    )
+                """, (t, u, u))
+            except Exception:
+                pass
+
+        # Clean up any discussion group accidentally marked as delivery channel or source
+        try:
+            _execute("""
+                DELETE FROM vc_channels 
+                WHERE channel_type = 'delivery' 
+                  AND (channel_id IN (4446159364, -1004446159364) OR LOWER(channel_title) LIKE '%discussion%')
+            """)
+            _execute("""
+                DELETE FROM vc_channels 
+                WHERE channel_type = 'source' 
+                  AND (channel_id IN (4446159364, -1004446159364, 4342232814, -1004342232814) 
+                       OR LOWER(channel_title) LIKE '%dark romance%')
+            """)
+        except Exception:
+            pass
+
+        sources = _query("SELECT * FROM vc_channels WHERE channel_type='source' ORDER BY id DESC", fetchall=True) or []
+        deliveries = _query("SELECT * FROM vc_channels WHERE channel_type='delivery' ORDER BY id DESC", fetchall=True) or []
+
+        settings_rows = _query("SELECT key_name, value FROM vc_settings", fetchall=True) or []
+        settings = {
+            "delete_source_message": "0",
+            "is_collector_active": "1",
+            "collect_from_all_joined": "1",
+            "delivery_interval_minutes": "15",
+            "custom_caption": "",
+            "vc_bot_token": os.environ.get("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc"),
+            "vc_bot_username": os.environ.get("VC_BOT_USERNAME", "newideos_bot")
+        }
+        for r in settings_rows:
+            settings[r["key_name"]] = r["value"]
+
+        stat_row = _query("SELECT stat_value FROM vc_stats WHERE stat_name='total_forwarded'", fetchone=True)
+        total_forwarded = stat_row["stat_value"] if stat_row else 0
+
+        queue_count_row = _query("SELECT COUNT(*) as cnt FROM vc_queue", fetchone=True)
+        queue_count = queue_count_row["cnt"] if queue_count_row else 0
+
+        queue_items = _query("SELECT * FROM vc_queue ORDER BY id ASC LIMIT 10", fetchall=True) or []
+
+        return render_template(
+            "video_collector.html",
+            sources=sources,
+            deliveries=deliveries,
+            settings=settings,
+            total_forwarded=total_forwarded,
+            queue_count=queue_count,
+            queue_items=queue_items,
+            active="video_collector"
         )
-    """)
-
-    # Pre-seed initial source channels requested by user
-    initial_sources = [
-        ("ayssorbonas420", "Ays Sorbonas"),
-        ("pfff_boom", "Pfff Boom"),
-        ("adult_desi30", "Adult Desi 30")
-    ]
-    for u, t in initial_sources:
-        _execute("""
-            INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
-            SELECT NULL, %s, %s, 'source', 1
-            WHERE NOT EXISTS (
-                SELECT 1 FROM vc_channels WHERE channel_username = %s AND channel_type = 'source'
-            )
-        """, (t, u, u))
-
-    # Clean up any discussion group accidentally marked as delivery channel or source
-    _execute("""
-        DELETE FROM vc_channels 
-        WHERE channel_type = 'delivery' 
-          AND (channel_id IN (4446159364, -1004446159364) OR LOWER(channel_title) LIKE '%discussion%')
-    """)
-    _execute("""
-        DELETE FROM vc_channels 
-        WHERE channel_type = 'source' 
-          AND (channel_id IN (4446159364, -1004446159364, 4342232814, -1004342232814) 
-               OR LOWER(channel_title) LIKE '%dark romance%')
-    """)
-
-    sources = _query("SELECT * FROM vc_channels WHERE channel_type='source' ORDER BY id DESC", fetchall=True) or []
-    deliveries = _query("SELECT * FROM vc_channels WHERE channel_type='delivery' ORDER BY id DESC", fetchall=True) or []
-
-    settings_rows = _query("SELECT key_name, value FROM vc_settings", fetchall=True) or []
-    settings = {
-        "delete_source_message": "0",
-        "is_collector_active": "1",
-        "collect_from_all_joined": "1",
-        "delivery_interval_minutes": "15",
-        "custom_caption": "",
-        "vc_bot_token": os.environ.get("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc"),
-        "vc_bot_username": os.environ.get("VC_BOT_USERNAME", "newideos_bot")
-    }
-    for r in settings_rows:
-        settings[r["key_name"]] = r["value"]
-
-    stat_row = _query("SELECT stat_value FROM vc_stats WHERE stat_name='total_forwarded'", fetchone=True)
-    total_forwarded = stat_row["stat_value"] if stat_row else 0
-
-    queue_count_row = _query("SELECT COUNT(*) as cnt FROM vc_queue", fetchone=True)
-    queue_count = queue_count_row["cnt"] if queue_count_row else 0
-
-    queue_items = _query("SELECT * FROM vc_queue ORDER BY id ASC LIMIT 10", fetchall=True) or []
-
-    return render_template(
-        "video_collector.html",
-        sources=sources,
-        deliveries=deliveries,
-        settings=settings,
-        total_forwarded=total_forwarded,
-        queue_count=queue_count,
-        queue_items=queue_items,
-        active="video_collector"
-    )
+    except Exception as e:
+        import traceback
+        err_msg = traceback.format_exc()
+        return f"<div style='background:#111;color:#ff6b6b;font-family:monospace;padding:24px;border-radius:10px;'><h3>❌ Error loading Video Collector:</h3><pre>{err_msg}</pre></div>", 500
 
 
 @app.route("/video-collector/add", methods=["POST"])
