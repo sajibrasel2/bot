@@ -31,8 +31,8 @@
     </div>
     <div>
       <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">ডেলিভারি সিডিউল</div>
-      <div style="font-size:20px; font-weight:700; margin-top:2px; color:#f59e0b;">প্রতি {{ settings.delivery_interval_minutes or '30' }} মিনিট</div>
-      <div style="font-size:11px; color:var(--muted);">সিরিয়াল বাই ১টি করে ভিডিও</div>
+      <div style="font-size:20px; font-weight:700; margin-top:2px; color:#f59e0b;">প্রতি {{ settings.delivery_interval_minutes or '15' }} মিনিট</div>
+      <div style="font-size:11px; color:var(--muted);">এক সাথে {{ settings.delivery_batch_size or '3' }}টি করে ভিডিও</div>
     </div>
   </div>
 
@@ -77,13 +77,21 @@
     </div>
   </div>
   <form method="POST" action="{{ url_for('video_collector_settings') }}">
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px; margin-bottom:18px;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:18px; margin-bottom:18px;">
       <div>
         <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
-          ⏱️ ডেলিভারি বিরতি (মিনিট) — <span style="color:#22c55e;">সিরিয়াল বাই ১টি করে</span>
+          ⏱️ ডেলিভারি বিরতি (মিনিট)
         </label>
-        <input type="number" name="delivery_interval_minutes" value="{{ settings.delivery_interval_minutes or '30' }}" min="1" max="1440" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#fff; font-size:14px; font-weight:600;">
-        <div style="font-size:11px; color:var(--muted); margin-top:4px;">ডিফল্ট ৩০ মিনিট। প্রতি ৩০ মিনিট পর পর সোর্স থেকে সিরিয়ালে ১টি ভিডিও পাঠানো হবে।</div>
+        <input type="number" name="delivery_interval_minutes" value="{{ settings.delivery_interval_minutes or '15' }}" min="1" max="1440" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#fff; font-size:14px; font-weight:600;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">ডিফল্ট ১৫ মিনিট। কত মিনিট পর পর ডেলিভারি হবে।</div>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
+          🎬 ব্যাচ সাইজ (এক সাথে কতটি ভিডিও)
+        </label>
+        <input type="number" name="delivery_batch_size" value="{{ settings.delivery_batch_size or '3' }}" min="1" max="20" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#22c55e; font-size:14px; font-weight:700;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">ডিফল্ট ৩টি। প্রতি বিরতিতে এক সাথে কয়টি ভিডিও পাঠানো হবে।</div>
       </div>
 
       <div>
@@ -293,7 +301,7 @@
   <div style="font-size:14px; line-height:1.8; color:var(--muted);">
     <p>১. <b>সোর্স চ্যানেল / গ্রুপ:</b> আপনি যে অন্যের চ্যানেল বা গ্রুপ থেকে ভিডিও আনতে চান, শুধু আপনার টেলিগ্রাম অ্যাকাউন্ট দিয়ে সেই চ্যানেলে জয়েন থাকুন। <b>কোনো অ্যাডমিন পারমিশন লাগবে না!</b> উপরে লিংক বা ইউজারনেম দিয়ে যত খুশি সোর্স চ্যানেল যোগ করতে বা ডিলিট করতে পারবেন।</p>
     <p>২. <b>ডেলিভারি চ্যানেল:</b> আপনার ডেলিভারি চ্যানেলটিতে (<a href="https://t.me/darkromance4u" target="_blank" style="color:var(--accent);">@darkromance4u</a>) আপনার অ্যাকাউন্ট বা বট অ্যাডমিন হিসেবে যুক্ত রাখুন যাতে ভিডিও পোস্ট করতে পারে।</p>
-    <p>৩. <b>৩০ মিনিট পর পর সিরিয়াল ডেলিভারি:</b> সোর্স চ্যানেলগুলো থেকে ভিডিও ক্রমানুসারে (FIFO/সিরিয়াল অর্ডারে) সংগ্রহ করা হয় এবং প্রতি ৩০ মিনিট পর পর ১টি করে ভিডিও ডেলিভারি চ্যানেলে সফলভাবে পাঠানো হয়।</p>
+    <p>৩. <b>এক সাথে ৩টি করে ভিডিও ডেলিভারি:</b> সোর্স চ্যানেলগুলো থেকে ভিডিও ক্রমানুসারে সংগ্রহ করা হয় এবং প্রতি বিরতিতে এক সাথে ৩টি করে ভিডিও ডেলিভারি চ্যানেলে সফলভাবে পাঠানো হয়। আপনি চাইলে উপরের সেটিংস থেকে এক সাথে কতটি ভিডিও যাবে তা পরিবর্তন করতে পারবেন।</p>
     <p>৪. <b>ডাটাবেজ থেকে তাৎক্ষণিক ডিলিট:</b> প্রতিটি ভিডিও সফলভাবে ডেলিভারি হওয়ার সাথে সাথেই MySQL ডাটাবেজের কিউ টেবিল থেকে তাৎক্ষণিকভাবে মুছে ফেলা হয়।</p>
   </div>
 </div>

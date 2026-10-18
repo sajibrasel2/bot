@@ -940,6 +940,7 @@ def video_collector():
             "is_collector_active": "1",
             "collect_from_all_joined": "1",
             "delivery_interval_minutes": "15",
+            "delivery_batch_size": "3",
             "custom_caption": "",
             "vc_bot_token": os.environ.get("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc"),
             "vc_bot_username": os.environ.get("VC_BOT_USERNAME", "newideos_bot")
@@ -1074,14 +1075,18 @@ def video_collector_settings():
     delete_source = "1" if request.form.get("delete_source_message") == "on" else "0"
     is_active = "1" if request.form.get("is_collector_active") == "on" else "0"
     collect_from_all = "1" if request.form.get("collect_from_all_joined") == "on" else "0"
-    delivery_interval = request.form.get("delivery_interval_minutes", "30").strip()
+    delivery_interval = request.form.get("delivery_interval_minutes", "15").strip()
+    delivery_batch_size = request.form.get("delivery_batch_size", "3").strip()
     custom_caption = request.form.get("custom_caption", "").strip()
     bot_token = request.form.get("vc_bot_token", "").strip()
     bot_username = request.form.get("vc_bot_username", "").strip().lstrip("@")
 
     # Validate interval integer
     if not delivery_interval.isdigit() or int(delivery_interval) < 1:
-        delivery_interval = "30"
+        delivery_interval = "15"
+
+    if not delivery_batch_size.isdigit() or int(delivery_batch_size) < 1:
+        delivery_batch_size = "3"
 
     try:
         for k, v in [
@@ -1089,6 +1094,7 @@ def video_collector_settings():
             ("is_collector_active", is_active),
             ("collect_from_all_joined", collect_from_all),
             ("delivery_interval_minutes", delivery_interval),
+            ("delivery_batch_size", delivery_batch_size),
             ("custom_caption", custom_caption),
             ("vc_bot_token", bot_token),
             ("vc_bot_username", bot_username)

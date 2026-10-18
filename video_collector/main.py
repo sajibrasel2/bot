@@ -340,11 +340,11 @@ async def deliver_video_message(orig_msg, target: Any, caption: str) -> bool:
 
 async def delivery_worker_loop() -> None:
     """
-    Sequential Delivery Worker:
-    Delivers 1 video every 30 minutes (or configured interval) from the MySQL queue,
+    Sequential Batch Delivery Worker:
+    Delivers 3 videos (or configured batch size) together every cycle from the MySQL queue,
     and immediately deletes each video record from the database once delivered.
     """
-    logger.info("🚀 30-Minute Sequential Delivery Worker initialized.")
+    logger.info("🚀 Sequential Batch Delivery Worker initialized (Default: 3 videos per batch).")
     # Initial pause to allow client and startup crawl to finish
     await asyncio.sleep(5)
 
@@ -355,32 +355,51 @@ async def delivery_worker_loop() -> None:
                 await asyncio.sleep(10)
                 continue
 
-            # Fetch next video in FIFO order
-            item = await get_next_queue_item()
-            if not item:
-                logger.info("📭 Video queue is currently empty. Running crawl on source channels...")
-                added = await crawl_source_channels(limit_per_source=60)
-                if added > 0:
-                    item = await get_next_queue_item()
+            # Batch size setting (default: 3 videos together)
+            try:
+                batch_size = int(await get_setting("delivery_batch_size", "3"))
+            except Exception:
+                batch_size = 3
+            if batch_size < 1:
+                batch_size = 3
 
-            if item:
+            deliveries = await get_delivery_channel_targets()
+            if not deliveries:
+                logger.warning("⚠️ No active delivery channels configured! Skipping delivery cycle.")
+                await asyncio.sleep(60)
+                continue
+
+            delivered_in_this_batch = 0
+            attempts = 0
+            max_attempts = max(10, batch_size * 5)
+
+            while delivered_in_this_batch < batch_size and attempts < max_attempts:
+                attempts += 1
+
+                # Fetch next video in FIFO order
+                item = await get_next_queue_item()
+                if not item:
+                    logger.info("📭 Video queue is empty. Running crawl on source channels to replenish...")
+                    added = await crawl_source_channels(limit_per_source=60)
+                    if added > 0:
+                        item = await get_next_queue_item()
+
+                if not item:
+                    # No more items available even after crawl
+                    break
+
                 queue_id = item["id"]
                 source_chat = item["source_chat_id"]
                 msg_id = item["source_message_id"]
                 stored_media_id = item.get("media_id")
-                logger.info(f"📦 Next in queue: #{queue_id} (Source Chat: {source_chat}, Msg ID: {msg_id})")
+                batch_label = f"[{delivered_in_this_batch + 1}/{batch_size}]"
+                logger.info(f"📦 Batch {batch_label} | Next in queue: #{queue_id} (Source Chat: {source_chat}, Msg ID: {msg_id})")
 
                 # If this media_id was already delivered previously, skip immediately without waiting
                 if stored_media_id and await is_media_processed(stored_media_id):
                     logger.warning(f"⚠️ Video content (Media ID: {stored_media_id}) already delivered previously! Skipping duplicate queue #{queue_id}.")
                     await delete_queue_item(queue_id)
                     await mark_message_processed(source_chat, msg_id, stored_media_id)
-                    continue
-
-                deliveries = await get_delivery_channel_targets()
-                if not deliveries:
-                    logger.warning("⚠️ No active delivery channels configured! Skipping delivery cycle.")
-                    await asyncio.sleep(60)
                     continue
 
                 delivery_success = False
@@ -408,7 +427,7 @@ async def delivery_worker_loop() -> None:
 
                     for target in deliveries:
                         try:
-                            logger.info(f"🚀 Delivering video #{queue_id} to channel: {target}...")
+                            logger.info(f"🚀 Delivering video {batch_label} #{queue_id} to channel: {target}...")
                             res = await deliver_video_message(orig_msg, target, caption)
                             if res:
                                 delivery_success = True
@@ -430,30 +449,32 @@ async def delivery_worker_loop() -> None:
 
                 if delivery_success:
                     await increment_forwarded_count()
-                    logger.info(f"🗑️ Video #{queue_id} immediately deleted from MySQL. Total forwarded incremented.")
+                    delivered_in_this_batch += 1
+                    logger.info(f"🗑️ Video #{queue_id} deleted from MySQL. Progress: {delivered_in_this_batch}/{batch_size} delivered in this batch.")
 
-                    # Calculate sleep time based on interval setting (default: 15 minutes)
-                    try:
-                        interval_min = int(await get_setting("delivery_interval_minutes", "15"))
-                    except Exception:
-                        interval_min = 15
+                    # Short safety pause between videos in the same batch
+                    if delivered_in_this_batch < batch_size:
+                        await asyncio.sleep(3)
 
-                    wait_seconds = max(10, interval_min * 60)
-                    logger.info(f"⏳ 1 video delivered! Waiting {interval_min} minutes ({wait_seconds}s) for next video delivery...")
+            if delivered_in_this_batch > 0:
+                # Calculate sleep time based on interval setting (default: 15 minutes)
+                try:
+                    interval_min = int(await get_setting("delivery_interval_minutes", "15"))
+                except Exception:
+                    interval_min = 15
 
-                    # Interruptible sleep in 5-second intervals to allow manual "Send Now" button trigger
-                    for _ in range(wait_seconds // 5):
-                        await asyncio.sleep(5)
-                        trigger_now = await get_setting("trigger_immediate_send", "0")
-                        if trigger_now == "1":
-                            await set_setting("trigger_immediate_send", "0")
-                            logger.info("⚡ Immediate delivery triggered by Admin! Delivering next video now...")
-                            break
-                else:
-                    # Retry in 30 seconds if failed
-                    await asyncio.sleep(30)
+                wait_seconds = max(10, interval_min * 60)
+                logger.info(f"⏳ Batch complete ({delivered_in_this_batch} videos delivered)! Waiting {interval_min} minutes ({wait_seconds}s) for next batch delivery...")
+
+                # Interruptible sleep in 5-second intervals to allow manual "Send Now" button trigger
+                for _ in range(wait_seconds // 5):
+                    await asyncio.sleep(5)
+                    trigger_now = await get_setting("trigger_immediate_send", "0")
+                    if trigger_now == "1":
+                        await set_setting("trigger_immediate_send", "0")
+                        logger.info("⚡ Immediate delivery triggered by Admin! Delivering next batch now...")
+                        break
             else:
-                # Queue empty even after crawl, wait 60s
                 logger.info("😴 No videos available in sources. Waiting 60 seconds before next check...")
                 await asyncio.sleep(60)
 
