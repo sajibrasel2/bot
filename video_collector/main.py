@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from telethon import TelegramClient, events
 from telethon.tl.functions.channels import JoinChannelRequest
-from telethon.tl.types import Channel, Chat
+from telethon.tl.types import Channel, Chat, DocumentAttributeAnimated
 
 from video_collector.config import (
     TG_API_ID, TG_API_HASH, SESSION_NAME, FORWARD_DELAY_SECONDS
@@ -48,15 +48,49 @@ client = TelegramClient(session_path, TG_API_ID, TG_API_HASH)
 
 
 def _is_video_message(message) -> bool:
-    """Check if a Telethon message contains a video or video document."""
+    """
+    Check if a Telethon message contains a genuine video file,
+    strictly excluding GIFs, animations, video stickers, and round video notes.
+    """
     if not message or not message.media:
         return False
+
+    # 1. Reject Telegram GIFs, stickers, and round video notes
+    if getattr(message, "gif", None):
+        return False
+    if getattr(message, "video_note", None):
+        return False
+    if getattr(message, "sticker", None):
+        return False
+
+    doc = getattr(message, "document", None) or getattr(message, "video", None)
+    if not doc:
+        return False
+
+    mime = (getattr(doc, "mime_type", "") or "").lower()
+    if mime == "image/gif":
+        return False
+
+    # Inspect document attributes for DocumentAttributeAnimated
+    attrs = getattr(doc, "attributes", []) or []
+    for attr in attrs:
+        if isinstance(attr, DocumentAttributeAnimated):
+            return False
+        if "animated" in type(attr).__name__.lower():
+            return False
+
+    # Check file name extension
+    file_name = (getattr(message.file, "name", "") or "").lower() if hasattr(message, "file") and message.file else ""
+    if file_name.endswith(".gif"):
+        return False
+
+    # 2. Accept only real video
     if getattr(message, "video", None):
         return True
-    if getattr(message, "document", None):
-        mime = getattr(message.document, "mime_type", "") or ""
-        if mime.startswith("video/"):
-            return True
+
+    if mime.startswith("video/"):
+        return True
+
     return False
 
 
@@ -354,38 +388,41 @@ async def delivery_worker_loop() -> None:
                 try:
                     # Retrieve the original message
                     orig_msg = await client.get_messages(source_chat, ids=msg_id)
-                    if orig_msg and _is_video_message(orig_msg):
-                        current_media_id = get_media_unique_id(orig_msg) or stored_media_id
+                    if not orig_msg or not _is_video_message(orig_msg):
+                        logger.warning(f"⚠️ Queue item #{queue_id} (Msg {msg_id} in {source_chat}) is not a genuine video (e.g. GIF, sticker, or deleted). Skipping immediately...")
+                        await delete_queue_item(queue_id)
+                        await mark_message_processed(source_chat, msg_id, stored_media_id)
+                        continue
 
-                        # Extra check: If current_media_id was already delivered previously, skip immediately
-                        if current_media_id and await is_media_processed(current_media_id):
-                            logger.warning(f"⚠️ Video content (Media ID: {current_media_id}) already delivered previously! Skipping duplicate queue #{queue_id}.")
-                            await delete_queue_item(queue_id)
-                            await mark_message_processed(source_chat, msg_id, current_media_id)
-                            continue
+                    current_media_id = get_media_unique_id(orig_msg) or stored_media_id
 
-                        custom_caption = await get_setting("custom_caption", "")
-                        caption = custom_caption if custom_caption else (orig_msg.text or item.get("caption") or "")
+                    # Extra check: If current_media_id was already delivered previously, skip immediately
+                    if current_media_id and await is_media_processed(current_media_id):
+                        logger.warning(f"⚠️ Video content (Media ID: {current_media_id}) already delivered previously! Skipping duplicate queue #{queue_id}.")
+                        await delete_queue_item(queue_id)
+                        await mark_message_processed(source_chat, msg_id, current_media_id)
+                        continue
 
-                        for target in deliveries:
-                            try:
-                                logger.info(f"🚀 Delivering video #{queue_id} to channel: {target}...")
-                                res = await deliver_video_message(orig_msg, target, caption)
-                                if res:
-                                    delivery_success = True
-                                    logger.info(f"✅ Video #{queue_id} successfully delivered to: {target}")
-                                    if FORWARD_DELAY_SECONDS > 0:
-                                        await asyncio.sleep(FORWARD_DELAY_SECONDS)
-                            except Exception as e_deliv:
-                                logger.error(f"❌ Failed to send video to delivery target '{target}': {e_deliv}")
-                    else:
-                        logger.warning(f"⚠️ Source video message {msg_id} was deleted or inaccessible in {source_chat}.")
-                        # Mark success so this missing item is removed from queue
-                        delivery_success = True
+                    custom_caption = await get_setting("custom_caption", "")
+                    caption = custom_caption if custom_caption else (orig_msg.text or item.get("caption") or "")
+
+                    for target in deliveries:
+                        try:
+                            logger.info(f"🚀 Delivering video #{queue_id} to channel: {target}...")
+                            res = await deliver_video_message(orig_msg, target, caption)
+                            if res:
+                                delivery_success = True
+                                logger.info(f"✅ Video #{queue_id} successfully delivered to: {target}")
+                                if FORWARD_DELAY_SECONDS > 0:
+                                    await asyncio.sleep(FORWARD_DELAY_SECONDS)
+                        except Exception as e_deliv:
+                            logger.error(f"❌ Failed to send video to delivery target '{target}': {e_deliv}")
 
                 except Exception as e_proc:
                     logger.error(f"❌ Error retrieving video for queue #{queue_id}: {e_proc}")
-                    delivery_success = True
+                    await delete_queue_item(queue_id)
+                    await mark_message_processed(source_chat, msg_id, stored_media_id)
+                    continue
 
                 # IMMEDIATELY DELETE FROM MYSQL QUEUE TABLE
                 await delete_queue_item(queue_id)
