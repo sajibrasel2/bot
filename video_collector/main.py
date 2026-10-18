@@ -28,7 +28,8 @@ from video_collector.database import (
     get_next_queue_item, is_message_processed, is_message_in_queue,
     mark_message_processed, increment_forwarded_count, get_collector_stats,
     get_setting, set_setting, is_channel_deactivated, auto_register_source_channel,
-    is_delivery_chat, purge_delivery_items_from_queue
+    is_delivery_chat, purge_delivery_items_from_queue, is_media_processed,
+    record_excluded_delivery_group
 )
 
 logging.basicConfig(
@@ -52,6 +53,17 @@ def _is_video_message(message) -> bool:
         if mime.startswith("video/"):
             return True
     return False
+
+
+def get_media_unique_id(message) -> Optional[int]:
+    """Extract Telegram's global 64-bit document/video ID to uniquely identify duplicate video files."""
+    if not message or not message.media:
+        return None
+    if getattr(message, "video", None):
+        return getattr(message.video, "id", None)
+    if getattr(message, "document", None):
+        return getattr(message.document, "id", None)
+    return None
 
 
 async def auto_join_channel(channel_target) -> Optional[Any]:
@@ -112,7 +124,8 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                     if current_queue + total_added >= max_queue_buffer:
                         break
                     if _is_video_message(msg):
-                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "")
+                        media_id = get_media_unique_id(msg)
+                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "", media_id=media_id)
                         if qid:
                             total_added += 1
 
@@ -146,7 +159,8 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                     if current_queue + total_added >= max_queue_buffer:
                         break
                     if _is_video_message(msg):
-                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "")
+                        media_id = get_media_unique_id(msg)
+                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "", media_id=media_id)
                         if qid:
                             total_added += 1
 
@@ -203,12 +217,10 @@ async def handle_new_message(event: events.NewMessage.Event) -> None:
     if not matched:
         return
 
-    logger.info(f"📥 New video detected from {chat_title} (ID: {chat_id}, Msg: {msg.id})")
-
-    # add_queue_item guarantees deduplication against both vc_processed and vc_queue
-    qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "")
+    media_id = get_media_unique_id(msg)
+    qid = await add_queue_item(chat_id, msg.id, str(msg.id), msg.text or "", media_id=media_id)
     if qid:
-        logger.info(f"📝 Video queued in MySQL with ID: #{qid}")
+        logger.info(f"📝 Video queued in MySQL with ID: #{qid} (Media ID: {media_id})")
 
 
 async def deliver_video_message(orig_msg, target: Any, caption: str) -> bool:
@@ -283,7 +295,15 @@ async def delivery_worker_loop() -> None:
                 queue_id = item["id"]
                 source_chat = item["source_chat_id"]
                 msg_id = item["source_message_id"]
+                stored_media_id = item.get("media_id")
                 logger.info(f"📦 Next in queue: #{queue_id} (Source Chat: {source_chat}, Msg ID: {msg_id})")
+
+                # If this media_id was already delivered previously, skip immediately without waiting
+                if stored_media_id and await is_media_processed(stored_media_id):
+                    logger.warning(f"⚠️ Video content (Media ID: {stored_media_id}) already delivered previously! Skipping duplicate queue #{queue_id}.")
+                    await delete_queue_item(queue_id)
+                    await mark_message_processed(source_chat, msg_id, stored_media_id)
+                    continue
 
                 deliveries = await get_delivery_channel_targets()
                 if not deliveries:
@@ -292,10 +312,20 @@ async def delivery_worker_loop() -> None:
                     continue
 
                 delivery_success = False
+                current_media_id = stored_media_id
                 try:
                     # Retrieve the original message
                     orig_msg = await client.get_messages(source_chat, ids=msg_id)
                     if orig_msg and _is_video_message(orig_msg):
+                        current_media_id = get_media_unique_id(orig_msg) or stored_media_id
+
+                        # Extra check: If current_media_id was already delivered previously, skip immediately
+                        if current_media_id and await is_media_processed(current_media_id):
+                            logger.warning(f"⚠️ Video content (Media ID: {current_media_id}) already delivered previously! Skipping duplicate queue #{queue_id}.")
+                            await delete_queue_item(queue_id)
+                            await mark_message_processed(source_chat, msg_id, current_media_id)
+                            continue
+
                         custom_caption = await get_setting("custom_caption", "")
                         caption = custom_caption if custom_caption else (orig_msg.text or item.get("caption") or "")
 
@@ -321,7 +351,7 @@ async def delivery_worker_loop() -> None:
 
                 # IMMEDIATELY DELETE FROM MYSQL QUEUE TABLE
                 await delete_queue_item(queue_id)
-                await mark_message_processed(source_chat, msg_id)
+                await mark_message_processed(source_chat, msg_id, current_media_id)
 
                 if delivery_success:
                     await increment_forwarded_count()
@@ -402,15 +432,15 @@ async def main() -> None:
             logger.info(f"🎯 Delivery channel confirmed: {getattr(ent, 'title', d)} [ID: {ent.id}]")
             if isinstance(d, str):
                 await update_channel_id_by_username(d, ent.id)
-            # Detect linked discussion group
+            # Detect linked discussion group for exclusion
             try:
                 from telethon.tl.functions.channels import GetFullChannelRequest
-                from video_collector.database import add_channel
+                from video_collector.database import record_excluded_delivery_group
                 full_chan = await client(GetFullChannelRequest(ent))
                 linked_id = getattr(full_chan.full_chat, "linked_chat_id", None)
                 if linked_id:
-                    logger.info(f"🔗 Linked discussion group detected for delivery channel: ID {linked_id}")
-                    await add_channel(linked_id, "Dark Romance Discussion Group", "", "delivery")
+                    logger.info(f"🔗 Linked discussion group detected for exclusion: ID {linked_id}")
+                    await record_excluded_delivery_group(linked_id, "Dark Romance Discussion Group")
             except Exception:
                 pass
         except Exception as e_del:

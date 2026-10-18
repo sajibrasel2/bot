@@ -897,6 +897,13 @@ def video_collector():
             )
         """, (t, u, u))
 
+    # Clean up any discussion group accidentally marked as delivery channel
+    _execute("""
+        DELETE FROM vc_channels 
+        WHERE channel_type = 'delivery' 
+          AND (channel_id IN (4446159364, -1004446159364) OR LOWER(channel_title) LIKE '%discussion%')
+    """)
+
     sources = _query("SELECT * FROM vc_channels WHERE channel_type='source' ORDER BY id DESC", fetchall=True) or []
     deliveries = _query("SELECT * FROM vc_channels WHERE channel_type='delivery' ORDER BY id DESC", fetchall=True) or []
 
