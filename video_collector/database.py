@@ -316,12 +316,21 @@ async def auto_register_source_channel(channel_id: Optional[int], channel_title:
             """, (cid, title, clean_user))
 
 
-async def is_delivery_chat(chat_id: int, chat_username: str = "") -> bool:
-    """Check if a chat is a designated delivery channel to prevent recursive forwarding loops."""
-    deliveries = await get_delivery_channel_targets()
+async def is_delivery_chat(chat_id: int, chat_username: str = "", chat_title: str = "") -> bool:
+    """Check if a chat is a designated delivery channel or its linked discussion group."""
     clean_user = (chat_username or "").lower().strip().lstrip("@")
-    chat_raw = abs(chat_id)
+    title_lower = (chat_title or "").lower()
 
+    # Exclude delivery channel and its discussion groups by title/username
+    if "dark romance" in title_lower or clean_user == "darkromance4u":
+        return True
+
+    # Known linked group ID for Dark Romance: -1004446159364 / 4446159364
+    chat_raw = abs(chat_id)
+    if chat_raw in (4446159364, 4342232814):
+        return True
+
+    deliveries = await get_delivery_channel_targets()
     for d in deliveries:
         if isinstance(d, str) and d.lower().strip().lstrip("@") == clean_user:
             return True
@@ -334,6 +343,17 @@ async def is_delivery_chat(chat_id: int, chat_username: str = "") -> bool:
             if str(chat_raw).startswith("100") and int(str(chat_raw)[3:]) == raw:
                 return True
     return False
+
+
+async def purge_delivery_items_from_queue() -> None:
+    """Purge any accidentally queued messages originating from delivery channel or its linked group."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("""
+                DELETE FROM vc_queue 
+                WHERE source_chat_id IN (4446159364, -1004446159364, 4342232814, -1004342232814)
+            """)
 
 
 # ── Queue & Deletion (Sequential FIFO) ─────────────

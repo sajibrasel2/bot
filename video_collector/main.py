@@ -28,7 +28,7 @@ from video_collector.database import (
     get_next_queue_item, is_message_processed, is_message_in_queue,
     mark_message_processed, increment_forwarded_count, get_collector_stats,
     get_setting, set_setting, is_channel_deactivated, auto_register_source_channel,
-    is_delivery_chat
+    is_delivery_chat, purge_delivery_items_from_queue
 )
 
 logging.basicConfig(
@@ -97,7 +97,7 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                 chat_title = getattr(dialog, "name", "") or getattr(chat_entity, "title", "Unknown")
 
                 # Strictly exclude delivery channels to prevent recursive loops
-                if await is_delivery_chat(chat_id, chat_username):
+                if await is_delivery_chat(chat_id, chat_username, chat_title):
                     continue
 
                 # Check if admin deactivated this channel
@@ -181,8 +181,8 @@ async def handle_new_message(event: events.NewMessage.Event) -> None:
         chat_title = "Unknown"
         chat_username = ""
 
-    # Strictly protect delivery channel(s) from self-collection
-    if await is_delivery_chat(chat_id, chat_username):
+    # Strictly protect delivery channel(s) and their discussion groups from self-collection
+    if await is_delivery_chat(chat_id, chat_username, chat_title):
         return
 
     collect_all = await get_setting("collect_from_all_joined", "1")
@@ -391,6 +391,9 @@ async def main() -> None:
     me = await client.get_me()
     logger.info(f"✅ Logged in successfully as: {me.first_name} (@{me.username or me.phone}) [ID: {me.id}]")
 
+    # Purge any delivery items that accidentally entered queue
+    await purge_delivery_items_from_queue()
+
     # Auto-resolve delivery channels (e.g. @darkromance4u)
     deliveries = await get_delivery_channel_targets()
     for d in deliveries:
@@ -399,6 +402,17 @@ async def main() -> None:
             logger.info(f"🎯 Delivery channel confirmed: {getattr(ent, 'title', d)} [ID: {ent.id}]")
             if isinstance(d, str):
                 await update_channel_id_by_username(d, ent.id)
+            # Detect linked discussion group
+            try:
+                from telethon.tl.functions.channels import GetFullChannelRequest
+                from video_collector.database import add_channel
+                full_chan = await client(GetFullChannelRequest(ent))
+                linked_id = getattr(full_chan.full_chat, "linked_chat_id", None)
+                if linked_id:
+                    logger.info(f"🔗 Linked discussion group detected for delivery channel: ID {linked_id}")
+                    await add_channel(linked_id, "Dark Romance Discussion Group", "", "delivery")
+            except Exception:
+                pass
         except Exception as e_del:
             logger.warning(f"Could not resolve delivery channel '{d}': {e_del}")
 
