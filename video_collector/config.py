@@ -14,8 +14,8 @@ def _get_int(key: str, default: int) -> int:
 
 # ── Video Collector Bot Config ───────────────────
 # You can set this in .env or update it via Web Admin Panel
-VC_BOT_TOKEN: str = os.getenv("VC_BOT_TOKEN", "")
-VC_BOT_USERNAME: str = os.getenv("VC_BOT_USERNAME", "")
+VC_BOT_TOKEN: str = os.getenv("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc")
+VC_BOT_USERNAME: str = os.getenv("VC_BOT_USERNAME", "newideos_bot")
 VC_OWNER_ID: int = _get_int("OWNER_ID", 8904339611)
 
 # ── MySQL Config (Uses same DB) ──────────────────

@@ -79,22 +79,42 @@ async def handle_incoming_video(update: Update, context: ContextTypes.DEFAULT_TY
 
     # 3. Send video to all delivery channels
     successful_deliveries = 0
+    custom_caption = await get_setting("custom_caption", "")
+
     for target_id in delivery_ids:
+        delivered = False
         try:
-            # Use copy_message to preserve original quality, formatting, and stream attributes
-            await context.bot.copy_message(
-                chat_id=target_id,
-                from_chat_id=chat.id,
-                message_id=msg.message_id,
-                caption=caption if caption else None,
-                parse_mode="HTML" if caption else None
-            )
+            # 1st attempt: copy_message preserves stream quality, original formatting and caption
+            kwargs = {
+                "chat_id": target_id,
+                "from_chat_id": chat.id,
+                "message_id": msg.message_id
+            }
+            if custom_caption:
+                kwargs["caption"] = custom_caption
+                kwargs["parse_mode"] = "HTML"
+            await context.bot.copy_message(**kwargs)
+            delivered = True
+        except Exception as e_copy:
+            logger.warning(f"copy_message failed for {target_id}: {e_copy}. Attempting direct send_video fallback...")
+            try:
+                # 2nd attempt: send_video using file_id
+                cap = custom_caption if custom_caption else (msg.caption_html or msg.caption or None)
+                await context.bot.send_video(
+                    chat_id=target_id,
+                    video=file_id,
+                    caption=cap,
+                    parse_mode="HTML" if cap else None
+                )
+                delivered = True
+            except Exception as e_send:
+                logger.error(f"❌ Failed to forward video to {target_id}: {e_send}")
+
+        if delivered:
             successful_deliveries += 1
             logger.info(f"🚀 Video forwarded to delivery channel {target_id}")
             if FORWARD_DELAY_SECONDS > 0:
                 await asyncio.sleep(FORWARD_DELAY_SECONDS)
-        except Exception as e:
-            logger.error(f"❌ Failed to forward video to {target_id}: {e}")
 
     # 4. Immediately delete from MySQL database once delivered
     if successful_deliveries > 0:

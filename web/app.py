@@ -859,8 +859,8 @@ def video_collector():
     settings = {
         "delete_source_message": "0",
         "is_collector_active": "1",
-        "vc_bot_token": os.environ.get("VC_BOT_TOKEN", ""),
-        "vc_bot_username": os.environ.get("VC_BOT_USERNAME", "")
+        "vc_bot_token": os.environ.get("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc"),
+        "vc_bot_username": os.environ.get("VC_BOT_USERNAME", "newideos_bot")
     }
     for r in settings_rows:
         settings[r["key_name"]] = r["value"]
