@@ -820,6 +820,132 @@ def bot_admins():
     return render_template("bot_admins.html", admins=admins, active="bot_admins")
 
 
+# ── Video Collector Routes ─────────────────────────
+
+@app.route("/video-collector", methods=["GET"])
+@login_required
+def video_collector():
+    # Ensure tables exist
+    _execute("""
+        CREATE TABLE IF NOT EXISTS vc_channels (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            channel_id BIGINT NOT NULL,
+            channel_title VARCHAR(255) DEFAULT '',
+            channel_username VARCHAR(255) DEFAULT '',
+            channel_type ENUM('source', 'delivery') NOT NULL,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_chan_type (channel_id, channel_type)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    """)
+    _execute("""
+        CREATE TABLE IF NOT EXISTS vc_settings (
+            key_name VARCHAR(100) PRIMARY KEY,
+            value TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    """)
+    _execute("""
+        CREATE TABLE IF NOT EXISTS vc_stats (
+            stat_name VARCHAR(100) PRIMARY KEY,
+            stat_value BIGINT DEFAULT 0
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    """)
+
+    sources = _query("SELECT * FROM vc_channels WHERE channel_type='source' ORDER BY id DESC", fetchall=True) or []
+    deliveries = _query("SELECT * FROM vc_channels WHERE channel_type='delivery' ORDER BY id DESC", fetchall=True) or []
+
+    settings_rows = _query("SELECT key_name, value FROM vc_settings", fetchall=True) or []
+    settings = {
+        "delete_source_message": "0",
+        "is_collector_active": "1",
+        "vc_bot_token": os.environ.get("VC_BOT_TOKEN", ""),
+        "vc_bot_username": os.environ.get("VC_BOT_USERNAME", "")
+    }
+    for r in settings_rows:
+        settings[r["key_name"]] = r["value"]
+
+    stat_row = _query("SELECT stat_value FROM vc_stats WHERE stat_name='total_forwarded'", fetchone=True)
+    total_forwarded = stat_row["stat_value"] if stat_row else 0
+
+    return render_template(
+        "video_collector.html",
+        sources=sources,
+        deliveries=deliveries,
+        settings=settings,
+        total_forwarded=total_forwarded,
+        active="video_collector"
+    )
+
+
+@app.route("/video-collector/add", methods=["POST"])
+@login_required
+def video_collector_add():
+    channel_id = request.form.get("channel_id", "").strip()
+    channel_title = request.form.get("channel_title", "").strip()
+    channel_username = request.form.get("channel_username", "").strip().lstrip("@")
+    channel_type = request.form.get("channel_type", "").strip().lower()
+
+    if not channel_id or channel_type not in ("source", "delivery"):
+        flash("❌ সঠিক চ্যানেল আইডি এবং টাইপ নির্বাচন করুন।", "error")
+        return redirect(url_for("video_collector"))
+
+    try:
+        cid = int(channel_id)
+        _execute("""
+            INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
+            VALUES (%s, %s, %s, %s, 1)
+            ON DUPLICATE KEY UPDATE 
+                channel_title = VALUES(channel_title),
+                channel_username = VALUES(channel_username),
+                is_active = 1
+        """, (cid, channel_title or f"Channel {cid}", channel_username, channel_type))
+        type_str = "সোর্স চ্যানেল" if channel_type == "source" else "ডেলিভারি চ্যানেল"
+        flash(f"✅ সফলভাবে {type_str} যুক্ত করা হয়েছে!", "success")
+    except Exception as e:
+        flash(f"❌ চ্যানেল যুক্ত করতে ব্যর্থ: {e}", "error")
+
+    return redirect(url_for("video_collector"))
+
+
+@app.route("/video-collector/delete/<int:channel_id_pk>", methods=["POST"])
+@login_required
+def video_collector_delete(channel_id_pk):
+    try:
+        _execute("DELETE FROM vc_channels WHERE id = %s", (channel_id_pk,))
+        flash("✅ চ্যানেল ডিলিট করা হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ ডিলিট করতে ব্যর্থ: {e}", "error")
+    return redirect(url_for("video_collector"))
+
+
+@app.route("/video-collector/settings", methods=["POST"])
+@login_required
+def video_collector_settings():
+    delete_source = "1" if request.form.get("delete_source_message") == "on" else "0"
+    is_active = "1" if request.form.get("is_collector_active") == "on" else "0"
+    bot_token = request.form.get("vc_bot_token", "").strip()
+    bot_username = request.form.get("vc_bot_username", "").strip().lstrip("@")
+
+    try:
+        for k, v in [
+            ("delete_source_message", delete_source),
+            ("is_collector_active", is_active),
+            ("vc_bot_token", bot_token),
+            ("vc_bot_username", bot_username)
+        ]:
+            _execute("""
+                INSERT INTO vc_settings (key_name, value)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE value = VALUES(value)
+            """, (k, v))
+        flash("✅ সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ সেটিংস সেভ করতে ব্যর্থ: {e}", "error")
+
+    return redirect(url_for("video_collector"))
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
 
