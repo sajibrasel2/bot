@@ -83,6 +83,12 @@ def _clean_flood(timestamps: list, now: float) -> list:
 
 MAIN_DARK_ROMANCE_GROUP = "https://t.me/alltimefantasyzone"
 
+try:
+    from telegram import LinkPreviewOptions
+    _DISABLE_PREVIEW = {"link_preview_options": LinkPreviewOptions(is_disabled=True)}
+except Exception:
+    _DISABLE_PREVIEW = {"disable_web_page_preview": True}
+
 def _build_action_buttons(chat_id: int, user_id: int, chat_title: str) -> InlineKeyboardMarkup:
     """সকল গ্রুপে পাঠানো সতর্কবার্তা থেকে মূল Dark Romance গ্রুপে মেম্বার ড্রাইভ করার বাটন।"""
     share_text = urllib.parse.quote(f"🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
@@ -115,7 +121,8 @@ async def _send_and_delete(context, chat_id: int, text: str, reply_markup=None, 
     """মেসেজ পাঠাও এবং নির্দিষ্ট সময় পরে ডিলিট করো।"""
     try:
         sent = await context.bot.send_message(
-            chat_id, text, parse_mode="HTML", reply_markup=reply_markup
+            chat_id, text, parse_mode="HTML", reply_markup=reply_markup,
+            **_DISABLE_PREVIEW
         )
         asyncio.create_task(_auto_delete(sent, delay=delay))
     except Exception:
@@ -234,9 +241,7 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 f"📢 <b>চ্যানেল:</b> {channel_title}\n"
                 f"🆔 <b>চ্যানেল আইডি:</b> <code>{msg.sender_chat.id}</code>\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"🔒 এই গ্রুপে কোনো প্রকার চ্যানেলের পোস্ট ফরোয়ার্ড করা বা চ্যানেলের মাধ্যমে মেসেজ দেওয়া সম্পূর্ণ নিষিদ্ধ!\n\n"
-                f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করুন:</b>\n"
-                f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>"
+                f"🔒 এই গ্রুপে কোনো প্রকার চ্যানেলের পোস্ট ফরোয়ার্ড করা বা চ্যানেলের মাধ্যমে মেসেজ দেওয়া সম্পূর্ণ নিষিদ্ধ!"
             )
             await _send_and_delete(context, chat.id, alert_text, delay=BOT_MSG_AUTO_DELETE)
             return
@@ -271,8 +276,6 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"⚠️ <i>গ্রুপে <b>{action_desc} করা সম্পূর্ণ নিষিদ্ধ</b>। বারবার <b>৩ বার ফরোয়ার্ড</b> করার অপরাধে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
-                    f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করুন:</b>\n"
-                    f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>\n\n"
                     f"👉 <i>আনমিউট হওয়ার পর সতর্ক থাকবেন, পুনরায় ফরোয়ার্ড করলে আবারও মিউট করা হবে।</i>"
                 )
                 await _send_and_delete(
@@ -298,8 +301,6 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     f"⚠️ <b>সতর্কতা / স্ট্রাইক:</b> <code>{strike_count}/{ANTIFORWARD_STRIKE_LIMIT}</code>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"🔒 {warning_desc}\n\n"
-                    f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
-                    f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>\n\n"
                     f"⚠️ <i>সতর্কতা: ৩ বার ফরোয়ার্ড করলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
                 )
                 await _send_and_delete(
@@ -426,8 +427,6 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                         f"🚫 <b>স্ট্রাইক:</b> <code>{strike_count}/{ANTILINK_STRIKE_LIMIT}</code> (সর্বোচ্চ সীমা অতিক্রম)\n"
                         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                         f"⚠️ <i>শর্ত ({required_invites} জন মেম্বার এড) পূরণ না করে বারবার <b>৩ বার লিংক বা চ্যানেল/বট প্রমোশন</b> করার কারণে আপনাকে <b>১ ঘণ্টার জন্য গ্রুপে মিউট</b> করা হলো!</i>\n\n"
-                        f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করুন:</b>\n"
-                        f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>\n\n"
                         f"👉 <i>আনমিউট হওয়ার পর লিংক বা প্রমোশন দিতে চাইলে আগে অবশ্যই ১০ জন মেম্বার এড করবেন।</i>"
                     )
 
@@ -449,8 +448,6 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                         f"🔒 এই গ্রুপে লিংক, চ্যানেল বা বট ইউজারনেম শেয়ার করতে হলে আপনাকে অবশ্যই <b>{required_invites} জন মেম্বার অ্যাড</b> করতে হবে।\n\n"
                         f"📊 <b>আপনার বর্তমান অগ্রগতি:</b> <code>{user_invites}/{required_invites}</code> জন\n"
                         f"👉 <i>আরও <b>{remaining_invites} জন</b> মেম্বার অ্যাড করলে সুবিধাটি অটোমেটিক আনলক হবে!</i>\n\n"
-                        f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
-                        f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>\n\n"
                         f"⚠️ <i>সতর্কতা: ৩ বার লিংক বা প্রমোশন দিলে স্বয়ংক্রিয়ভাবে <b>১ ঘণ্টার জন্য মিউট</b> হবেন! (বাকি: <b>{strikes_left} বার</b>)</i>"
                     )
 

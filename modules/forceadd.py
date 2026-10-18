@@ -26,6 +26,12 @@ logger = logging.getLogger(__name__)
 
 MAIN_DARK_ROMANCE_GROUP = "https://t.me/alltimefantasyzone"
 
+try:
+    from telegram import LinkPreviewOptions
+    _DISABLE_PREVIEW = {"link_preview_options": LinkPreviewOptions(is_disabled=True)}
+except Exception:
+    _DISABLE_PREVIEW = {"disable_web_page_preview": True}
+
 # Debounce tracker: {chat_id: {user_id: last_alert_timestamp}} to avoid Telegram 429 FloodWait
 _last_forceadd_alert: dict = defaultdict(lambda: defaultdict(float))
 
@@ -87,14 +93,14 @@ async def handle_member_invites(update: Update, context: ContextTypes.DEFAULT_TY
             # Permanently mark as unlocked so raising requirement later will never re-lock them!
             await unlock_user_forceadd(chat.id, inviter.id)
             try:
+                congrats_markup = InlineKeyboardMarkup([
+                    [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=MAIN_DARK_ROMANCE_GROUP)]
+                ])
                 congrats = await msg.reply_html(
                     f"🎉 <b>অভিনন্দন {mention_html(inviter.id, inviter.first_name)}!</b>\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"✅ আপনি সফলভাবে <b>{total_invites} জন</b> বন্ধুকে গ্রুপে অ্যাড করেছেন।\n"
-                    f"🔓 আপনার চ্যাট ও মেসেজ লক <b>আজীবন আনলক</b> করা হয়েছে!\n"
-                    f"💬 এখন আপনি গ্রুপে সবসময় যেকোনো মেসেজ ও চ্যাট করতে পারবেন।\n\n"
-                    f"🔞 <b>আমাদের মূল Dark Romance গ্রুপে জয়েন করুন:</b>\n"
-                    f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance ১৮+ আড্ডা</a>"
+                    f"✅ <b>{total_invites} জন</b> বন্ধু অ্যাড করেছেন। চ্যাট আজীবন আনলক করা হয়েছে! 🔓",
+                    reply_markup=congrats_markup,
+                    **_DISABLE_PREVIEW
                 )
                 asyncio.create_task(_auto_delete(congrats, 15))
             except Exception:
@@ -176,14 +182,9 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
 
     remaining = req_count - user_invites
     alert_text = (
-        f"⛔ <b>চ্যাট লক করা আছে!</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
-        f"🔒 গ্রুপে মেসেজ লিখতে ও চ্যাট করতে হলে আপনাকে অবশ্যই <b>{req_count} জন বন্ধুকে</b> অ্যাড করতে হবে।\n\n"
-        f"📊 <b>আপনার অগ্রগতি:</b> <code>{user_invites}/{req_count}</code> জন\n"
-        f"👉 <i>দয়া করে আরও <b>{remaining} জন</b> বন্ধুকে গ্রুপে অ্যাড করে চ্যাট আনলক করুন!</i>\n\n"
-        f"🔞 <b>আমাদের মূল গ্রুপে জয়েন করতে নিচের বাটনে চাপ দিন:</b>\n"
-        f"👉 <a href=\"{MAIN_DARK_ROMANCE_GROUP}\">Dark Romance মূল গ্রুপ লিংক</a>"
+        f"⛔ <b>চ্যাট লক!</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+        f"🔒 মেসেজ লিখতে আরও <b>{remaining} জন</b> বন্ধুকে অ্যাড করুন।\n"
+        f"📊 আপনার অগ্রগতি: <code>{user_invites}/{req_count}</code> জন"
     )
 
     share_text = urllib.parse.quote(f"🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
@@ -191,10 +192,8 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
 
     buttons = [
         [
-            InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url=MAIN_DARK_ROMANCE_GROUP)
-        ],
-        [
-            InlineKeyboardButton(text="👥 বন্ধুদের ইনভাইট পাঠান (Invite/Share)", url=share_url),
+            InlineKeyboardButton(text="👥 মেম্বার অ্যাড করুন", url=share_url),
+            InlineKeyboardButton(text="🔥 মূল গ্রুপ", url=MAIN_DARK_ROMANCE_GROUP),
         ],
         [
             InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
@@ -208,10 +207,11 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
             chat_id=chat.id,
             text=alert_text,
             reply_markup=reply_markup,
-            parse_mode="HTML"
+            parse_mode="HTML",
+            **_DISABLE_PREVIEW
         )
-        # Message stays visible for 30 seconds then auto-deletes
-        asyncio.create_task(_auto_delete(sent, 30))
+        # Message stays visible for 15 seconds then auto-deletes
+        asyncio.create_task(_auto_delete(sent, 15))
     except Exception as e:
         logger.warning(f"Could not send force add lock notice in chat {chat.id}: {e}")
 
