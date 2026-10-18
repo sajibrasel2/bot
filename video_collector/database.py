@@ -175,6 +175,8 @@ async def init_db() -> None:
                 ('collect_from_all_joined', '1'),
                 ('custom_caption', ''),
                 ('delivery_interval_minutes', '15'),
+                ('delivery_batch_size', '3'),
+                ('min_video_duration', '20'),
                 ('trigger_immediate_send', '0')
                 ON DUPLICATE KEY UPDATE value = IF(key_name = 'delivery_interval_minutes', '15', value)
             """)

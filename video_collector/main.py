@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from telethon import TelegramClient, events
 from telethon.tl.functions.channels import JoinChannelRequest
-from telethon.tl.types import Channel, Chat, DocumentAttributeAnimated
+from telethon.tl.types import Channel, Chat, DocumentAttributeAnimated, DocumentAttributeVideo
 
 from video_collector.config import (
     TG_API_ID, TG_API_HASH, SESSION_NAME, FORWARD_DELAY_SECONDS
@@ -48,10 +48,44 @@ session_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), SESSION_
 client = TelegramClient(session_path, TG_API_ID, TG_API_HASH)
 
 
-def _is_video_message(message) -> bool:
+def get_video_duration(message) -> Optional[float]:
+    """Extract video duration in seconds from message attributes or file helper."""
+    if not message or not message.media:
+        return None
+    try:
+        if hasattr(message, "file") and message.file and message.file.duration is not None:
+            return float(message.file.duration)
+    except Exception:
+        pass
+
+    doc = getattr(message, "document", None) or getattr(message, "video", None)
+    if doc:
+        attrs = getattr(doc, "attributes", []) or []
+        for attr in attrs:
+            if isinstance(attr, DocumentAttributeVideo):
+                return float(getattr(attr, "duration", 0))
+            if hasattr(attr, "duration") and "video" in type(attr).__name__.lower():
+                try:
+                    return float(attr.duration)
+                except Exception:
+                    pass
+    return None
+
+
+async def get_min_video_duration() -> float:
+    """Fetch minimum video duration in seconds from database settings (default: 20s)."""
+    try:
+        val = await get_setting("min_video_duration", "20")
+        return float(val)
+    except Exception:
+        return 20.0
+
+
+def _is_video_message(message, min_duration: float = 20.0) -> bool:
     """
     Check if a Telethon message contains a genuine video file,
-    strictly excluding GIFs, animations, video stickers, and round video notes.
+    strictly excluding GIFs, animations, video stickers, round video notes,
+    and videos shorter than min_duration seconds (default: 20 seconds).
     """
     if not message or not message.media:
         return False
@@ -85,14 +119,23 @@ def _is_video_message(message) -> bool:
     if file_name.endswith(".gif"):
         return False
 
-    # 2. Accept only real video
+    # 2. Check genuine video
+    is_video = False
     if getattr(message, "video", None):
-        return True
+        is_video = True
+    elif mime.startswith("video/"):
+        is_video = True
 
-    if mime.startswith("video/"):
-        return True
+    if not is_video:
+        return False
 
-    return False
+    # 3. Check video duration (Must be >= min_duration, default: 20 seconds)
+    if min_duration > 0:
+        duration = get_video_duration(message)
+        if duration is None or duration < min_duration:
+            return False
+
+    return True
 
 
 def get_media_unique_id(message) -> Optional[int]:
@@ -199,6 +242,7 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
 
     collect_all = await get_setting("collect_from_all_joined", "1")
     total_added = 0
+    min_duration = await get_min_video_duration()
 
     if collect_all == "1":
         logger.info("🔍 Auto-crawling across joined channels & groups for previous undelivered videos...")
@@ -238,7 +282,7 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                     if min_seen_id is None or msg.id < min_seen_id:
                         min_seen_id = msg.id
 
-                    if _is_video_message(msg):
+                    if _is_video_message(msg, min_duration=min_duration):
                         media_id = get_media_unique_id(msg)
                         clean_caption = clean_source_caption(msg.text or "")
                         qid = await add_queue_item(chat_id, msg.id, str(msg.id), clean_caption, media_id=media_id)
@@ -292,7 +336,7 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                     if min_seen_id is None or msg.id < min_seen_id:
                         min_seen_id = msg.id
 
-                    if _is_video_message(msg):
+                    if _is_video_message(msg, min_duration=min_duration):
                         media_id = get_media_unique_id(msg)
                         clean_caption = clean_source_caption(msg.text or "")
                         qid = await add_queue_item(chat_id, msg.id, str(msg.id), clean_caption, media_id=media_id)
@@ -316,11 +360,15 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
 async def handle_new_message(event: events.NewMessage.Event) -> None:
     """Real-time listener for incoming new videos from joined channels/groups."""
     msg = event.message
-    if not msg or not _is_video_message(msg):
+    if not msg:
         return
 
     is_active = await get_setting("is_collector_active", "1")
     if is_active != "1":
+        return
+
+    min_duration = await get_min_video_duration()
+    if not _is_video_message(msg, min_duration=min_duration):
         return
 
     # Do not collect from private 1-on-1 chats or DMs
@@ -477,8 +525,10 @@ async def delivery_worker_loop() -> None:
                 try:
                     # Retrieve the original message
                     orig_msg = await client.get_messages(source_chat, ids=msg_id)
-                    if not orig_msg or not _is_video_message(orig_msg):
-                        logger.warning(f"⚠️ Queue item #{queue_id} (Msg {msg_id} in {source_chat}) is not a genuine video (e.g. GIF, sticker, or deleted). Skipping immediately...")
+                    min_duration = await get_min_video_duration()
+                    if not orig_msg or not _is_video_message(orig_msg, min_duration=min_duration):
+                        dur = get_video_duration(orig_msg) if orig_msg else None
+                        logger.warning(f"⚠️ Queue item #{queue_id} (Msg {msg_id} in {source_chat}) is not a genuine video >= {min_duration}s (Duration: {dur}s). Skipping immediately...")
                         await delete_queue_item(queue_id)
                         await mark_message_processed(source_chat, msg_id, stored_media_id)
                         continue
