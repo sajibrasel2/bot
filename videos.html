@@ -19,11 +19,8 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
-  <!-- Adsterra Popunder Script -->
-  <script src="https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js"></script>
-
-  <!-- Adsterra Native Social Bar Script -->
-  <script src="https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js" async data-cfasync="false"></script>
+  <!-- Ad Loader -->
+  <script src="assets/js/ads.js"></script>
 </head>
 <body>
 
@@ -128,14 +125,16 @@
       </div>
 
       <div class="filter-chips">
-        <div class="chip-item active">সব ভিডিও</div>
-        <a href="kids.html" class="chip-item" style="text-decoration:none; color:var(--yellow); border-color:rgba(251, 191, 36, 0.4);"><i class="fa-solid fa-child"></i> বাচ্চাদের ভিডিও</a>
-        <div class="chip-item">🔴 লাইভ ক্যাম</div>
-        <div class="chip-item">👑 ভিআইপি স্পেশাল</div>
-        <div class="chip-item">⚡ ট্রেন্ডিং</div>
+        <div class="chip-item active" onclick="triggerAdRedirect()">সব ভিডিও (১,৪২০+)</div>
+        <div class="chip-item" onclick="triggerAdRedirect()">🔴 লাইভ ক্যামেরা (৩১২)</div>
+        <div class="chip-item" onclick="triggerAdRedirect()">👑 দেবর-ভাবি (৩২০)</div>
+        <div class="chip-item" onclick="triggerAdRedirect()">🎓 কলেজ স্পেশাল (২৪৫)</div>
+        <div class="chip-item" onclick="triggerAdRedirect()">💍 প্রবাসী ভাবি (২৯০)</div>
+        <div class="chip-item" onclick="triggerAdRedirect()">🔥 ভাইরাল ২০২৬ (৪১০)</div>
+        <div class="chip-item" onclick="triggerAdRedirect()">✨ আনকাট এইচডি (১৮০)</div>
       </div>
 
-      <!-- Video Grid -->
+      <!-- Video Grid (12 Realistic Cards) -->
       <div class="video-grid">
 
         <!-- Video 1 -->
@@ -149,14 +148,22 @@
           <div class="video-info">
             <h3 class="video-title">গোপন রুমের লাইভ ক্যামেরা আড্ডা — নুসরাত ও রিয়া</h3>
             <div class="video-meta">
-              <span><i class="fa-solid fa-eye"></i> ১,৮৯০ জন দেখছেন</span>
-              <span style="color: var(--pink-light);"><i class="fa-solid fa-heart"></i> ৯৮% লাইক</span>
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ১,৮৯০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৮% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#লাইভক্যাম</span>
+              <span class="v-tag vip">#গোপনআড্ডা</span>
+              <span class="v-tag">#১০৮০p</span>
             </div>
           </div>
         </div>
 
         <!-- Video 2 -->
-        <div class="video-card" onclick="openVideoPlayer('হোস্টেল রুমের এক্সক্লুসিভ লাইভ আড্ডা (ফুল এইচডি)', '২,৪৫০', 'assets/img/video2.jpg')">
+        <div class="video-card" onclick="openVideoPlayer('হোস্টেল রুমের এক্সক্লুসিভ লাইভ আড্ডা (ফুল এইচডি ১০৮০p)', '২,৪৫০', 'assets/img/video2.jpg')">
           <div class="video-thumb">
             <img src="assets/img/video2.jpg" alt="Video 2" />
             <div class="video-tag-live" style="background: var(--purple);"><i class="fa-solid fa-crown"></i> VIP SPECIAL</div>
@@ -164,10 +171,18 @@
             <div class="video-duration">০৮:২০ মি.</div>
           </div>
           <div class="video-info">
-            <h3 class="video-title">হোস্টেল রুমের এক্সক্লুসিভ লাইভ আড্ডা (ফুল এইচডি)</h3>
+            <h3 class="video-title">হোস্টেল রুমের এক্সক্লুসিভ লাইভ আড্ডা (ফুল এইচডি ১০৮০p)</h3>
             <div class="video-meta">
-              <span><i class="fa-solid fa-eye"></i> ২,৪৫০ জন দেখছেন</span>
-              <span style="color: var(--blue);"><i class="fa-solid fa-thumbs-up"></i> ৯৯% রেটিং</span>
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ২,৪৫০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-thumbs-up"></i> ৯৯% রেটিং</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#হোস্টেল</span>
+              <span class="v-tag vip">#ভিআইপি</span>
+              <span class="v-tag">#ফুলএইচডি</span>
             </div>
           </div>
         </div>
@@ -183,17 +198,268 @@
           <div class="video-info">
             <h3 class="video-title">ঢাকা ও চট্টগ্রামের মেয়েদের ১-অন-১ গোপন ক্যামেরা লাইভ</h3>
             <div class="video-meta">
-              <span><i class="fa-solid fa-eye"></i> ৩,১২০ জন দেখছেন</span>
-              <span style="color: var(--green);"><i class="fa-solid fa-fire"></i> ভাইরাল</span>
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৩,১২০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-fire"></i> ভাইরাল</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#১-অন-১</span>
+              <span class="v-tag vip">#প্রাইভেট</span>
+              <span class="v-tag">#ভাইরাল</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 4 -->
+        <div class="video-card" onclick="openVideoPlayer('দেবর-ভাবির গোপন রুমের হট রোমান্স ভিডিও ২০২৬', '৪,৭৫০', 'assets/img/video2.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video2.jpg" alt="Video 4" />
+            <div class="video-tag-live" style="background:var(--pink);"><span class="pulse-mini"></span> HOT EXCLUSIVE</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">২২:১৫ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">দেবর-ভাবির গোপন রুমের হট রোমান্স ভিডিও ২০২৬</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৪,৭৫০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৭% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#দেবরভাবি</span>
+              <span class="v-tag vip">#রোমান্স</span>
+              <span class="v-tag">#হট</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 5 -->
+        <div class="video-card" onclick="openVideoPlayer('কলেজ হোস্টেল ছাত্রীর গোপন লাইভ চ্যাট রেকর্ড (আনকাট)', '৫,১৮০', 'assets/img/video3.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video3.jpg" alt="Video 5" />
+            <div class="video-tag-live" style="background:var(--blue);"><i class="fa-solid fa-graduation-cap"></i> কলেজ স্পেশাল</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">১৪:০৫ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">কলেজ হোস্টেল ছাত্রীর গোপন লাইভ চ্যাট রেকর্ড (আনকাট)</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৫,১৮০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৯% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#কলেজছাত্রী</span>
+              <span class="v-tag vip">#হোস্টেল</span>
+              <span class="v-tag">#আনকাট</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 6 -->
+        <div class="video-card" onclick="openVideoPlayer('প্রবাসী ভাবির মধ্যরাতের লাইভ ভিডিও কল আড্ডা', '৩,৮৯০', 'assets/img/video1.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video1.jpg" alt="Video 6" />
+            <div class="video-tag-live" style="background:var(--yellow); color:#000;"><i class="fa-solid fa-ring"></i> প্রবাসী স্পেশাল</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">১১:৩০ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">প্রবাসী ভাবির মধ্যরাতের লাইভ ভিডিও কল আড্ডা</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৩,৮৯০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৬% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#প্রবাসীভাবি</span>
+              <span class="v-tag vip">#মধ্যরাত</span>
+              <span class="v-tag">#ভিডিওকল</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 7 -->
+        <div class="video-card" onclick="openVideoPlayer('বউ-শ্বশুর এক্সক্লুসিভ ভাইরাল ক্লিপস ২০২৬ (ফুল ভার্সন)', '৬,৪২০', 'assets/img/video2.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video2.jpg" alt="Video 7" />
+            <div class="video-tag-live" style="background:var(--purple);"><i class="fa-solid fa-crown"></i> VIP UNCUT</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">১৯:৪০ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">বউ-শ্বশুর এক্সক্লুসিভ ভাইরাল ক্লিপস ২০২৬ (ফুল ভার্সন)</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৬,৪২০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৮% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#বউশ্বশুর</span>
+              <span class="v-tag vip">#ফুলভার্সন</span>
+              <span class="v-tag">#ভাইরাল২০২৬</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 8 -->
+        <div class="video-card" onclick="openVideoPlayer('ডিভোর্সি ভাবির গোপন প্রেমের ভিডিও ক্লিপ — রিয়া ও সাদিয়া', '৪,১০০', 'assets/img/video3.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video3.jpg" alt="Video 8" />
+            <div class="video-tag-live" style="background:#ec4899;"><i class="fa-solid fa-venus"></i> ডিভোর্সি ভাবি</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">১৩:৫০ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">ডিভোর্সি ভাবির গোপন প্রেমের ভিডিও ক্লিপ — রিয়া ও সাদিয়া</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৪,১০০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-thumbs-up"></i> ৯৭% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#ডিভোর্সিভাবি</span>
+              <span class="v-tag vip">#গোপনপ্রেম</span>
+              <span class="v-tag">#এক্সক্লুসিভ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 9 -->
+        <div class="video-card" onclick="openVideoPlayer('গ্রামের মিষ্টি গৃহবধূর হট ড্যান্স ও গোপন আড্ডা', '৩,৬৫০', 'assets/img/video1.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video1.jpg" alt="Video 9" />
+            <div class="video-tag-live" style="background:var(--green);"><i class="fa-solid fa-wheat-awn"></i> গ্রামের গৃহবধূ</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">১৬:২৫ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">গ্রামের মিষ্টি গৃহবধূর হট ড্যান্স ও গোপন আড্ডা</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৩,৬৫০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৫% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#গ্রামেরগৃহবধূ</span>
+              <span class="v-tag vip">#হটড্যান্স</span>
+              <span class="v-tag">#ভিডিও</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 10 -->
+        <div class="video-card" onclick="openVideoPlayer('রাজশাহীর কলেজ সুন্দরীর গোপন ক্যামেরা সেশন (HD 4K)', '২,৯৮০', 'assets/img/video2.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video2.jpg" alt="Video 10" />
+            <div class="video-tag-live" style="background:#06b6d4;"><i class="fa-solid fa-bolt"></i> 4K ULTRA HD</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">০৯:৪৫ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">রাজশাহীর কলেজ সুন্দরীর গোপন ক্যামেরা সেশন (HD 4K)</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ২,৯৮০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৯% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#রাজশাহী</span>
+              <span class="v-tag vip">#৪কেআল্ট্রা</span>
+              <span class="v-tag">#ক্যামেরাশো</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 11 -->
+        <div class="video-card" onclick="openVideoPlayer('সিলেটের প্রবাসী প্রেমিকার গোপন ভিডিও বার্তা', '৩,৩৪০', 'assets/img/video3.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video3.jpg" alt="Video 11" />
+            <div class="video-tag-live" style="background:#f43f5e;"><i class="fa-solid fa-heart"></i> সিক্রেট ক্লিপস</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">২১:১০ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">সিলেটের প্রবাসী প্রেমিকার গোপন ভিডিও বার্তা</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৩,৩৪০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ৯৭% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#সিলেট</span>
+              <span class="v-tag vip">#প্রবাসীপ্রেমিকা</span>
+              <span class="v-tag">#সিক্রেট</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video 12 -->
+        <div class="video-card" onclick="openVideoPlayer('রাত ২টার ভিআইপি প্রাইভেট শো — মিতু আক্তার', '৭,২০০', 'assets/img/video1.jpg')">
+          <div class="video-thumb">
+            <img src="assets/img/video1.jpg" alt="Video 12" />
+            <div class="video-tag-live" style="background:#dc2626;"><span class="pulse-mini"></span> ১৮+ স্পেশাল</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">১৮:৩০ মি.</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">রাত ২টার ভিআইপি প্রাইভেট শো — মিতু আক্তার</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ৭,২০০ জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-fire"></i> ১০০% লাইক</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              <span class="v-tag hot">#নাইটশো</span>
+              <span class="v-tag vip">#ভিআইপিপ্রাইভেট</span>
+              <span class="v-tag">#সরাসরি</span>
             </div>
           </div>
         </div>
 
       </div>
 
+      <!-- Load More & Infinite Pagination Trigger (Max Ad Impressions) -->
+      <div class="load-more-wrap">
+        <button class="load-more-btn" onclick="loadMoreVideos(event)">
+          <i class="fa-solid fa-circle-down"></i>
+          <span>আরও ২৪টি ভাইরাল ভিডিও লোড করুন (আরও ৪২০টি বাকি আছে)</span>
+        </button>
+
+        <div class="pagination-bar">
+          <span class="page-num active" onclick="triggerAdRedirect()">১</span>
+          <span class="page-num" onclick="triggerAdRedirect()">২</span>
+          <span class="page-num" onclick="triggerAdRedirect()">৩</span>
+          <span class="page-num" onclick="triggerAdRedirect()">৪</span>
+          <span class="page-dots">...</span>
+          <span class="page-num" onclick="triggerAdRedirect()">৮২</span>
+          <span class="page-next" onclick="triggerAdRedirect()">পরবর্তী পৃষ্ঠা <i class="fa-solid fa-chevron-right"></i></span>
+        </div>
+      </div>
+
     </main>
 
-    <!-- IN-APP VIDEO PLAYER SHEET MODAL -->
+    <!-- IN-APP VIDEO PLAYER SHEET MODAL (UPGRADED HIGH CTR) -->
     <div class="video-player-modal" id="video-player-modal">
       <div class="video-player-header">
         <div>
@@ -209,12 +475,77 @@
         
         <div class="video-live-overlay-comments" id="video-live-comments"></div>
         <div class="floating-hearts-container" id="floating-hearts-container"></div>
+
+        <!-- Fake Interactive Player Controls Overlay -->
+        <div class="player-controls-overlay" onclick="toggleFakePlay(event)">
+          <div class="player-progress-track">
+            <div class="player-progress-buffer"></div>
+            <div class="player-progress-fill"></div>
+          </div>
+          <div class="player-controls-row">
+            <div class="player-ctrl-left">
+              <span id="fake-play-ctrl-icon"><i class="fa-solid fa-pause"></i></span>
+              <span onclick="triggerAdRedirect()"><i class="fa-solid fa-volume-high"></i></span>
+              <span style="font-size:11px; font-family:var(--font-outfit); font-weight:700;">০৬:৪২ / ২১:১৫</span>
+            </div>
+            <div class="player-ctrl-right">
+              <span class="player-hd-badge">1080p 60fps</span>
+              <span onclick="triggerAdRedirect()"><i class="fa-solid fa-expand"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multi-Server & Download Action Buttons Grid (MAX CTR) -->
+      <div class="player-actions-container">
+        <div class="player-cta-grid">
+          <button class="player-cta-btn btn-server2" onclick="switchServer(2)">
+            <i class="fa-solid fa-server"></i>
+            <span>সার্ভার ২ (ফাস্ট প্লে)</span>
+          </button>
+          <button class="player-cta-btn btn-download" onclick="triggerAdRedirect()">
+            <i class="fa-solid fa-download"></i>
+            <span>ফুল এইচডি ডাউনলোড</span>
+          </button>
+          <button class="player-cta-btn btn-tg-vip" onclick="handleTgForward()">
+            <i class="fa-brands fa-telegram"></i>
+            <span>টেলিগ্রাম ভিআইপি গ্রুপে আনকাট ভিডিও দেখুন (ফ্রি)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- In-Modal Related Video Reel -->
+      <div class="player-related-section">
+        <div class="player-related-title"><i class="fa-solid fa-fire" style="color:var(--pink);"></i> সম্পর্কিত আরও ভাইরাল ভিডিও:</div>
+        <div class="player-related-reel">
+          <div class="player-related-item" onclick="openVideoPlayer('দেবর-ভাবির গোপন রুমের হট রোমান্স ভিডিও ২০২৬', '৪,৭৫০', 'assets/img/video2.jpg')">
+            <div class="player-related-thumb">
+              <img src="assets/img/video2.jpg" alt="Related" />
+              <span class="dur">২২:১৫</span>
+            </div>
+            <div class="player-related-info">দেবর-ভাবির গোপন রোমান্স</div>
+          </div>
+          <div class="player-related-item" onclick="openVideoPlayer('কলেজ হোস্টেল ছাত্রীর গোপন লাইভ চ্যাট রেকর্ড', '৫,১৮০', 'assets/img/video3.jpg')">
+            <div class="player-related-thumb">
+              <img src="assets/img/video3.jpg" alt="Related" />
+              <span class="dur">১৪:০৫</span>
+            </div>
+            <div class="player-related-info">কলেজ হোস্টেল ছাত্রী</div>
+          </div>
+          <div class="player-related-item" onclick="openVideoPlayer('প্রবাসী ভাবির মধ্যরাতের লাইভ ভিডিও কল আড্ডা', '৩,৮৯০', 'assets/img/video1.jpg')">
+            <div class="player-related-thumb">
+              <img src="assets/img/video1.jpg" alt="Related" />
+              <span class="dur">১১:৩০</span>
+            </div>
+            <div class="player-related-info">প্রবাসী ভাবির আড্ডা</div>
+          </div>
+        </div>
       </div>
 
       <div class="video-player-footer">
         <input type="text" class="story-reply-input" placeholder="লাইভ কমেন্ট করুন..." onkeypress="if(event.key==='Enter') sendVideoHeart()" />
         <button class="story-heart-btn" onclick="sendVideoHeart()"><i class="fa-solid fa-heart"></i></button>
-        <button class="header-btn" onclick="triggerAdRedirect()" style="width:44px; height:44px; border-radius:50%; background:var(--grad-blue);"><i class="fa-solid fa-share-nodes"></i></button>
+        <button class="header-btn" onclick="triggerAdRedirect()" style="width:40px; height:40px; border-radius:50%; background:var(--grad-blue);"><i class="fa-solid fa-share-nodes"></i></button>
       </div>
     </div>
 

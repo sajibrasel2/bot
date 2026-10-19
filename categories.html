@@ -19,11 +19,8 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
-  <!-- Adsterra Popunder Script -->
-  <script src="https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js"></script>
-
-  <!-- Adsterra Native Social Bar Script -->
-  <script src="https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js" async data-cfasync="false"></script>
+  <!-- Ad Loader -->
+  <script src="assets/js/ads.js"></script>
 </head>
 <body>
 
@@ -132,7 +129,7 @@
         <input type="text" id="category-search-input" class="category-search-input" placeholder="ক্যাটাগরি বা চ্যাট রুম খুঁজুন..." oninput="filterCategories()" />
       </div>
 
-      <!-- Categories Action Grid -->
+      <!-- Categories Action Grid (12 Items Linking to Content) -->
       <div class="action-grid" id="categories-grid">
 
         <a href="kids.html" class="action-card category-card" data-title="বাচ্চাদের কার্টুন ও ভিডিও জোন" style="text-decoration:none; border: 1.5px solid rgba(251, 191, 36, 0.4);">
@@ -143,53 +140,93 @@
           </div>
         </a>
 
-        <div class="action-card category-card" data-title="বউ-শ্বশুর গল্প ও চ্যাট" onclick="triggerAdRedirect(event)">
-          <div class="action-icon" style="background: rgba(255, 42, 133, 0.15); color: var(--pink);"><i class="fa-solid fa-fire"></i></div>
-          <div class="action-info">
-            <span class="action-title">বউ-শ্বশুর গল্প ও চ্যাট</span>
-            <span class="action-sub">৭৪ জন একটিভ</span>
-          </div>
-        </div>
-
-        <div class="action-card category-card" data-title="দেবর-ভাবি আড্ডা" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="দেবর-ভাবির গোপন রোমান্স" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
           <div class="action-icon" style="background: rgba(0, 210, 255, 0.15); color: var(--blue);"><i class="fa-solid fa-heart-pulse"></i></div>
           <div class="action-info">
-            <span class="action-title">দেবর-ভাবি আড্ডা</span>
-            <span class="action-sub">৮৮ জন একটিভ</span>
+            <span class="action-title">🔥 দেবর-ভাবির গোপন রোমান্স</span>
+            <span class="action-sub">৩২০+ ভিডিও • ৮৮ জন একটিভ</span>
           </div>
         </div>
 
-        <div class="action-card category-card" data-title="কলেজ ছাত্রী চ্যাট রুম" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="কলেজ ছাত্রী চ্যাট রুম" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
           <div class="action-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--green);"><i class="fa-solid fa-graduation-cap"></i></div>
           <div class="action-info">
-            <span class="action-title">কলেজ ছাত্রী চ্যাট রুম</span>
-            <span class="action-sub">১১২ জন একটিভ</span>
+            <span class="action-title">🎓 কলেজ ছাত্রী স্পেশাল আড্ডা</span>
+            <span class="action-sub">২৪৫+ ভিডিও • ১১২ জন একটিভ</span>
           </div>
         </div>
 
-        <div class="action-card category-card" data-title="প্রবাসী ভাবি আড্ডা" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="প্রবাসী ভাবি আড্ডা" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
           <div class="action-icon" style="background: rgba(251, 191, 36, 0.15); color: var(--yellow);"><i class="fa-solid fa-ring"></i></div>
           <div class="action-info">
-            <span class="action-title">প্রবাসী ভাবি আড্ডা</span>
-            <span class="action-sub">৬৫ জন একটিভ</span>
+            <span class="action-title">💍 প্রবাসী ভাবির লাইভ চ্যাট</span>
+            <span class="action-sub">২৯০+ ভিডিও • ৬৫ জন একটিভ</span>
           </div>
         </div>
 
-        <div class="action-card category-card" data-title="ডিভোর্সি ভাবি চ্যাট" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="বউ-শ্বশুর গল্প ও চ্যাট" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
+          <div class="action-icon" style="background: rgba(255, 42, 133, 0.15); color: var(--pink);"><i class="fa-solid fa-fire"></i></div>
+          <div class="action-info">
+            <span class="action-title">💖 বউ-শ্বশুর এক্সক্লুসিভ গল্প</span>
+            <span class="action-sub">১৭৫+ ভিডিও • ৭৪ জন একটিভ</span>
+          </div>
+        </div>
+
+        <div class="action-card category-card" data-title="ডিভোর্সি ভাবি চ্যাট" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
           <div class="action-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--purple);"><i class="fa-solid fa-venus"></i></div>
           <div class="action-info">
-            <span class="action-title">ডিভোর্সি ভাবি চ্যাট</span>
-            <span class="action-sub">৯৩ জন একটিভ</span>
+            <span class="action-title">💎 ডিভোর্সি ভাবি আড্ডা রুম</span>
+            <span class="action-sub">১৯৫+ ভিডিও • ৯৩ জন একটিভ</span>
           </div>
         </div>
 
-        <div class="action-card category-card" data-title="লাইভ ক্যামেরা শো" onclick="triggerAdRedirect(event)">
+        <div class="action-card category-card" data-title="লাইভ ক্যামেরা শো" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
           <div class="action-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--red);"><i class="fa-solid fa-camera-retro"></i></div>
           <div class="action-info">
-            <span class="action-title">লাইভ ক্যামেরা শো</span>
-            <span class="action-sub">১৪৫ জন একটিভ</span>
+            <span class="action-title">📹 লাইভ ক্যামেরা প্রাইভেট শো</span>
+            <span class="action-sub">৩১২+ ভিডিও • ১৪৫ জন একটিভ</span>
           </div>
         </div>
+
+        <div class="action-card category-card" data-title="গ্রামের মিষ্টি গৃহবধূ" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
+          <div class="action-icon" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;"><i class="fa-solid fa-wheat-awn"></i></div>
+          <div class="action-info">
+            <span class="action-title">🌾 গ্রামের মিষ্টি গৃহবধূ</span>
+            <span class="action-sub">২১৫+ ভিডিও • ৭৯ জন একটিভ</span>
+          </div>
+        </div>
+
+        <div class="action-card category-card" data-title="ভিআইপি আনকাট কালেকশন" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
+          <div class="action-icon" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;"><i class="fa-solid fa-crown"></i></div>
+          <div class="action-info">
+            <span class="action-title">👑 ভিআইপি আনকাট কালেকশন</span>
+            <span class="action-sub">১৮০+ ভিডিও • ২০৫ জন একটিভ</span>
+          </div>
+        </div>
+
+        <div class="action-card category-card" data-title="মধ্যরাতের স্পেশাল ২০২৬" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html'; }, 300);">
+          <div class="action-icon" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e;"><i class="fa-solid fa-moon"></i></div>
+          <div class="action-info">
+            <span class="action-title">⚡ মধ্যরাতের হট আড্ডা ২০২৬</span>
+            <span class="action-sub">৪১০+ ভিডিও • ১৮৫ জন একটিভ</span>
+          </div>
+        </div>
+
+        <a href="voice.html" class="action-card category-card" data-title="রোমান্টিক অডিও ও ভয়েস চ্যাট" style="text-decoration:none;">
+          <div class="action-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;"><i class="fa-solid fa-microphone-lines"></i></div>
+          <div class="action-info">
+            <span class="action-title">🎧 রোমান্টিক ভয়েস চ্যাট রুম</span>
+            <span class="action-sub">লাইভ কথা শুনুন • ১৬২ জন একটিভ</span>
+          </div>
+        </a>
+
+        <a href="wheel.html" class="action-card category-card" data-title="লাকি হুইল স্পিন" style="text-decoration:none;">
+          <div class="action-icon" style="background: rgba(234, 179, 8, 0.15); color: #eab308;"><i class="fa-solid fa-dharmachakra"></i></div>
+          <div class="action-info">
+            <span class="action-title">🎯 লাকি হুইল স্পিন গেম</span>
+            <span class="action-sub">ফ্রি স্পিন করে রিওয়ার্ড জিতুন</span>
+          </div>
+        </a>
 
       </div>
 
