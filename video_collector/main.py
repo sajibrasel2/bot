@@ -149,13 +149,44 @@ def get_media_unique_id(message) -> Optional[int]:
     return None
 
 
+COMMERCIAL_AD_PATTERN = re.compile(
+    r'(?i)(?:'
+    r'টাকা|টাকায়|টাকায়|দাম|অফার|ডিসকাউন্ট|ছাড়|ছাড়|লাইফ\s*টাইম|আজীবন|মেসেজ\s*কর|ইনবক্স|কিনতে|বিক্রি|যোগাযোগ|'
+    r'প্রিমিয়াম\s*গ্রুপ|প্রিমিয়াম\s*গ্রুপ|ভিআইপি\s*গ্রুপ|প্যাকেজ|প্যাক|বিকাশ|নগদ|রকেট|সীমিত\s*সময়|সীমিত\s*সময়|'
+    r'বাচ্চা|বাচ্চাদের|ধর্ষণ|ধর্ষন|রেপ|'
+    r'price|taka|\btk\b|offer|discount|lifetime|inbox|dm\s*me|contact\s*admin|buy|sell|paid\s*group|premium\s*group|vip\s*group|'
+    r'child|rape|cp\b'
+    r')'
+)
+
+LIST_ITEM_PATTERN = re.compile(
+    r'(?:^|\n)\s*[\d\u09E6-\u09EF\U0001D7CE-\U0001D7FF]{1,3}\s*[\.\/\)\-\:]'
+)
+
+
 def clean_source_caption(text: str) -> str:
     """
     Cleans caption by removing source channel names, mentions (@channel),
-    all links/URLs, and promotional phrases to ensure delivered videos are completely clean.
-    If no meaningful content remains, returns empty string so video sends with no caption.
+    all links/URLs, promotional phrases, and large commercial advertisement blocks.
+    If the text is an advertisement, list menu, or too long, returns empty string
+    so video delivers completely clean.
     """
     if not text:
+        return ""
+
+    raw_text = text.strip()
+
+    # Rule 1: Commercial advertisement / paid group / pricing / blacklist check
+    if COMMERCIAL_AD_PATTERN.search(raw_text):
+        return ""
+
+    # Rule 2: Package menu / numbered list detection (e.g. 1/, 2/, 3/ or 1., 2., 3.)
+    if len(LIST_ITEM_PATTERN.findall(raw_text)) >= 2:
+        return ""
+
+    # Rule 3: Reject large text blocks (more than 4 lines or more than 220 characters)
+    raw_lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+    if len(raw_lines) > 4 or len(raw_text) > 220:
         return ""
 
     url_pattern = re.compile(
@@ -170,41 +201,36 @@ def clean_source_caption(text: str) -> str:
         r'(?:চ্যানেল|জয়েন|সাবস্ক্রাইব|লিংক|ভিডিও|সোর্স|ক্লিক|গ্রুপ)'
     )
 
-    lines = text.splitlines()
     cleaned_lines = []
 
-    for line in lines:
-        line_str = line.strip()
-        if not line_str:
+    for line in raw_lines:
+        # Rule 4: ANY line containing an external URL or Telegram link is promo/source attribution -> Drop completely
+        if url_pattern.search(line):
             continue
 
-        # Rule 1: ANY line containing an external URL or Telegram link is promo/source attribution -> Drop completely
-        if url_pattern.search(line_str):
-            continue
-
-        # Rule 2: If a line has a mention (@channel) and promo words, drop completely
-        has_mention = bool(mention_pattern.search(line_str))
-        has_promo = bool(promo_words_pattern.search(line_str))
+        # Rule 5: If a line has a mention (@channel) and promo words, drop completely
+        has_mention = bool(mention_pattern.search(line))
+        has_promo = bool(promo_words_pattern.search(line))
         if has_mention and has_promo:
             continue
 
         # Strip mentions and symbols to inspect remaining text
-        stripped = mention_pattern.sub('', line_str)
+        stripped = mention_pattern.sub('', line)
         stripped = re.sub(r'[-—:>=><~|•_#\*\.\s\?&/\\\(\)\[\]{}!@$%^+=]+', ' ', stripped).strip()
 
-        # Rule 3: If what remains has no real letters/words, drop it
+        # Rule 6: If what remains has no real letters/words, drop it
         letters_only = re.sub(r'[^\w]|_', '', stripped)
         if len(letters_only) < 3:
             continue
 
-        # Rule 4: If what remains is predominantly promotional keywords (e.g. "Direct Link", "Join Channel")
+        # Rule 7: If what remains is predominantly promotional keywords (e.g. "Direct Link", "Join Channel")
         non_promo = promo_words_pattern.sub('', stripped)
         non_promo_letters = re.sub(r'[^\w]|_', '', non_promo)
         if len(non_promo_letters) < 3:
             continue
 
         # Clean trailing/leading symbols from valid title line
-        cleaned = mention_pattern.sub('', line_str)
+        cleaned = mention_pattern.sub('', line)
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
         cleaned = re.sub(r'^[-—:>=><~|•_#\*\.\s/]+', '', cleaned)
         cleaned = re.sub(r'[-—:>=><~|•_#\*\.\s/]+$', '', cleaned).strip()
@@ -212,7 +238,17 @@ def clean_source_caption(text: str) -> str:
         if cleaned:
             cleaned_lines.append(cleaned)
 
-    return '\n'.join(cleaned_lines).strip()
+    # Rule 8: Genuine video captions are concise titles (max 2 lines)
+    if len(cleaned_lines) > 2:
+        return ""
+
+    final_text = '\n'.join(cleaned_lines).strip()
+
+    # Rule 9: Max length of genuine title is 120 characters
+    if len(final_text) > 120:
+        return ""
+
+    return final_text
 
 
 async def auto_join_channel(channel_target) -> Optional[Any]:
