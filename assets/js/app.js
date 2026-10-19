@@ -44,24 +44,24 @@ const DIRECT_LINK_1 = 'https://omg10.com/4/11017767';
 const DIRECT_LINK_2 = 'https://www.effectivecpmnetwork.com/mgtqwzbp?key=5c4003e0ae2b0ebd387daded087bc9aa';
 
 let isTgVerified = true;
-let isAgeVerified = (localStorage.getItem('age18Verified') === 'true');
+let isAgeVerified = (localStorage.getItem('age18Verified') === 'true' || sessionStorage.getItem('age18Verified') === 'true');
 
 let adClickCount = parseInt(sessionStorage.getItem('adClickCount') || '0');
 
-function openAdUrl(targetUrl) {
+function openAdUrl(targetUrl, allowTopNavigation = false) {
   if (!targetUrl) return;
 
-  // 1. Telegram WebApp native opener (guaranteed to bypass in-app webview popup blocking)
+  // 1. Telegram WebApp native opener (opens link externally while keeping WebApp open)
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
     try {
       window.Telegram.WebApp.openLink(targetUrl);
       return;
     } catch(e) {
-      console.log("Telegram openLink fallback:", e);
+      console.log("Telegram openLink notice:", e);
     }
   }
 
-  // 2. Standard window.open
+  // 2. Standard window.open in new tab/window
   try {
     const opened = window.open(targetUrl, '_blank', 'noopener,noreferrer');
     if (opened && !opened.closed && typeof opened.closed !== 'undefined') {
@@ -69,7 +69,7 @@ function openAdUrl(targetUrl) {
     }
   } catch(e) {}
 
-  // 3. Fallback: Programmatic anchor click
+  // 3. Fallback: Programmatic anchor click in new tab
   try {
     const a = document.createElement('a');
     a.href = targetUrl;
@@ -83,8 +83,10 @@ function openAdUrl(targetUrl) {
     return;
   } catch(e) {}
 
-  // 4. Final fallback: top navigation
-  window.location.href = targetUrl;
+  // 4. Safe fallback: Only navigate current tab if explicitly permitted
+  if (allowTopNavigation) {
+    window.location.href = targetUrl;
+  }
 }
 
 function triggerAdRedirect(e) {
@@ -93,9 +95,11 @@ function triggerAdRedirect(e) {
   // Rotate between high-revenue Adsterra direct links
   const targetUrl = (adClickCount % 2 === 0) ? DIRECT_LINK_1 : DIRECT_LINK_2;
   adClickCount++;
-  sessionStorage.setItem('adClickCount', adClickCount);
+  try {
+    sessionStorage.setItem('adClickCount', adClickCount);
+  } catch(e) {}
 
-  openAdUrl(targetUrl);
+  openAdUrl(targetUrl, false);
 }
 
 function handleStickyCta(e) {
@@ -329,17 +333,23 @@ async function checkRealDatabaseInvites(isAutoCheck = false) {
 }
 
 function unlockTelegramGate() {
-  localStorage.setItem('tg10Added', 'true');
-  localStorage.setItem('tgVerifiedReal', 'true');
+  try {
+    localStorage.setItem('tg10Added', 'true');
+    localStorage.setItem('tgVerifiedReal', 'true');
+  } catch(e) {}
   isTgVerified = true;
 
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
-  if (tgOverlay) tgOverlay.style.display = 'none';
+  if (tgOverlay) {
+    tgOverlay.style.setProperty('display', 'none', 'important');
+    try { tgOverlay.remove(); } catch(e) {}
+  }
 
   if (!isAgeVerified) {
     const ageOverlay = document.getElementById('age-gate-overlay');
     if (ageOverlay) {
-      ageOverlay.style.display = 'flex';
+      ageOverlay.classList.add('active');
+      ageOverlay.style.setProperty('display', 'flex', 'important');
       ageOverlay.style.opacity = '1';
     }
   } else {
@@ -348,29 +358,62 @@ function unlockTelegramGate() {
 }
 
 function enterAgeGate(e) {
-  if (e && e.preventDefault) e.preventDefault();
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
 
-  localStorage.setItem('age18Verified', 'true');
+  try {
+    localStorage.setItem('age18Verified', 'true');
+    sessionStorage.setItem('age18Verified', 'true');
+  } catch(err) {}
   isAgeVerified = true;
 
   const ageOverlay = document.getElementById('age-gate-overlay');
-  if (ageOverlay) ageOverlay.style.display = 'none';
+  if (ageOverlay) {
+    ageOverlay.classList.remove('active');
+    ageOverlay.classList.add('hidden');
+    ageOverlay.style.setProperty('display', 'none', 'important');
+    ageOverlay.style.opacity = '0';
+    ageOverlay.style.pointerEvents = 'none';
+    try {
+      ageOverlay.remove();
+    } catch(err) {}
+  }
 
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
-  if (tgOverlay) tgOverlay.style.display = 'none';
+  if (tgOverlay) {
+    tgOverlay.style.setProperty('display', 'none', 'important');
+    try {
+      tgOverlay.remove();
+    } catch(err) {}
+  }
 
-  // Guaranteed direct ad click on user's first gate interaction!
-  triggerAdRedirect();
-
+  // Start app immediately
   unlockAllAndStart();
+
+  // Monetize the entry click via new tab / background link without replacing current window
+  try {
+    triggerAdRedirect();
+  } catch(adErr) {
+    console.log("Gate ad trigger error:", adErr);
+  }
 }
 
 function unlockAllAndStart() {
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
 
-  if (tgOverlay) tgOverlay.style.display = 'none';
-  if (ageOverlay) ageOverlay.style.display = 'none';
+  if (tgOverlay) {
+    tgOverlay.style.setProperty('display', 'none', 'important');
+    try { tgOverlay.remove(); } catch(e) {}
+  }
+  if (ageOverlay) {
+    ageOverlay.classList.remove('active');
+    ageOverlay.classList.add('hidden');
+    ageOverlay.style.setProperty('display', 'none', 'important');
+    try { ageOverlay.remove(); } catch(e) {}
+  }
 
   initAllAdsterraAds();
   startFluctuationEngine();
@@ -923,24 +966,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
-  if (tgOverlay) tgOverlay.style.display = 'none';
+  if (tgOverlay) {
+    tgOverlay.style.setProperty('display', 'none', 'important');
+    try { tgOverlay.remove(); } catch(e) {}
+  }
 
   // Telegram 10-member gate is disabled - allow direct entrance
   isTgVerified = true;
-  localStorage.setItem('tg10Added', 'true');
+  try {
+    localStorage.setItem('tg10Added', 'true');
+  } catch(e) {}
 
-  // If age not verified, show 18+ Age Gate first (guarantees ad click on first tap!)
-  if (!isAgeVerified) {
+  // If age already verified, start immediately and remove overlay
+  if (isAgeVerified) {
     if (ageOverlay) {
-      ageOverlay.style.display = 'flex';
+      ageOverlay.style.setProperty('display', 'none', 'important');
+      try { ageOverlay.remove(); } catch(e) {}
+    }
+    unlockAllAndStart();
+    handleTargetNavigation();
+  } else {
+    // Show 18+ Age Gate first (clean, smooth, dismisses on 1 tap)
+    if (ageOverlay) {
+      ageOverlay.classList.remove('hidden');
+      ageOverlay.classList.add('active');
+      ageOverlay.style.setProperty('display', 'flex', 'important');
       ageOverlay.style.opacity = '1';
     }
-  } else {
-    unlockAllAndStart();
-  }
-
-  // Handle initial tab navigation if already unlocked
-  if (isAgeVerified) {
-    handleTargetNavigation();
   }
 });

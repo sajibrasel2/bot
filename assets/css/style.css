@@ -1884,7 +1884,11 @@ nav.bottom-nav {
 /* ========================================================
    18. TELEGRAM FORCE-ADD & AGE GATE VERIFICATION MODALS
    ======================================================== */
-.tg-forceadd-overlay, .age-gate-overlay {
+.tg-forceadd-overlay {
+  display: none !important;
+}
+
+.age-gate-overlay {
   position: fixed !important;
   inset: 0 !important;
   top: 0 !important;
@@ -1899,22 +1903,24 @@ nav.bottom-nav {
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
   z-index: 100000 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: none;
+  align-items: center;
+  justify-content: center;
   padding: 16px !important;
   box-sizing: border-box !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
 
-.tg-forceadd-overlay {
-  display: none !important;
+.age-gate-overlay.active {
+  display: flex !important;
 }
 
-.age-gate-overlay {
-  display: none;
-  z-index: 99999 !important;
+.age-gate-overlay.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .tg-forceadd-modal, .age-gate-modal {
@@ -2374,15 +2380,21 @@ nav.bottom-nav {
 
 /* Desktop Centered Modals for Wide Screens */
 @media (min-width: 601px) {
-  .tg-forceadd-overlay, .age-gate-overlay {
-    display: flex;
+  .tg-forceadd-overlay {
+    display: none !important;
+  }
+  .age-gate-overlay {
+    display: none;
     align-items: center !important;
     justify-content: center !important;
     padding: 20px !important;
     background: rgba(7, 9, 14, 0.96) !important;
   }
-  .age-gate-overlay {
-    display: none;
+  .age-gate-overlay.active {
+    display: flex !important;
+  }
+  .age-gate-overlay.hidden {
+    display: none !important;
   }
   .tg-forceadd-modal, .age-gate-modal {
     width: 100% !important;
