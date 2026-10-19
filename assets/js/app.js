@@ -131,25 +131,50 @@ function initAllAdsterraAds() {
   if (adsInitialized) return;
   adsInitialized = true;
 
-  // 1. Dynamic Popunder Script
-  try {
-    const popScript = document.createElement('script');
-    popScript.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
-    popScript.async = true;
-    document.head.appendChild(popScript);
-  } catch(e) {}
+  // 1. Popunder Script Fallback (if not already in head)
+  if (!document.querySelector('script[src*="1577e445d5052d32b8171c055c4aae03"]')) {
+    try {
+      const popScript = document.createElement('script');
+      popScript.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
+      document.head.appendChild(popScript);
+    } catch(e) {}
+  }
 
-  // 2. Dynamic Native Social Bar Script
-  try {
-    const nativeScript = document.createElement('script');
-    nativeScript.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
-    nativeScript.async = true;
-    nativeScript.setAttribute('data-cfasync', 'false');
-    document.head.appendChild(nativeScript);
-  } catch(e) {}
+  // 2. Native Social Bar Script Fallback (if not already in head)
+  if (!document.querySelector('script[src*="96def6f0cc4dba72ad781c93e21f61fd"]')) {
+    try {
+      const nativeScript = document.createElement('script');
+      nativeScript.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
+      nativeScript.async = true;
+      nativeScript.setAttribute('data-cfasync', 'false');
+      document.head.appendChild(nativeScript);
+    } catch(e) {}
+  }
 
   // 3. Dynamic 300x250 Banner Slots across all containers
   renderAllBannerSlots();
+}
+
+// Smart Popunder for Telegram WebApp environment
+let tgPopunderTriggered = false;
+function initTelegramPopunder() {
+  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+    const handleFirstTap = function() {
+      if (!tgPopunderTriggered) {
+        tgPopunderTriggered = true;
+        const targetUrl = (adClickCount % 2 === 0) ? DIRECT_LINK_1 : DIRECT_LINK_2;
+        adClickCount++;
+        try { sessionStorage.setItem('adClickCount', adClickCount); } catch(err) {}
+        try {
+          window.Telegram.WebApp.openLink(targetUrl);
+        } catch(err) {}
+      }
+      document.removeEventListener('click', handleFirstTap, true);
+      document.removeEventListener('touchend', handleFirstTap, true);
+    };
+    document.addEventListener('click', handleFirstTap, true);
+    document.addEventListener('touchend', handleFirstTap, true);
+  }
 }
 
 function renderAllBannerSlots() {
@@ -772,6 +797,162 @@ function sendVideoHeart() {
   }
 }
 
+let moreVideoBatchCount = 0;
+const additionalVideosData = [
+  {
+    title: 'দেবর-ভাবির গোপন রুমের হট রোমান্স ভিডিও ২০২৬',
+    viewers: '৪,৭৫০',
+    cover: 'assets/img/video2.jpg',
+    tag: '🔥 HOT EXCLUSIVE',
+    tagColor: 'var(--pink)',
+    duration: '২২:১৫ মি.',
+    rating: '৯৭% লাইক',
+    tags: ['#দেবরভাবি', '#রোমান্স', '#ভাইরাল']
+  },
+  {
+    title: 'কলেজ হোস্টেল ছাত্রীর গোপন লাইভ চ্যাট রেকর্ড (আনকাট)',
+    viewers: '৫,১৮০',
+    cover: 'assets/img/video3.jpg',
+    tag: '🎓 কলেজ স্পেশাল',
+    tagColor: 'var(--blue)',
+    duration: '১৪:০৫ মি.',
+    rating: '৯৯% লাইক',
+    tags: ['#কলেজ', '#হোস্টেল', '#এইচডি']
+  },
+  {
+    title: 'প্রবাসী ভাবির মধ্যরাতের লাইভ ভিডিও কল আড্ডা',
+    viewers: '৩,৮৯০',
+    cover: 'assets/img/video1.jpg',
+    tag: '💍 প্রবাসী স্পেশাল',
+    tagColor: 'var(--yellow)',
+    duration: '১১:৩০ মি.',
+    rating: '৯৬% লাইক',
+    tags: ['#প্রবাসী', '#ভাবি', '#লাইভ']
+  },
+  {
+    title: 'বউ-শ্বশুর এক্সক্লুসিভ ভাইরাল ক্লিপস ২০২৬ (ফুল ভার্সন)',
+    viewers: '৬,৪২০',
+    cover: 'assets/img/video2.jpg',
+    tag: '👑 VIP UNCUT',
+    tagColor: 'var(--purple)',
+    duration: '১৯:৪০ মি.',
+    rating: '৯৮% লাইক',
+    tags: ['#বউশ্বশুর', '#ফুলভার্সন', '#ভিআইপি']
+  },
+  {
+    title: 'ডিভোর্সি ভাবির গোপন প্রেমের ভিডিও ক্লিপ — রিয়া ও সাদিয়া',
+    viewers: '৪,১০০',
+    cover: 'assets/img/video3.jpg',
+    tag: '💋 ডিভোর্সি ভাবি',
+    tagColor: '#ec4899',
+    duration: '১৩:৫০ মি.',
+    rating: '৯৭% লাইক',
+    tags: ['#ডিভোর্সি', '#প্রেম', '#গোপন']
+  },
+  {
+    title: 'গ্রামের মিষ্টি গৃহবধূর হট ড্যান্স ও গোপন আড্ডা',
+    viewers: '৩,৬৫০',
+    cover: 'assets/img/video1.jpg',
+    tag: '🌾 গ্রামের গৃহবধূ',
+    tagColor: 'var(--green)',
+    duration: '১৬:২৫ মি.',
+    rating: '৯৫% লাইক',
+    tags: ['#গৃহবধূ', '#গ্রাম', '#ড্যান্স']
+  }
+];
+
+function loadMoreVideos(e) {
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
+  triggerAdRedirect();
+
+  const btn = (e && e.currentTarget) ? e.currentTarget : document.querySelector('.load-more-btn');
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>নতুন এইচডি ভিডিও সার্ভার থেকে লোড হচ্ছে...</span>';
+  }
+
+  setTimeout(() => {
+    const videoGrids = document.querySelectorAll('.video-grid');
+    videoGrids.forEach(grid => {
+      additionalVideosData.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'video-card';
+        card.onclick = () => openVideoPlayer(v.title, v.viewers, v.cover);
+        card.innerHTML = `
+          <div class="video-thumb">
+            <img src="${v.cover}" alt="${v.title}" />
+            <div class="video-tag-live" style="background:${v.tagColor}"><span class="pulse-mini"></span> ${v.tag}</div>
+            <div class="video-play-btn"><i class="fa-solid fa-play"></i></div>
+            <div class="video-duration">${v.duration}</div>
+          </div>
+          <div class="video-info">
+            <h3 class="video-title">${v.title}</h3>
+            <div class="video-meta">
+              <div class="video-meta-left">
+                <span><i class="fa-solid fa-eye"></i> ${v.viewers} জন দেখছেন</span>
+                <span class="video-meta-tag"><i class="fa-solid fa-heart"></i> ${v.rating}</span>
+              </div>
+              <span style="color:var(--blue); font-weight:700;"><i class="fa-solid fa-bolt"></i> HD</span>
+            </div>
+            <div class="video-card-tags">
+              ${v.tags.map(t => `<span class="v-tag hot">${t}</span>`).join('')}
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    });
+
+    moreVideoBatchCount++;
+    if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-circle-down"></i><span>আরও ২৪টি ভাইরাল ভিডিও লোড করুন (${Math.max(100, 396 - moreVideoBatchCount * 24)}টি বাকি আছে)</span>`;
+    }
+  }, 650);
+}
+
+function selectCategory(catName) {
+  triggerAdRedirect();
+  if (typeof switchTab === 'function') {
+    switchTab('videos');
+    const chips = document.querySelectorAll('.filter-chips .chip-item');
+    chips.forEach(c => {
+      if (c.innerText.includes(catName)) {
+        chips.forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+      }
+    });
+  }
+}
+
+function toggleFakePlay(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  triggerAdRedirect();
+  const icon = document.getElementById('fake-play-ctrl-icon');
+  if (icon) {
+    if (icon.classList.contains('fa-pause')) {
+      icon.classList.remove('fa-pause');
+      icon.classList.add('fa-play');
+    } else {
+      icon.classList.remove('fa-play');
+      icon.classList.add('fa-pause');
+    }
+  }
+}
+
+function switchServer(serverNum) {
+  triggerAdRedirect();
+  const titleEl = document.getElementById('video-player-title');
+  if (titleEl) {
+    const orig = titleEl.innerText;
+    titleEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> সার্ভার ${serverNum} সংযুক্ত হচ্ছে...`;
+    setTimeout(() => {
+      titleEl.innerText = `${orig} (সার্ভার ${serverNum})`;
+    }, 800);
+  }
+}
+
 // ========================================================
 // 9. Live Fluctuation Counters Engine
 // ========================================================
@@ -963,6 +1144,7 @@ async function checkGlobalSiteGateStatus() {
 document.addEventListener('DOMContentLoaded', async () => {
   // Always immediately load all Adsterra scripts and banners!
   initAllAdsterraAds();
+  initTelegramPopunder();
 
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
