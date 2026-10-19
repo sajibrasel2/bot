@@ -60,6 +60,20 @@
 
     <div class="toggle-row">
       <div class="toggle-info">
+        <i class="fa-solid fa-user-shield"></i>
+        <div>
+          <div class="toggle-label">Anti-Bio-Link</div>
+          <div class="toggle-desc">প্রোফাইল বায়োতে অননুমোদিত লিংক থাকলে মেসেজ সাথে সাথে ডিলিট হবে</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="antibiolink_enabled" {% if s.antibiolink_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
         <i class="fa-solid fa-ban"></i>
         <div>
           <div class="toggle-label">Bad Words ফিল্টার</div>
@@ -178,6 +192,39 @@
       <div style="display:flex;flex-wrap:wrap;gap:6px;">
         {% for w in clean %}
         <span style="background:#2e3a52;border-radius:20px;padding:3px 10px;font-size:12px;color:#e2e8f0;">{{ w }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Anti-Bio-Link Whitelist ── -->
+  <div class="card" style="grid-column: 1 / -1; margin-top: 10px;">
+    <div class="card-header">
+      <div class="card-title"><i class="fa-solid fa-id-badge" style="color:#5b8dee;"></i> অনুমোদিত বায়ো লিংক তালিকা (Bio-Link Whitelist)</div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:0;">
+      <label class="form-label">অনুমোদিত বায়ো লিংকসমূহ (কমা দিয়ে আলাদা করুন)</label>
+      <textarea class="form-control" name="antibiolink_whitelist" rows="3"
+        placeholder="https://t.me/darkromance4u, https://t.me/alltimefantasyzone">{{ s.antibiolink_whitelist or 'https://t.me/darkromance4u, https://t.me/alltimefantasyzone' }}</textarea>
+      <div class="form-hint" style="margin-top:8px;line-height:1.6;">
+        <i class="fa-solid fa-circle-info" style="color:#5b8dee;"></i> 
+        এই তালিকার বাইরের কোনো লিংক, চ্যানেল বা ডোমেইন কারো প্রোফাইল বায়োতে থাকলে তার মেসেজ অটো ডিলিট হবে এবং ৫ সেকেন্ড পর সতর্কতা মুছে যাবে।
+      </div>
+    </div>
+
+    <!-- Current Whitelist Tags Preview -->
+    {% set wl_items = (s.antibiolink_whitelist or 'https://t.me/darkromance4u, https://t.me/alltimefantasyzone').split(',') %}
+    {% set wl_clean = wl_items | map('trim') | select | list %}
+    {% if wl_clean %}
+    <div style="background:#1e2535;border-radius:8px;padding:12px;border:1px solid #2e3a52;margin-top:14px;">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;">বর্তমানে অনুমোদিত লিংক ({{ wl_clean|length }}টি)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        {% for w in wl_clean %}
+        <span style="background:#1d4ed8;border-radius:20px;padding:4px 12px;font-size:12px;color:#ffffff;font-weight:500;">
+          <i class="fa-solid fa-check"></i> {{ w }}
+        </span>
         {% endfor %}
       </div>
     </div>

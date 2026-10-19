@@ -360,15 +360,19 @@ def _settings_markup(chat_id: int, settings: dict):
                 callback_data=f"set_toggle:{chat_id}:antilink_enabled"
             ),
             InlineKeyboardButton(
-                f"🌊 Antiflood: {'✅' if settings.get('antiflood_enabled') else '❌'}",
-                callback_data=f"set_toggle:{chat_id}:antiflood_enabled"
+                f"🛡️ Bio-Link: {'✅' if settings.get('antibiolink_enabled') else '❌'}",
+                callback_data=f"set_toggle:{chat_id}:antibiolink_enabled"
             ),
             InlineKeyboardButton(
-                f"🚫 Badwords: {'✅' if settings.get('badwords_enabled') else '❌'}",
-                callback_data=f"set_toggle:{chat_id}:badwords_enabled"
+                f"🌊 Antiflood: {'✅' if settings.get('antiflood_enabled') else '❌'}",
+                callback_data=f"set_toggle:{chat_id}:antiflood_enabled"
             )
         ],
         [
+            InlineKeyboardButton(
+                f"🚫 Badwords: {'✅' if settings.get('badwords_enabled') else '❌'}",
+                callback_data=f"set_toggle:{chat_id}:badwords_enabled"
+            ),
             InlineKeyboardButton(
                 f"💬 Msg Lock: {'🔒' if settings.get('lock_messages') else '🔓'}",
                 callback_data=f"set_toggle:{chat_id}:lock_messages"
@@ -376,13 +380,13 @@ def _settings_markup(chat_id: int, settings: dict):
             InlineKeyboardButton(
                 f"🖼️ Media Lock: {'🔒' if settings.get('lock_media') else '🔓'}",
                 callback_data=f"set_toggle:{chat_id}:lock_media"
-            ),
-            InlineKeyboardButton(
-                f"👾 Sticker Lock: {'🔒' if settings.get('lock_stickers') else '🔓'}",
-                callback_data=f"set_toggle:{chat_id}:lock_stickers"
             )
         ],
         [
+            InlineKeyboardButton(
+                f"👾 Sticker Lock: {'🔒' if settings.get('lock_stickers') else '🔓'}",
+                callback_data=f"set_toggle:{chat_id}:lock_stickers"
+            ),
             InlineKeyboardButton("❌ প্যানেল বন্ধ করুন", callback_data=f"set_close:{chat_id}")
         ]
     ]
@@ -400,6 +404,7 @@ def _settings_text(chat_title, settings):
         f"  • গুডবাই মেসেজ: {'✅ চালু' if settings.get('goodbye_enabled') else '❌ বন্ধ'}\n\n"
         f"🛡️ <b>স্প্যাম প্রটেকশন:</b>\n"
         f"  • লিংক ব্লক (Antilink): {'✅ চালু (১০ জন অ্যাড করলে আনলক)' if settings.get('antilink_enabled') else '❌ বন্ধ'}\n"
+        f"  • বায়ো লিংক প্রটেকশন (Bio-Link): {'✅ চালু' if settings.get('antibiolink_enabled') else '❌ বন্ধ'}\n"
         f"  • ফ্লাড প্রটেকশন (Antiflood): {'✅ চালু' if settings.get('antiflood_enabled') else '❌ বন্ধ'}\n"
         f"  • নিষিদ্ধ শব্দ ফিল্টার: {'✅ চালু' if settings.get('badwords_enabled') else '❌ বন্ধ'}\n\n"
         f"🔒 <b>চ্যাট লকিং:</b>\n"

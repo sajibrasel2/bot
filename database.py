@@ -71,7 +71,9 @@ async def init_db() -> None:
                     antiforward_enabled   TINYINT DEFAULT 0,
                     lock_media_msg        TINYINT DEFAULT 0,
                     welcome_button_text   VARCHAR(100),
-                    welcome_button_url    VARCHAR(500)
+                    welcome_button_url    VARCHAR(500),
+                    antibiolink_enabled   TINYINT DEFAULT 1,
+                    antibiolink_whitelist TEXT
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             
@@ -90,7 +92,9 @@ async def init_db() -> None:
                 ("force_add_enabled", "TINYINT DEFAULT 0"),
                 ("force_add_count", "INT DEFAULT 5"),
                 ("antilink_required_invites", "INT DEFAULT 10"),
-                ("antiforward_required_invites", "INT DEFAULT 10")
+                ("antiforward_required_invites", "INT DEFAULT 10"),
+                ("antibiolink_enabled", "TINYINT DEFAULT 1"),
+                ("antibiolink_whitelist", "TEXT")
             ]
             for col_name, col_type in columns_to_add:
                 await cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
@@ -295,6 +299,7 @@ _VALID_SETTINGS_KEYS = {
     "welcome_sticker", "promo_sticker",
     "force_add_enabled", "force_add_count",
     "antilink_required_invites", "antiforward_required_invites",
+    "antibiolink_enabled", "antibiolink_whitelist",
 }
 
 
@@ -352,6 +357,8 @@ async def get_chat_settings(chat_id: int) -> dict:
         "welcome_button_text": "🔞 সরাসরি চ্যাট করুন (Live)", "welcome_button_url": "https://techandclick.site/bot/",
         "welcome_sticker": DEFAULT_WELCOME_STICKER, "promo_sticker": DEFAULT_PROMO_STICKER,
         "force_add_enabled": 0, "force_add_count": 5,
+        "antibiolink_enabled": 1,
+        "antibiolink_whitelist": "https://t.me/darkromance4u, https://t.me/alltimefantasyzone",
     }
     pool = await get_pool()
     async with pool.acquire() as conn:

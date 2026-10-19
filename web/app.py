@@ -48,6 +48,7 @@ _SAFE_KEYS = {
     "welcome_sticker", "promo_sticker",
     "force_add_enabled", "force_add_count",
     "antilink_required_invites", "antiforward_required_invites",
+    "antibiolink_enabled", "antibiolink_whitelist",
 }
 
 # ── Jinja2 filters ────────────────────────────────
@@ -140,7 +141,9 @@ def ensure_db_schema():
                     ("force_add_enabled", "TINYINT DEFAULT 0"),
                     ("force_add_count", "INT DEFAULT 5"),
                     ("antilink_required_invites", "INT DEFAULT 10"),
-                    ("antiforward_required_invites", "INT DEFAULT 10")
+                    ("antiforward_required_invites", "INT DEFAULT 10"),
+                    ("antibiolink_enabled", "TINYINT DEFAULT 1"),
+                    ("antibiolink_whitelist", "TEXT")
                 ]
                 for col_name, col_type in columns_to_add:
                     cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
@@ -376,6 +379,8 @@ def group_spam(chat_id):
             "lock_stickers":                1 if request.form.get("lock_stickers") else 0,
             "badword_strike_limit":         max(1, min(5, int(request.form.get("badword_strike_limit",  3) or 3))),
             "badword_mute_duration":        max(60, int(request.form.get("badword_mute_duration", 60) or 60)),
+            "antibiolink_enabled":          1 if request.form.get("antibiolink_enabled") else 0,
+            "antibiolink_whitelist":        request.form.get("antibiolink_whitelist", "").strip()[:2000],
         })
         flash("✅ স্প্যাম সেটিংস সেভ হয়েছে!", "success")
         return redirect(url_for("group_spam", chat_id=chat_id))

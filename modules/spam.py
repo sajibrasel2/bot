@@ -58,6 +58,87 @@ _antilink_strike_time: dict = defaultdict(lambda: defaultdict(float))
 _antiforward_strikes: dict = defaultdict(lambda: defaultdict(int))
 _antiforward_strike_time: dict = defaultdict(lambda: defaultdict(float))
 
+# Anti-Bio-Link cache & alert debounce tracker
+# User bio cache: {user_id: (timestamp, bio_str_or_none)}
+_user_bio_cache: dict = {}
+BIO_CACHE_TTL = 180  # 3 minutes cache TTL
+_bio_alert_time: dict = defaultdict(lambda: defaultdict(float))
+
+DEFAULT_BIOLINK_WHITELIST = "https://t.me/darkromance4u, https://t.me/alltimefantasyzone"
+
+BIO_URL_PATTERN = re.compile(
+    r"(https?://[^\s]+|ftp://[^\s]+|www\.[^\s]+|t\.me/[^\s]+|telegram\.me/[^\s]+|telegram\.dog/[^\s]+|tg://[^\s]+|"
+    r"wa\.me/[^\s]+|discord\.gg/[^\s]+|bit\.ly/[^\s]+|tinyurl\.com/[^\s]+|cutt\.ly/[^\s]+|rb\.gy/[^\s]+|is\.gd/[^\s]+|"
+    r"\b[a-zA-Z0-9.-]+\.(com|net|org|io|me|info|xyz|site|top|online|club|live|vip|link|app|co|bd|in|gg|ly|be|cc|ru|biz|tech|store|shop|pro|win|fun|icu|page)\b(/[^\s]*)?)",
+    re.IGNORECASE
+)
+BIO_MENTION_PATTERN = re.compile(r"(?<!\w)@([a-zA-Z0-9_]{4,32})", re.IGNORECASE)
+
+def _normalize_bio_target(target: str) -> str:
+    target = target.strip().lower()
+    target = re.sub(r"^https?://", "", target)
+    target = re.sub(r"^www\.", "", target)
+    target = re.sub(r"^(t\.me|telegram\.me|telegram\.dog)/", "", target)
+    target = target.lstrip("@").strip("/")
+    return target
+
+def _parse_biolink_whitelist(whitelist_raw: str | None) -> set:
+    if not whitelist_raw or not whitelist_raw.strip():
+        whitelist_raw = DEFAULT_BIOLINK_WHITELIST
+    items = set()
+    tokens = re.split(r"[,\n\r\t]+", whitelist_raw)
+    for t in tokens:
+        t = t.strip()
+        if not t:
+            continue
+        items.add(t.lower())
+        norm = _normalize_bio_target(t)
+        if norm:
+            items.add(norm)
+    return items
+
+def check_bio_unauthorized(bio: str | None, whitelist_raw: str | None) -> tuple[bool, list[str]]:
+    if not bio or not bio.strip():
+        return False, []
+    
+    whitelist = _parse_biolink_whitelist(whitelist_raw)
+    unauthorized = []
+    
+    # 1. Check URLs in bio
+    for match in BIO_URL_PATTERN.finditer(bio):
+        raw_url = match.group(0).strip(".,!?;:()[]{}")
+        norm = _normalize_bio_target(raw_url)
+        if raw_url.lower() in whitelist or norm in whitelist:
+            continue
+        if any(norm == w or norm.startswith(w + "/") for w in whitelist if w):
+            continue
+        unauthorized.append(raw_url)
+        
+    # 2. Check @mentions in bio
+    for match in BIO_MENTION_PATTERN.finditer(bio):
+        handle = match.group(1).lower()
+        if handle in whitelist or f"@{handle}" in whitelist:
+            continue
+        unauthorized.append(f"@{handle}")
+        
+    return len(unauthorized) > 0, unauthorized
+
+async def get_user_bio(user_id: int, context: ContextTypes.DEFAULT_TYPE) -> str | None:
+    now = time.time()
+    cached = _user_bio_cache.get(user_id)
+    if cached and (now - cached[0] < BIO_CACHE_TTL):
+        return cached[1]
+    
+    try:
+        chat_obj = await context.bot.get_chat(user_id)
+        bio = getattr(chat_obj, "bio", None) or ""
+        _user_bio_cache[user_id] = (now, bio)
+        return bio
+    except Exception as e:
+        logger.debug(f"Failed to fetch bio for user {user_id}: {e}")
+        _user_bio_cache[user_id] = (now - BIO_CACHE_TTL + 60, None)
+        return None
+
 BADWORD_STRIKE_WINDOW      = 300     # ৫ মিনিটের মধ্যে strike expiry
 ANTILINK_STRIKE_WINDOW     = 3600    # ১ ঘণ্টার মধ্যে strike expiry
 ANTILINK_STRIKE_LIMIT      = 3       # সর্বোচ্চ ৩ বার লিংক দিলে মিউট
@@ -316,6 +397,31 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
     if chat.type != "private" and chat.title:
         asyncio.create_task(update_chat_info(chat.id, title=chat.title))
+
+    # ── Anti-Bio-Link (অননুমোদিত প্রোফাইল বায়ো লিংক প্রটেকশন) ────────────────
+    if settings.get("antibiolink_enabled", 1):
+        user_bio = await get_user_bio(user.id, context)
+        if user_bio:
+            wl_raw = settings.get("antibiolink_whitelist")
+            is_unauth, bad_links = check_bio_unauthorized(user_bio, wl_raw)
+            if is_unauth:
+                try:
+                    await msg.delete()
+                except Exception:
+                    pass
+
+                now = time.time()
+                last_alert = _bio_alert_time[chat.id][user.id]
+                if now - last_alert > 15:
+                    _bio_alert_time[chat.id][user.id] = now
+                    alert_text = (
+                        f"⚠️ <b>বায়ো লিংক নিষিদ্ধ!</b>\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+                        f"🔒 আপনার প্রোফাইল বায়োতে অননুমোদিত লিংক থাকায় মেসেজ মুছে দেওয়া হয়েছে।"
+                    )
+                    await _send_and_delete(context, chat.id, alert_text, delay=5)
+                return
 
     # ── Anti-flood (স্বাভাবিক ফ্লাড প্রটেকশন) ──────────────────────────────────
     if settings.get("antiflood_enabled", 0):
@@ -615,6 +721,27 @@ async def cmd_antiforward(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 
 @admin_only
+async def cmd_antibiolink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.effective_chat.id
+    args = context.args
+    if not args or args[0].lower() not in ("on", "off"):
+        settings = await get_chat_settings(chat_id)
+        status = "চালু ✅" if settings.get("antibiolink_enabled") else "বন্ধ ❌"
+        wl = settings.get("antibiolink_whitelist") or DEFAULT_BIOLINK_WHITELIST
+        await update.message.reply_html(
+            f"🛡️ <b>Anti-Bio-Link সেটিংস:</b> {status}\n\n"
+            f"📋 <b>অনুমোদিত লিংকসমূহ (Whitelist):</b>\n<code>{wl}</code>\n\n"
+            f"💡 ব্যবহার: <code>/antibiolink on</code> অথবা <code>/antibiolink off</code>"
+        )
+        return
+    val = 1 if args[0].lower() == "on" else 0
+    await update_chat_setting(chat_id, "antibiolink_enabled", val)
+    await update.message.reply_html(
+        f"🛡️ Anti-Bio-Link {'<b>চালু ✅</b> (প্রোফাইলে অননুমোদিত বায়ো লিংক থাকলে মেসেজ সাথে সাথে মুছে যাবে)' if val else '<b>বন্ধ ❌</b>'}"
+    )
+
+
+@admin_only
 async def cmd_badwords_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     args = context.args
     if not args or args[0].lower() not in ("on", "off"):
@@ -683,7 +810,7 @@ VALID_COMMANDS = {
     "setwelcome", "setgoodbye", "welcome", "goodbye", "resetwelcome", "setwelcomesticker", "delwelcomesticker", "setwelcomebtn", "delwelcomebtn",
     "promo", "sendpromo", "setpromosticker", "delpromosticker",
     "servicealert", "sendalert", "girlnotice",
-    "antiflood", "antilink", "antiforward", "badwords", "addbadword", "delbadword", "badwordlist",
+    "antiflood", "antilink", "antiforward", "antibiolink", "badwords", "addbadword", "delbadword", "badwordlist",
     "notes", "save", "get", "clear"
 }
 
@@ -733,6 +860,7 @@ def register(app) -> None:
     app.add_handler(CommandHandler("antiflood",   cmd_antiflood))
     app.add_handler(CommandHandler("antilink",    cmd_antilink))
     app.add_handler(CommandHandler("antiforward", cmd_antiforward))
+    app.add_handler(CommandHandler("antibiolink", cmd_antibiolink))
     app.add_handler(CommandHandler("badwords",    cmd_badwords_toggle))
     app.add_handler(CommandHandler("addbadword",  cmd_addbadword))
     app.add_handler(CommandHandler("delbadword",  cmd_delbadword))
