@@ -72,7 +72,7 @@ BOT_MSG_AUTO_DELETE        = 30     # বটের সতর্কতা মে�
 URL_PATTERN = re.compile(
     r"(https?://|ftp://|www\.|t\.me/|telegram\.me/|telegram\.dog/|tg://|"
     r"wa\.me/|discord\.gg/|bit\.ly/|tinyurl\.com/|cutt\.ly/|rb\.gy/|is\.gd/|"
-    r"@[a-zA-Z0-9_]{3,}|\b[a-zA-Z0-9.-]+\.(com|net|org|io|me|info|xyz|site|top|online|club|live|vip|link|app|co|bd|in|gg|ly|be|cc|ru|biz|tech|store|shop|pro|win|fun|icu|page)\b(/[^\s]*)?)",
+    r"\b[a-zA-Z0-9.-]+\.(com|net|org|io|me|info|xyz|site|top|online|club|live|vip|link|app|co|bd|in|gg|ly|be|cc|ru|biz|tech|store|shop|pro|win|fun|icu|page)\b(/[^\s]*)?)",
     re.IGNORECASE
 )
 
@@ -352,32 +352,18 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         has_link = False
         bot_uname = (context.bot.username or "").lower()
 
-        # 1. Regex check on text or caption (URLs, t.me links, @mentions)
+        # 1. Regex check on text or caption for actual web links / invite URLs
         if content_text:
-            for match in URL_PATTERN.finditer(content_text):
-                matched_str = match.group(0).lower().lstrip("@")
-                if bot_uname and matched_str == bot_uname:
-                    continue
+            if URL_PATTERN.search(content_text):
                 has_link = True
-                break
 
-        # 2. Check Telegram entities (for text or media captions)
+        # 2. Check Telegram entities (url and text_link only — allowing member mentions)
         if not has_link:
             entities = list(msg.entities or []) + list(msg.caption_entities or [])
             for ent in entities:
-                if ent.type in ("url", "text_link", "text_mention"):
+                if ent.type in ("url", "text_link"):
                     has_link = True
                     break
-                elif ent.type == "mention":
-                    try:
-                        mention_str = content_text[ent.offset : ent.offset + ent.length].lstrip("@").lower()
-                        if bot_uname and mention_str == bot_uname:
-                            continue
-                        has_link = True
-                        break
-                    except Exception:
-                        has_link = True
-                        break
 
         if has_link:
             # Check user confirmed invites from database
