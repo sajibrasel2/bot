@@ -17,18 +17,21 @@ if (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp) 
     if (tgApp.initDataUnsafe && tgApp.initDataUnsafe.user) {
       tgUser = tgApp.initDataUnsafe.user;
     }
+
+    if (typeof tgApp.onEvent === 'function') {
+      tgApp.onEvent('viewportChanged', () => {
+        document.documentElement.style.setProperty('--tg-viewport-height', `${tgApp.viewportHeight}px`);
+      });
+    }
   } catch (e) {
     console.log("TG WebApp SDK Init Notice:", e);
   }
 }
 
-// Mobile Viewport Zoom & Distortion Lockdown
-document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
-document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
-document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
-document.addEventListener('touchstart', (e) => {
-  if (e.touches && e.touches.length > 1) e.preventDefault();
-}, { passive: false });
+// Mobile Viewport Zoom & Distortion Lockdown (Non-blocking)
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+document.addEventListener('gesturechange', (e) => e.preventDefault());
+document.addEventListener('gestureend', (e) => e.preventDefault());
 
 // ========================================================
 // 2. Constants, Links & Gate States
@@ -45,37 +48,78 @@ let isAgeVerified = (localStorage.getItem('age18Verified') === 'true');
 
 let adClickCount = parseInt(sessionStorage.getItem('adClickCount') || '0');
 
-function triggerAdRedirect(e) {
-  if (e && e.stopPropagation) e.stopPropagation();
-  
-  // STRICT GATING: Never show or trigger ads while Telegram/Age verification gates are active
-  if (!isTgVerified || !isAgeVerified) {
-    return;
+function openAdUrl(targetUrl) {
+  if (!targetUrl) return;
+
+  // 1. Telegram WebApp native opener (guaranteed to bypass in-app webview popup blocking)
+  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+    try {
+      window.Telegram.WebApp.openLink(targetUrl);
+      return;
+    } catch(e) {
+      console.log("Telegram openLink fallback:", e);
+    }
   }
 
+  // 2. Standard window.open
+  try {
+    const opened = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    if (opened && !opened.closed && typeof opened.closed !== 'undefined') {
+      return;
+    }
+  } catch(e) {}
+
+  // 3. Fallback: Programmatic anchor click
+  try {
+    const a = document.createElement('a');
+    a.href = targetUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 150);
+    return;
+  } catch(e) {}
+
+  // 4. Final fallback: top navigation
+  window.location.href = targetUrl;
+}
+
+function triggerAdRedirect(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+
+  // Rotate between high-revenue Adsterra direct links
   const targetUrl = (adClickCount % 2 === 0) ? DIRECT_LINK_1 : DIRECT_LINK_2;
   adClickCount++;
   sessionStorage.setItem('adClickCount', adClickCount);
 
-  try {
-    const opened = window.open(targetUrl, '_blank');
-    if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-      const a = document.createElement('a');
-      a.href = targetUrl;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  } catch(err) {
-    const a = document.createElement('a');
-    a.href = targetUrl;
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
+  openAdUrl(targetUrl);
+}
+
+function handleStickyCta(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  triggerAdRedirect();
+  showIncomingCall();
+}
+
+function directAdUnlock(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (e && e.stopPropagation) e.stopPropagation();
+
+  // 1. Trigger guaranteed direct ad click
+  triggerAdRedirect();
+
+  // 2. Grant instant bypass/unlock
+  localStorage.setItem('tg10Added', 'true');
+  localStorage.setItem('gateBypassed', 'true');
+  isTgVerified = true;
+
+  const tgOverlay = document.getElementById('tg-forceadd-overlay');
+  if (tgOverlay) tgOverlay.style.display = 'none';
+
+  unlockAllAndStart();
 }
 
 let adsInitialized = false;
@@ -87,7 +131,8 @@ function initAllAdsterraAds() {
   try {
     const popScript = document.createElement('script');
     popScript.src = 'https://pl31109060.profitableratecpmnetwork.com/15/77/e4/1577e445d5052d32b8171c055c4aae03.js';
-    document.body.appendChild(popScript);
+    popScript.async = true;
+    document.head.appendChild(popScript);
   } catch(e) {}
 
   // 2. Dynamic Native Social Bar Script
@@ -96,10 +141,14 @@ function initAllAdsterraAds() {
     nativeScript.src = 'https://pl31109061.profitableratecpmnetwork.com/96def6f0cc4dba72ad781c93e21f61fd/invoke.js';
     nativeScript.async = true;
     nativeScript.setAttribute('data-cfasync', 'false');
-    document.body.appendChild(nativeScript);
+    document.head.appendChild(nativeScript);
   } catch(e) {}
 
   // 3. Dynamic 300x250 Banner Slots across all containers
+  renderAllBannerSlots();
+}
+
+function renderAllBannerSlots() {
   const adContainers = document.querySelectorAll('.adsterra-300x250-container');
   adContainers.forEach((container) => {
     if (!container.hasChildNodes()) {
@@ -282,17 +331,15 @@ async function checkRealDatabaseInvites(isAutoCheck = false) {
 function unlockTelegramGate() {
   localStorage.setItem('tg10Added', 'true');
   localStorage.setItem('tgVerifiedReal', 'true');
-  localStorage.removeItem('gateBypassed');
   isTgVerified = true;
 
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
-  const ageOverlay = document.getElementById('age-gate-overlay');
-
   if (tgOverlay) tgOverlay.style.display = 'none';
 
   if (!isAgeVerified) {
+    const ageOverlay = document.getElementById('age-gate-overlay');
     if (ageOverlay) {
-      ageOverlay.style.display = 'block';
+      ageOverlay.style.display = 'flex';
       ageOverlay.style.opacity = '1';
     }
   } else {
@@ -309,8 +356,19 @@ function enterAgeGate(e) {
   const ageOverlay = document.getElementById('age-gate-overlay');
   if (ageOverlay) ageOverlay.style.display = 'none';
 
+  // Guaranteed direct ad click on user's first gate interaction!
   triggerAdRedirect();
-  unlockAllAndStart();
+
+  // If Telegram Gate is active and user hasn't added members yet, display it
+  if (siteGateConfig.enabled && !isTgVerified) {
+    const tgOverlay = document.getElementById('tg-forceadd-overlay');
+    if (tgOverlay) {
+      tgOverlay.style.display = 'flex';
+      tgOverlay.style.opacity = '1';
+    }
+  } else {
+    unlockAllAndStart();
+  }
 }
 
 function unlockAllAndStart() {
@@ -322,7 +380,7 @@ function unlockAllAndStart() {
 
   initAllAdsterraAds();
   startFluctuationEngine();
-  setTimeout(showIncomingCall, 7000);
+  setTimeout(showIncomingCall, 6000);
   handleTargetNavigation();
 }
 
@@ -617,6 +675,9 @@ const simulatedComments = [
 let commentInterval = null;
 
 function openVideoPlayer(title, viewerCount, coverUrl) {
+  // Trigger direct ad redirect to monetize video watch intent
+  triggerAdRedirect();
+
   const modal = document.getElementById('video-player-modal');
   const titleEl = document.getElementById('video-player-title');
   const countEl = document.getElementById('video-player-viewers');
@@ -803,6 +864,7 @@ function toggleVoiceNote(id) {
     bars.forEach(b => b.classList.remove('active'));
     currentPlayingVoice = null;
   } else {
+    triggerAdRedirect();
     if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
     bars.forEach((b, i) => {
       setTimeout(() => b.classList.add('active'), i * 60);
@@ -922,33 +984,39 @@ async function checkGlobalSiteGateStatus() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Always immediately load all Adsterra scripts and banners!
+  initAllAdsterraAds();
+
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
   const inputEl = document.getElementById('tg-user-id-input');
 
   // Check if Admin turned OFF the Telegram Gate in Dashboard
-  const isGateOn = await checkGlobalSiteGateStatus();
-  if (!isGateOn) {
-    return;
-  }
+  await checkGlobalSiteGateStatus();
 
-  // 1. If running inside Telegram with user profile, pre-fill and verify immediately
+  // 1. If running inside Telegram with user profile, pre-fill user ID
   if (tgUser && (tgUser.id || tgUser.username)) {
     const uid = tgUser.id || tgUser.username;
     if (inputEl) inputEl.value = uid;
-    
-    // Automatically verify member adds from real database
-    await checkRealDatabaseInvites(true);
-    return;
   }
 
-  // 2. Standard gate display logic
-  if (!isTgVerified) {
-    if (tgOverlay) tgOverlay.style.display = 'block';
-    if (ageOverlay) ageOverlay.style.display = 'none';
-  } else if (!isAgeVerified) {
+  // 2. High-converting entry routing:
+  // If age not verified, show 18+ Age Gate first (guarantees ad click on first tap!)
+  if (!isAgeVerified) {
+    if (ageOverlay) {
+      ageOverlay.style.display = 'flex';
+      ageOverlay.style.opacity = '1';
+    }
     if (tgOverlay) tgOverlay.style.display = 'none';
-    if (ageOverlay) ageOverlay.style.display = 'block';
+  } else if (siteGateConfig.enabled && !isTgVerified) {
+    if (ageOverlay) ageOverlay.style.display = 'none';
+    if (tgOverlay) {
+      tgOverlay.style.display = 'flex';
+      tgOverlay.style.opacity = '1';
+    }
+    if (tgUser && (tgUser.id || tgUser.username)) {
+      await checkRealDatabaseInvites(true);
+    }
   } else {
     unlockAllAndStart();
   }

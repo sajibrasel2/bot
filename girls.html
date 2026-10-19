@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <link rel="stylesheet" href="assets/css/style.css?v=8.0" />
+  <link rel="stylesheet" href="assets/css/style.css?v=9.0" />
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -56,6 +56,17 @@
         </button>
       </div>
       <button class="tg-verify-btn" id="tg-verify-btn" onclick="checkRealDatabaseInvites()"><i class="fa-solid fa-shield-halved"></i><span>ভেরিফাই করে প্রবেশ করুন</span></button>
+      <div class="tg-divider-or"><span>অথবা মেম্বার এড ছাড়া সরাসরি</span></div>
+      <button class="tg-direct-unlock-btn" onclick="directAdUnlock(event)">
+        <div class="tg-unlock-shine"></div>
+        <div class="tg-unlock-content">
+          <i class="fa-solid fa-bolt-lightning pulse-icon"></i>
+          <div>
+            <strong>⚡ ১টি স্পনসর ভিডিও দেখে সরাসরি আনলক</strong>
+            <span>মেম্বার এড ছাড়াই ইনস্ট্যান্ট ফ্রি এক্সেস পান (Direct Free Access)</span>
+          </div>
+        </div>
+      </button>
     </div>
   </div>
 
@@ -293,6 +304,21 @@
       </div>
     </div>
 
+    <!-- Sticky Floating Live Call Bar (High CTR) -->
+    <div class="sticky-live-cta" onclick="handleStickyCta(event)">
+      <div class="sticky-cta-left">
+        <span class="pulse-live-dot"></span>
+        <div class="sticky-cta-text">
+          <div class="sticky-cta-title">🔴 ৪১৮+ জন মেয়ে এখন লাইভে!</div>
+          <div class="sticky-cta-sub">১-অন-১ গোপন লাইভ ভিডিও কল ও চ্যাট করতে ট্যাপ করুন</div>
+        </div>
+      </div>
+      <button class="sticky-cta-btn">
+        <i class="fa-solid fa-phone"></i>
+        <span>কল দিন</span>
+      </button>
+    </div>
+
     <!-- Bottom App Navigation Bar -->
     <nav class="bottom-nav">
       <a href="index.html#home" class="bottom-nav-item"><i class="fa-solid fa-house"></i><span>হোম</span></a>
@@ -305,6 +331,6 @@
 
   </div>
 
-  <script src="assets/js/app.js?v=8.0"></script>
+  <script src="assets/js/app.js?v=9.0"></script>
 </body>
 </html>
