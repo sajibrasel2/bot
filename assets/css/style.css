@@ -1908,6 +1908,10 @@ nav.bottom-nav {
   -webkit-overflow-scrolling: touch !important;
 }
 
+.tg-forceadd-overlay {
+  display: none !important;
+}
+
 .age-gate-overlay {
   display: none;
   z-index: 99999 !important;

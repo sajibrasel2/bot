@@ -553,7 +553,7 @@ def _get_global_settings():
             "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা</a>"
         )
     settings = {
-        "site_gate_enabled": "1",
+        "site_gate_enabled": "0",
         "site_gate_required_invites": "10",
         "site_gate_custom_link": "https://t.me/alltimefantasyzone",
         "service_alert_enabled": "1",

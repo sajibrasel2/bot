@@ -194,7 +194,7 @@ async def init_db() -> None:
                     setting_val TEXT
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
-            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_enabled', '1')")
+            await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('site_gate_enabled', '0') ON DUPLICATE KEY UPDATE setting_val='0'")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_required_invites', '10')")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/alltimefantasyzone')")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_enabled', '1')")
@@ -730,7 +730,7 @@ async def get_all_global_settings() -> dict:
             await cur.execute("SELECT setting_key, setting_val FROM global_settings")
             rows = await cur.fetchall()
             res = {
-                "site_gate_enabled": "1",
+                "site_gate_enabled": "0",
                 "site_gate_required_invites": "10",
                 "site_gate_custom_link": "https://t.me/alltimefantasyzone",
                 "service_alert_enabled": "1",

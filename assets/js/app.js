@@ -43,7 +43,7 @@ const TG_SHARE_URL = `https://t.me/share/url?url=${encodeURIComponent(TG_GROUP_L
 const DIRECT_LINK_1 = 'https://omg10.com/4/11017767';
 const DIRECT_LINK_2 = 'https://www.effectivecpmnetwork.com/mgtqwzbp?key=5c4003e0ae2b0ebd387daded087bc9aa';
 
-let isTgVerified = (localStorage.getItem('tg10Added') === 'true');
+let isTgVerified = true;
 let isAgeVerified = (localStorage.getItem('age18Verified') === 'true');
 
 let adClickCount = parseInt(sessionStorage.getItem('adClickCount') || '0');
@@ -356,19 +356,13 @@ function enterAgeGate(e) {
   const ageOverlay = document.getElementById('age-gate-overlay');
   if (ageOverlay) ageOverlay.style.display = 'none';
 
+  const tgOverlay = document.getElementById('tg-forceadd-overlay');
+  if (tgOverlay) tgOverlay.style.display = 'none';
+
   // Guaranteed direct ad click on user's first gate interaction!
   triggerAdRedirect();
 
-  // If Telegram Gate is active and user hasn't added members yet, display it
-  if (siteGateConfig.enabled && !isTgVerified) {
-    const tgOverlay = document.getElementById('tg-forceadd-overlay');
-    if (tgOverlay) {
-      tgOverlay.style.display = 'flex';
-      tgOverlay.style.opacity = '1';
-    }
-  } else {
-    unlockAllAndStart();
-  }
+  unlockAllAndStart();
 }
 
 function unlockAllAndStart() {
@@ -904,83 +898,23 @@ function filterCategories() {
 // 14. Global Gate Config & Startup DOM Router
 // ========================================================
 let siteGateConfig = {
-  enabled: true,
-  required: 10,
+  enabled: false,
+  required: 0,
   link: TG_GROUP_LINK
 };
 
 function updateGateUiElements() {
-  try {
-    const req = siteGateConfig.required || 10;
-    const link = siteGateConfig.link || TG_GROUP_LINK;
-
-    // Update group link buttons
-    const groupLinks = document.querySelectorAll('.tg-task-list a[href*="t.me"], .tg-task-btn[href*="t.me"]');
-    groupLinks.forEach(a => {
-      a.href = link;
-    });
-
-    // Update text in lock warning
-    const lockWarning = document.querySelector('.tg-lock-warning div');
-    if (lockWarning) {
-      lockWarning.innerHTML = `<strong style="color: #fff;">লক নোটিশ:</strong> টেলিগ্রাম গ্রুপে <b>${toBengaliNumerals(req)} জন মেম্বার এড</b> না করা পর্যন্ত সাইটের কোনো গোপন ভিডিও, লাইভ ক্যামেরা বা চ্যাট রুম আনলক হবে না!`;
-    }
-
-    // Update progress bar required text
-    const progressText = document.querySelector('.tg-progress-text');
-    if (progressText) {
-      const counterEl = document.getElementById('tg-added-counter');
-      const percentEl = document.getElementById('tg-progress-percent');
-      const curCount = counterEl ? counterEl.innerText : '০';
-      const curPct = percentEl ? percentEl.innerText : '০%';
-      progressText.innerHTML = `<span>মেম্বার এড অগ্রগতি:</span><span><strong id="tg-added-counter" style="color: var(--tg-cyan);">${curCount}</strong> / ${toBengaliNumerals(req)} জন (<span id="tg-progress-percent">${curPct}</span>)</span>`;
-    }
-  } catch (e) {}
+  const tgOverlay = document.getElementById('tg-forceadd-overlay');
+  if (tgOverlay) tgOverlay.style.display = 'none';
 }
 
 async function checkGlobalSiteGateStatus() {
-  try {
-    const res = await fetch(`api/check_invites.php?action=gate_status&_nocache=${Date.now()}`, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
-    });
-    const data = await res.json();
-    if (data && data.success) {
-      siteGateConfig.enabled = (data.gate_enabled !== false && data.site_gate_enabled !== 0);
-      siteGateConfig.required = data.required || 10;
-      if (data.custom_link) siteGateConfig.link = data.custom_link;
-
-      if (!siteGateConfig.enabled) {
-        // Gate is turned OFF by Admin from Dashboard!
-        isTgVerified = true;
-        localStorage.setItem('tg10Added', 'true');
-        localStorage.setItem('gateBypassed', 'true');
-        const tgOverlay = document.getElementById('tg-forceadd-overlay');
-        if (tgOverlay) tgOverlay.style.display = 'none';
-
-        if (!isAgeVerified) {
-          const ageOverlay = document.getElementById('age-gate-overlay');
-          if (ageOverlay) {
-            ageOverlay.style.display = 'block';
-            ageOverlay.style.opacity = '1';
-          }
-        } else {
-          unlockAllAndStart();
-        }
-        return false;
-      } else {
-        // Gate is explicitly turned ON by Admin!
-        // Invalidate previous bypass if user hasn't legitimately verified in DB:
-        if (localStorage.getItem('gateBypassed') === 'true' || localStorage.getItem('tgVerifiedReal') !== 'true') {
-          localStorage.removeItem('gateBypassed');
-          localStorage.removeItem('tg10Added');
-          isTgVerified = false;
-        }
-        updateGateUiElements();
-      }
-    }
-  } catch(e) {}
-  return true;
+  siteGateConfig.enabled = false;
+  isTgVerified = true;
+  localStorage.setItem('tg10Added', 'true');
+  const tgOverlay = document.getElementById('tg-forceadd-overlay');
+  if (tgOverlay) tgOverlay.style.display = 'none';
+  return false;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -989,40 +923,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const tgOverlay = document.getElementById('tg-forceadd-overlay');
   const ageOverlay = document.getElementById('age-gate-overlay');
-  const inputEl = document.getElementById('tg-user-id-input');
+  if (tgOverlay) tgOverlay.style.display = 'none';
 
-  // Check if Admin turned OFF the Telegram Gate in Dashboard
-  await checkGlobalSiteGateStatus();
+  // Telegram 10-member gate is disabled - allow direct entrance
+  isTgVerified = true;
+  localStorage.setItem('tg10Added', 'true');
 
-  // 1. If running inside Telegram with user profile, pre-fill user ID
-  if (tgUser && (tgUser.id || tgUser.username)) {
-    const uid = tgUser.id || tgUser.username;
-    if (inputEl) inputEl.value = uid;
-  }
-
-  // 2. High-converting entry routing:
   // If age not verified, show 18+ Age Gate first (guarantees ad click on first tap!)
   if (!isAgeVerified) {
     if (ageOverlay) {
       ageOverlay.style.display = 'flex';
       ageOverlay.style.opacity = '1';
     }
-    if (tgOverlay) tgOverlay.style.display = 'none';
-  } else if (siteGateConfig.enabled && !isTgVerified) {
-    if (ageOverlay) ageOverlay.style.display = 'none';
-    if (tgOverlay) {
-      tgOverlay.style.display = 'flex';
-      tgOverlay.style.opacity = '1';
-    }
-    if (tgUser && (tgUser.id || tgUser.username)) {
-      await checkRealDatabaseInvites(true);
-    }
   } else {
     unlockAllAndStart();
   }
 
-  // 3. Handle initial tab navigation if already unlocked
-  if (isTgVerified && isAgeVerified) {
+  // Handle initial tab navigation if already unlocked
+  if (isAgeVerified) {
     handleTargetNavigation();
   }
 });

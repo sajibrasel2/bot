@@ -91,7 +91,7 @@ if (!$pdo) {
 }
 
 // Fetch Global Settings
-$site_gate_enabled = 1;
+$site_gate_enabled = 0;
 $required = 10;
 $custom_link = 'https://t.me/alltimefantasyzone';
 
