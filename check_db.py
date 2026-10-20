@@ -57,6 +57,48 @@ async def main():
                 await pool.wait_closed()
                 return
 
+            # Dynamic migration: ensure created_at & updated_at columns exist
+            try:
+                await cur.execute("SHOW COLUMNS FROM users LIKE 'created_at'")
+                if not await cur.fetchone():
+                    print("🔄 'users' টেবিলে 'created_at' কলাম তৈরি ও ইনডেক্স করা হচ্ছে...")
+                    await cur.execute("ALTER TABLE users ADD COLUMN `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+                    await cur.execute("ALTER TABLE users ADD COLUMN `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                    await cur.execute("ALTER TABLE users ADD INDEX `idx_users_created` (created_at)")
+                    print("✅ কলাম সফলভাবে তৈরি হয়েছে!")
+            except Exception as e:
+                pass
+
+            # Backfill timestamps from user_name_history & user_invites
+            try:
+                await cur.execute("""
+                    UPDATE users u
+                    JOIN (
+                        SELECT user_id, MIN(recorded_at) as first_seen, MAX(recorded_at) as last_seen 
+                        FROM user_name_history 
+                        GROUP BY user_id
+                    ) unh ON u.user_id = unh.user_id
+                    SET u.created_at = FROM_UNIXTIME(unh.first_seen),
+                        u.updated_at = FROM_UNIXTIME(unh.last_seen)
+                    WHERE u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00'
+                """)
+            except Exception:
+                pass
+
+            try:
+                await cur.execute("""
+                    UPDATE users u
+                    JOIN (
+                        SELECT invited_id, MAX(timestamp) as last_invite 
+                        FROM user_invites 
+                        GROUP BY invited_id
+                    ) ui ON u.user_id = ui.invited_id
+                    SET u.created_at = GREATEST(COALESCE(u.created_at, FROM_UNIXTIME(ui.last_invite)), FROM_UNIXTIME(ui.last_invite))
+                    WHERE ui.last_invite > 0 AND (u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00')
+                """)
+            except Exception:
+                pass
+
             # Check columns in users
             await cur.execute("SHOW COLUMNS FROM users")
             u_cols = [c["Field"] for c in await cur.fetchall()]
@@ -198,6 +240,15 @@ async def main():
                 for d in user_dbs:
                     current_tag = " (👈 বর্তমান বট ডেটাবেজ)" if d == MYSQL_DB else ""
                     print(f"   • {d}{current_tag}")
+                    if d != MYSQL_DB and "bot" in d:
+                        try:
+                            await cur.execute(f"SHOW TABLES FROM `{d}` LIKE 'users'")
+                            if await cur.fetchone():
+                                await cur.execute(f"SELECT COUNT(*) as cnt FROM `{d}`.users")
+                                other_cnt = (await cur.fetchone())["cnt"]
+                                print(f"     └─ 🔍 এই ডেটাবেজেও 'users' টেবিল আছে! মোট মেম্বার: {other_cnt:,} জন")
+                        except Exception:
+                            pass
             except Exception:
                 pass
             print("═" * 65 + "\n")
