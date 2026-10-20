@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{% block title %}টেলিগ্রাম মেম্বার অটো-অ্যাডার{% endblock %}
 {% block page_title %}টেলিগ্রাম মেম্বার অটো-অ্যাডার ড্যাশবোর্ড{% endblock %}
 
 {% block content %}
@@ -12,7 +13,7 @@
     <div>
       <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">ডাটাবেজে মোট মেম্বার</div>
       <div style="font-size:24px; font-weight:700; margin-top:2px;">{{ total_candidates }} জন</div>
-      <div style="font-size:11px; color:var(--muted);">পূর্বের ব্যান হওয়া গ্রুপ থেকে সংগৃহীত</div>
+      <div style="font-size:11px; color:var(--muted);">ব্যান হওয়া গ্রুপ থেকে সংগৃহীত ইউজার</div>
     </div>
   </div>
 
@@ -33,8 +34,8 @@
     </div>
     <div>
       <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">আজকের সফল অ্যাড</div>
-      <div style="font-size:24px; font-weight:700; margin-top:2px; color:#f59e0b;">{{ added_today }} / {{ settings.daily_limit or '35' }}</div>
-      <div style="font-size:11px; color:var(--muted);">দৈনিক সর্বোচ্চ কোটা: {{ settings.daily_limit or '35' }} জন</div>
+      <div style="font-size:24px; font-weight:700; margin-top:2px; color:#f59e0b;">{{ added_today }} জন</div>
+      <div style="font-size:11px; color:var(--muted);">প্রতি একাউন্টে কোটা: {{ settings.daily_limit or '35' }} জন</div>
     </div>
   </div>
 
@@ -45,18 +46,246 @@
     <div>
       <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">প্রাইভেসি লকড ইউজার</div>
       <div style="font-size:24px; font-weight:700; margin-top:2px; color:#ef4444;">{{ total_privacy }} জন</div>
-      <div style="font-size:11px; color:var(--muted);">টেলিগ্রাম প্রাইভেসি কারণে বাদ দেওয়া হয়েছে</div>
+      <div style="font-size:11px; color:var(--muted);">টেলিগ্রাম প্রাইভেসি কারণে স্কিপ হয়েছে</div>
     </div>
   </div>
 </div>
 
-<!-- Safe Guidelines Notice -->
-<div style="background:linear-gradient(135deg, rgba(234,179,8,0.1), rgba(245,158,11,0.05)); border:1px solid rgba(234,179,8,0.3); border-radius:10px; padding:18px 20px; margin-bottom:24px;">
-  <div style="display:flex; align-items:center; gap:10px; font-size:15px; font-weight:700; color:#eab308; margin-bottom:8px;">
-    <i class="fa-solid fa-triangle-exclamation"></i> টেলিগ্রামের কঠোর স্প্যাম ও একাউন্ট সেফটি গাইডলাইন
+<!-- Service Controls Card (Turn On / Off / Restart Without Terminal) -->
+<div class="card" style="margin-bottom:24px; border:1px solid rgba(91,141,238,0.3); background:linear-gradient(180deg, rgba(30,37,53,0.9), var(--card));">
+  <div class="card-header" style="flex-wrap:wrap; gap:14px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="card-title" style="margin-bottom:0;">
+        <i class="fa-solid fa-power-off"></i> অটো-অ্যাডার সার্ভিস কন্ট্রোল
+      </div>
+      <div id="service-status-pill">
+        {% if is_running %}
+        <span class="badge" style="background:rgba(34,197,94,0.18); color:#22c55e; border:1px solid #22c55e; padding:5px 12px; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+          <span class="status-dot"></span> সার্ভিস চালু আছে (Running)
+        </span>
+        {% else %}
+        <span class="badge" style="background:rgba(239,68,68,0.18); color:#ef4444; border:1px solid #ef4444; padding:5px 12px; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+          <i class="fa-solid fa-circle-stop"></i> সার্ভিস বন্ধ আছে (Stopped)
+        </span>
+        {% endif %}
+      </div>
+      <span id="service-pids-text" style="font-size:12px; color:var(--muted);">
+        {% if running_pids %}PID: {{ running_pids|join(', ') }}{% endif %}
+      </span>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      {% if not is_running %}
+      <form method="POST" action="{{ url_for('member_adder_service_action', action='start') }}" style="margin:0;">
+        <button type="submit" class="btn" style="background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; padding:8px 18px; font-size:13px; font-weight:600; border-radius:8px;">
+          <i class="fa-solid fa-play"></i> অটো-অ্যাডার চালু করুন
+        </button>
+      </form>
+      {% else %}
+      <form method="POST" action="{{ url_for('member_adder_service_action', action='stop') }}" onsubmit="return confirm('আপনি কি অটো-অ্যাডার সার্ভিসটি বন্ধ করতে চান?');" style="margin:0;">
+        <button type="submit" class="btn btn-danger" style="padding:8px 18px; font-size:13px; font-weight:600; border-radius:8px;">
+          <i class="fa-solid fa-stop"></i> বন্ধ করুন (Stop)
+        </button>
+      </form>
+      <form method="POST" action="{{ url_for('member_adder_service_action', action='restart') }}" style="margin:0;">
+        <button type="submit" class="btn" style="background:linear-gradient(135deg,#2563eb,#3b82f6); color:#fff; padding:8px 18px; font-size:13px; font-weight:600; border-radius:8px;">
+          <i class="fa-solid fa-rotate-right"></i> রিস্টার্ট দিন (Restart)
+        </button>
+      </form>
+      {% endif %}
+    </div>
   </div>
+
   <div style="font-size:13px; color:var(--text); line-height:1.6;">
-    টেলিগ্রামের সিকিউরিটি পলিসি অনুযায়ী একটি সাধারণ একাউন্ট থেকে দিনে সর্বোচ্চ <b>৩০–৪০ জনের</b> বেশি মেম্বার অ্যাড করা নিষিদ্ধ। আমাদের তৈরি অটো-অ্যাডার স্ক্রিপ্টটি প্রতি অ্যাডের মাঝে <b>৬০ থেকে ১১০ সেকেন্ড</b> স্বাভাবিক মানুষের মতো বিরতি রাখে এবং দিনে ৩৫ জন সম্পন্ন হওয়া মাত্র স্বয়ংক্রিয়ভাবে থেমে যায়। ফলে আপনার একাউন্ট বা নতুন গ্রুপ ব্যান হওয়ার কোনো ঝুঁকি থাকে না।
+    <span style="color:#38bdf8; font-weight:600;"><i class="fa-solid fa-circle-info"></i> সুবিধা:</span> 
+    আপনাকে আর cPanel বা কোনো টার্মিনাল ওপেন করতে হবে না। এখান থেকে <b>এক ক্লিকেই সার্ভিস চালু বা বন্ধ</b> করতে পারবেন। সংযুক্ত সবগুলি একাউন্ট থেকে প্রতিদিন স্বয়ংক্রিয়ভাবে চক্রাকারে (Multi-Account Rotation) ৩৫ জন করে নিরাপদ বিরতিতে মেম্বার অ্যাড হবে।
+  </div>
+</div>
+
+<!-- 2-Column Grid: Connected Accounts & Add New Account -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:22px; margin-bottom:24px;">
+
+  <!-- Column 1: Connected Telegram Accounts -->
+  <div class="card" style="margin-bottom:0; display:flex; flex-direction:column;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-id-card-clip"></i> যুক্ত থাকা টেলিগ্রাম আইডি ({{ connected_accounts|length }}টি)
+      </div>
+      <span class="badge badge-blue">সক্রিয় সেশনসমূহ</span>
+    </div>
+
+    <div style="flex:1;">
+      {% if connected_accounts %}
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        {% for acc in connected_accounts %}
+        <div style="background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#0284c7,#38bdf8); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; font-weight:700; flex-shrink:0;">
+              <i class="fa-brands fa-telegram"></i>
+            </div>
+            <div>
+              <div style="font-size:14px; font-weight:700; color:#fff;">
+                {{ acc.display_name }}
+              </div>
+              <div style="font-size:12px; color:#38bdf8; font-weight:600;">
+                {% if acc.username %}@{{ acc.username }}{% else %}ID: {{ acc.id }}{% endif %}
+              </div>
+              <div style="font-size:11px; color:var(--muted); margin-top:2px;">
+                সেশন: <code>sessions/{{ acc.name }}.session</code>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px;">
+            {% if acc.status == 'authorized' %}
+            <span class="badge badge-green" style="font-size:11px;">
+              <i class="fa-solid fa-check"></i> কানেক্টেড
+            </span>
+            {% else %}
+            <span class="badge badge-red" style="font-size:11px;">
+              <i class="fa-solid fa-triangle-exclamation"></i> লগআউট
+            </span>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('member_adder_delete_account', account_name=acc.name) }}" onsubmit="return confirm('আপনি কি নিশ্চিত যে \'{{ acc.name }}\' একাউন্টটি রিমুভ করতে চান?');" style="margin:0;">
+              <button type="submit" class="btn btn-sm btn-danger" title="এই একাউন্টটি মুছে ফেলুন" style="padding:6px 10px; border-radius:6px;">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align:center; padding:30px 20px; color:var(--muted); background:var(--card2); border-radius:10px; border:1px dashed var(--border);">
+        <i class="fa-solid fa-user-slash" style="font-size:32px; margin-bottom:10px; opacity:0.6;"></i>
+        <div style="font-size:13px; font-weight:600;">এখনো কোনো টেলিগ্রাম আইডি যুক্ত করা হয়নি।</div>
+        <div style="font-size:11px; margin-top:4px;">ডানপাশের ফর্ম থেকে ফোন নাম্বার দিয়ে আইডি যুক্ত করুন।</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Multi-Account Capacity Booster Tip -->
+    <div style="margin-top:16px; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); border-radius:8px; padding:12px 14px; font-size:12px; color:var(--text); line-height:1.5;">
+      <i class="fa-solid fa-bolt" style="color:#22c55e;"></i> <b>মাল্টি-একাউন্ট সুবিধা:</b><br>
+      টেলিগ্রামের লিমিটের কারণে ১টি আইডি দিয়ে দিনে ৩৫ জন মেম্বার অ্যাড হয়। তবে আপনি <b>৫টি আইডি</b> কানেক্ট করলে প্রতিদিন <b>৫ × ৩৫ = ১৭৫ জন</b> মেম্বার অটোমেটিক অ্যাড হবে!
+    </div>
+  </div>
+
+  <!-- Column 2: Add New Telegram Account (Web OTP Login) -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-user-plus"></i> নতুন টেলিগ্রাম আইডি যুক্ত করুন
+      </div>
+      <span class="badge badge-yellow">ওয়েব লগইন</span>
+    </div>
+
+    {% if pending_login %}
+    <!-- Step 2: OTP Verification Form -->
+    <div style="background:rgba(234,179,8,0.1); border:1px solid rgba(234,179,8,0.3); border-radius:10px; padding:18px; margin-bottom:18px;">
+      <div style="font-size:14px; font-weight:700; color:#eab308; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-envelope-open-text"></i> ওটিপি (OTP) ভেরিফিকেশন
+      </div>
+      <div style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:14px;">
+        আপনার টেলিগ্রাম অ্যাপে (ফোন: <b style="color:#38bdf8;">{{ pending_login.phone }}</b>) পাঠানো ৫ ডিজিটের লগইন কোডটি লিখুন:
+      </div>
+
+      <form method="POST" action="{{ url_for('member_adder_login_verify_code') }}">
+        <div style="margin-bottom:14px;">
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px;">
+            টেলিগ্রাম লগইন কোড (Login Code) *
+          </label>
+          <input type="text" name="code" required class="form-control" placeholder="যেমন: 45678" autofocus style="font-size:16px; font-weight:700; letter-spacing:4px; text-align:center; padding:10px;">
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px;">
+            2-Step Verification পাসওয়ার্ড (ঐচ্ছিক - যদি একাউন্টে চালু থাকে)
+          </label>
+          <input type="password" name="password" class="form-control" placeholder="আপনার ২-স্টেপ পাসওয়ার্ড দিন">
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center; padding:10px;">
+            <i class="fa-solid fa-check"></i> লগইন সম্পন্ন করুন
+          </button>
+        </div>
+      </form>
+
+      <form method="POST" action="{{ url_for('member_adder_login_cancel') }}" style="margin-top:10px;">
+        <button type="submit" class="btn btn-sm" style="background:transparent; color:var(--muted); border:1px solid var(--border); width:100%; justify-content:center;">
+          <i class="fa-solid fa-xmark"></i> বাতিল করুন
+        </button>
+      </form>
+    </div>
+
+    {% else %}
+    <!-- Step 1: Send Code Form -->
+    <form method="POST" action="{{ url_for('member_adder_login_send_code') }}">
+      <div style="margin-bottom:14px;">
+        <label style="display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px;">
+          আইডির সংক্ষিপ্ত নাম (Account Nickname) *
+        </label>
+        <input type="text" name="account_name" required class="form-control" placeholder="যেমন: nikita2, account3, id_4" style="padding:10px 14px;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">যেকোনো একটি ইংরেজি নাম লিখুন যাতে সহজে চিনতে পারেন।</div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px;">
+          টেলিগ্রামের ফোন নাম্বার (Phone Number) *
+        </label>
+        <input type="text" name="phone" required class="form-control" placeholder="+88017XXXXXXXX বা 017XXXXXXXX" style="padding:10px 14px; font-size:14px;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">দেশের কোডসহ বা ছাড়া টেলিগ্রাম ফোন নাম্বার লিখুন।</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:10px; font-size:13px; font-weight:600;">
+        <i class="fa-solid fa-paper-plane"></i> ওটিপি কোড পাঠান (Send Code)
+      </button>
+
+      <div style="margin-top:14px; font-size:12px; color:var(--muted); line-height:1.5;">
+        <i class="fa-solid fa-circle-question" style="color:var(--accent);"></i> <b>কিভাবে কাজ করে?</b><br>
+        কোড পাঠান বাটনে চাপ দিলে আপনার টেলিগ্রাম অ্যাপে ৫ ডিজিটের কোড আসবে। কোডটি পরের বক্সে দিয়ে সাবমিট করলেই কোনো টার্মিনাল ছাড়াই আইডি সচল হয়ে যাবে।
+      </div>
+    </form>
+    {% endif %}
+
+    <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border); font-size:11px; color:var(--muted);">
+      ⚠️ <b>জরুরি সতর্কতা:</b> মেম্বার অ্যাড করতে হলে এই আইডিটিকে আপনার টার্গেট গ্রুপে (<code>@{{ settings.target_group or 'darkfantasyloverzone' }}</code>) <b>অ্যাডমিন</b> বানিয়ে "Add Members" পারমিশন অন করে রাখবেন।
+    </div>
+  </div>
+
+</div>
+
+<!-- Real-Time Terminal Log Viewer (Terminal Output directly in Web Panel) -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="card-title" style="margin-bottom:0;">
+        <i class="fa-solid fa-terminal"></i> লাইভ মেম্বার অ্যাড লগ (Real-Time Terminal Console)
+      </div>
+      <span id="log-live-badge" class="badge badge-green" style="font-size:11px; display:inline-flex; align-items:center; gap:6px;">
+        <span class="status-dot"></span> লাইভ অটো-আপডেট সক্রিয়
+      </span>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button id="toggle-log-btn" onclick="toggleLogPause()" class="btn btn-sm" style="background:var(--card2); color:var(--text); border:1px solid var(--border);">
+        <i class="fa-solid fa-pause"></i> পজ
+      </button>
+      <button onclick="updateAdderLogs(true)" class="btn btn-sm" style="background:var(--card2); color:var(--text); border:1px solid var(--border);">
+        <i class="fa-solid fa-arrows-rotate"></i> রিফ্রেশ
+      </button>
+    </div>
+  </div>
+
+  <div style="position:relative;">
+    <pre id="adder-live-log" style="background:#070b14; border:1px solid #1f293d; border-radius:10px; padding:16px 18px; font-family:'Courier New', Consolas, monospace; font-size:12px; color:#38bdf8; max-height:360px; overflow-y:auto; line-height:1.6; white-space:pre-wrap; margin:0; word-break:break-word;">লগ লোড হচ্ছে...</pre>
+  </div>
+  <div style="font-size:11px; color:var(--muted); margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+    <span><i class="fa-solid fa-clock"></i> প্রতি ৪ সেকেন্ড পর পর সার্ভার থেকে নতুন লগ আপডেট হচ্ছে। টার্মিনাল খোলার কোনো দরকার নেই।</span>
+    <span id="last-log-update" style="color:var(--muted);"></span>
   </div>
 </div>
 
@@ -64,100 +293,60 @@
 <div class="card" style="margin-bottom:24px;">
   <div class="card-header">
     <div class="card-title">
-      <i class="fa-solid fa-sliders"></i> মেম্বার অটো-অ্যাডার কনফিগারেশন
+      <i class="fa-solid fa-sliders"></i> মেম্বার অটো-অ্যাডার কনফিগারেশন ও সেটিংস
     </div>
+    <span class="badge badge-blue">নিরাপত্তা সেটিংস</span>
   </div>
   <form method="POST" action="{{ url_for('member_adder_settings') }}">
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:18px; margin-bottom:18px;">
+      
       <div>
         <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
-          👤 মেম্বার অ্যাড করার সক্রিয় একাউন্ট (Active Account)
+          🎯 টার্গেট গ্রুপ ইউজারনেম (যেখানে মেম্বার যুক্ত হবে)
         </label>
         <div style="display:flex; align-items:center;">
           <span style="padding:10px 12px; background:var(--card2); border:1px solid var(--border); border-right:none; border-radius:8px 0 0 8px; color:var(--muted);">@</span>
-          <input type="text" name="active_account" value="{{ settings.active_account or 'nikita967' }}" required class="form-input" placeholder="nikita967" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:0 8px 8px 0; color:#22c55e; font-size:14px; font-weight:700;">
+          <input type="text" name="target_group" value="{{ settings.target_group or 'darkfantasyloverzone' }}" required class="form-control" style="border-radius:0 8px 8px 0; color:#fff; font-size:14px; font-weight:600;">
         </div>
-        <div style="font-size:11px; color:var(--muted); margin-top:4px;">
-          ডিফল্ট: nikita967। পরে অন্য আইডি ব্যবহার করতে চাইলে এখানে নাম পরিবর্তন করে সেভ করুন।
-          {% if available_accounts %}
-          <br><span style="color:#38bdf8;">লগইনকৃত একাউন্টসমূহ:</span> {{ available_accounts|join(', ') }}
-          {% endif %}
-        </div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">যেমন: darkfantasyloverzone</div>
       </div>
 
       <div>
         <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
-          🎯 টার্গেট গ্রুপ ইউজারনেম (যেখানে মেম্বার ঢুকবে)
+          🛡️ দৈনিক নিরাপদ সীমা (প্রতি একাউন্টে মেম্বার সংখ্যা)
         </label>
-        <div style="display:flex; align-items:center;">
-          <span style="padding:10px 12px; background:var(--card2); border:1px solid var(--border); border-right:none; border-radius:8px 0 0 8px; color:var(--muted);">@</span>
-          <input type="text" name="target_group" value="{{ settings.target_group or 'darkfantasyloverzone' }}" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:0 8px 8px 0; color:#fff; font-size:14px; font-weight:600;">
-        </div>
-        <div style="font-size:11px; color:var(--muted); margin-top:4px;">যেমন: darkfantasyloverzone বা mastiunlimitedzone</div>
+        <input type="number" name="daily_limit" value="{{ settings.daily_limit or '35' }}" min="5" max="50" required class="form-control" style="color:#22c55e; font-size:14px; font-weight:700;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">নিরাপদ কোটা: ৩০ থেকে ৩৫ জন (টেলিগ্রাম পলিসি)।</div>
       </div>
 
       <div>
         <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
-          🛡️ দৈনিক নিরাপদ সীমা (মেম্বার সংখ্যা)
-        </label>
-        <input type="number" name="daily_limit" value="{{ settings.daily_limit or '35' }}" min="5" max="50" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#22c55e; font-size:14px; font-weight:700;">
-        <div style="font-size:11px; color:var(--muted); margin-top:4px;">নিরাপদ রিকমেন্ডেড: ৩০ থেকে ৩৫ জন (সর্বোচ্চ ৪০ জন)।</div>
-      </div>
-
-      <div>
-        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
-          ⏱️ বিরতি (সেকেন্ড)
+          ⏱️ বিরতি (সেকেন্ড) - প্রতি সফল অ্যাডের পর অপেক্ষা
         </label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <input type="number" name="min_delay" value="{{ settings.min_delay or '60' }}" min="30" max="300" placeholder="Min 60" required class="form-input" style="width:100%; padding:10px 10px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#38bdf8; font-size:13px; font-weight:700;">
-          <input type="number" name="max_delay" value="{{ settings.max_delay or '110' }}" min="60" max="600" placeholder="Max 110" required class="form-input" style="width:100%; padding:10px 10px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#38bdf8; font-size:13px; font-weight:700;">
+          <input type="number" name="min_delay" value="{{ settings.min_delay or '60' }}" min="30" max="300" placeholder="Min 60" required class="form-control" style="color:#38bdf8; font-size:13px; font-weight:700;">
+          <input type="number" name="max_delay" value="{{ settings.max_delay or '110' }}" min="60" max="600" placeholder="Max 110" required class="form-control" style="color:#38bdf8; font-size:13px; font-weight:700;">
         </div>
-        <div style="font-size:11px; color:var(--muted); margin-top:4px;">ডিফল্ট ৬০-১১০ সেকেন্ড (প্রতি সফল অ্যাডের পর অপেক্ষা)।</div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">স্বাভাবিক মানুষের মতো ৬০-১১০ সেকেন্ড বিরতি রাখা নিরাপদ।</div>
       </div>
+
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
+          👤 ডিফল্ট প্রাইমারি আইডি (Primary Account)
+        </label>
+        <div style="display:flex; align-items:center;">
+          <span style="padding:10px 12px; background:var(--card2); border:1px solid var(--border); border-right:none; border-radius:8px 0 0 8px; color:var(--muted);">@</span>
+          <input type="text" name="active_account" value="{{ settings.active_account or 'nikita967' }}" required class="form-control" style="border-radius:0 8px 8px 0; color:#38bdf8; font-size:14px; font-weight:600;">
+        </div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">ডিফল্ট সেশন নাম (যেমন: nikita967)।</div>
+      </div>
+
     </div>
 
-    <button type="submit" class="btn btn-primary" style="padding:10px 24px; font-size:13px; font-weight:600; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; cursor:pointer;">
+    <button type="submit" class="btn btn-primary" style="padding:10px 24px; font-size:13px; font-weight:600;">
       <i class="fa-solid fa-floppy-disk"></i> সেটিংস সংরক্ষণ করুন
     </button>
   </form>
-</div>
-
-<!-- cPanel Terminal Execution Guide -->
-<div class="card" style="margin-bottom:24px;">
-  <div class="card-header">
-    <div class="card-title">
-      <i class="fa-solid fa-terminal"></i> সার্ভার থেকে চালানোর কমান্ড (Terminal Commands)
-    </div>
-  </div>
-  <div style="display:flex; flex-direction:column; gap:16px;">
-    <div>
-      <div style="font-size:13px; font-weight:700; margin-bottom:6px; color:var(--text);">
-        ১. নতুন একাউন্ট (যেমন: @{{ settings.active_account or 'nikita967' }}) দিয়ে প্রথমবার লগইন করার কমান্ড:
-      </div>
-      <div style="background:#090d16; border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-family:monospace; font-size:13px; color:#eab308; overflow-x:auto;">
-        cd /home/techandc/public_html/bot && source /home/techandc/virtualenv/public_html/bot/3.11/bin/activate && python login_adder.py {{ settings.active_account or 'nikita967' }}
-      </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">এটি টার্মিনালে রান করে ফোন নাম্বার ও টেলিগ্রাম কোড দিয়ে একবার লগইন করে নিবেন।</div>
-    </div>
-
-    <div>
-      <div style="font-size:13px; font-weight:700; margin-bottom:6px; color:var(--text);">
-        ২. ব্যাকগ্রাউন্ডে স্বয়ংক্রিয়ভাবে মেম্বার অ্যাড চালু করতে (Daemon Mode - প্রতিদিন নিজে নিজে ৩৫ জন করে অ্যাড করবে):
-      </div>
-      <div style="background:#090d16; border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-family:monospace; font-size:13px; color:#38bdf8; overflow-x:auto;">
-        cd /home/techandc/public_html/bot && source /home/techandc/virtualenv/public_html/bot/3.11/bin/activate && nohup python auto_member_adder.py --account {{ settings.active_account or 'nikita967' }} --daemon > auto_adder.log 2>&1 &
-      </div>
-    </div>
-
-    <div>
-      <div style="font-size:13px; font-weight:700; margin-bottom:6px; color:var(--text);">
-        ৩. তাৎক্ষণিক লাইভ লগ ও অগ্রগতি দেখতে:
-      </div>
-      <div style="background:#090d16; border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-family:monospace; font-size:13px; color:#22c55e; overflow-x:auto;">
-        tail -f auto_adder.log
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Recent Addition History Table -->
@@ -170,60 +359,60 @@
   </div>
 
   {% if recent_history %}
-  <div class="table-responsive">
-    <table class="table" style="width:100%; border-collapse:collapse; font-size:13px;">
+  <div class="table-wrap">
+    <table>
       <thead>
-        <tr style="border-bottom:1px solid var(--border); text-align:left; color:var(--muted);">
-          <th style="padding:10px 14px;">ইউজার</th>
-          <th style="padding:10px 14px;">টার্গেট গ্রুপ</th>
-          <th style="padding:10px 14px;">অ্যাডার আইডি</th>
-          <th style="padding:10px 14px;">স্ট্যাটাস</th>
-          <th style="padding:10px 14px;">বিবরণ</th>
-          <th style="padding:10px 14px;">সময়</th>
+        <tr>
+          <th>ইউজার</th>
+          <th>টার্গেট গ্রুপ</th>
+          <th>অ্যাডার আইডি</th>
+          <th>স্ট্যাটাস</th>
+          <th>বিবরণ</th>
+          <th>সময়</th>
         </tr>
       </thead>
       <tbody>
         {% for h in recent_history %}
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:10px 14px;">
+        <tr>
+          <td>
             <div style="font-weight:600; color:#fff;">
               {% if h.username %}@{{ h.username }}{% else %}{{ h.first_name or 'Unknown' }}{% endif %}
             </div>
             <div style="font-size:11px; color:var(--muted);">ID: {{ h.user_id }}</div>
           </td>
-          <td style="padding:10px 14px; font-weight:600; color:var(--accent);">
+          <td style="font-weight:600; color:var(--accent);">
             @{{ h.target_chat }}
           </td>
-          <td style="padding:10px 14px; font-weight:600; color:#38bdf8;">
+          <td style="font-weight:600; color:#38bdf8;">
             @{{ h.added_by_account or 'nikita967' }}
           </td>
-          <td style="padding:10px 14px;">
+          <td>
             {% if h.status == 'added' %}
-            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(34,197,94,0.15); color:#22c55e;">
+            <span class="badge badge-green">
               <i class="fa-solid fa-check"></i> সফলভাবে যুক্ত
             </span>
             {% elif h.status == 'privacy_restricted' %}
-            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(239,68,68,0.15); color:#ef4444;">
+            <span class="badge badge-red">
               <i class="fa-solid fa-lock"></i> প্রাইভেসি রেস্ট্রিক্টেড
             </span>
             {% elif h.status == 'already_in_group' %}
-            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(59,130,246,0.15); color:#3b82f6;">
+            <span class="badge badge-blue">
               <i class="fa-solid fa-circle-info"></i> ইতিমধ্যে মেম্বার
             </span>
             {% elif h.status == 'channels_full' %}
-            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(245,158,11,0.15); color:#f59e0b;">
+            <span class="badge badge-yellow">
               <i class="fa-solid fa-triangle-exclamation"></i> লিমিট শেষ
             </span>
             {% else %}
-            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(148,163,184,0.15); color:#94a3b8;">
+            <span class="badge" style="background:rgba(148,163,184,0.15); color:#94a3b8;">
               {{ h.status }}
             </span>
             {% endif %}
           </td>
-          <td style="padding:10px 14px; font-size:12px; color:var(--muted);">
+          <td style="font-size:12px; color:var(--muted);">
             {{ h.error_message or 'সফলভাবে যুক্ত হয়েছে' }}
           </td>
-          <td style="padding:10px 14px; font-size:12px; color:var(--muted);">
+          <td style="font-size:12px; color:var(--muted); white-space:nowrap;">
             {{ h.attempted_at }}
           </td>
         </tr>
@@ -234,8 +423,91 @@
   {% else %}
   <div style="text-align:center; padding:36px; color:var(--muted);">
     <i class="fa-solid fa-clipboard-list" style="font-size:32px; margin-bottom:12px; opacity:0.5;"></i>
-    <div>এখনো কোনো মেম্বার অ্যাড করার প্রচেষ্টা শুরু হয়নি। উপরের কমান্ড দিয়ে স্ক্রিপ্ট চালু করুন।</div>
+    <div>এখনো কোনো মেম্বার অ্যাড করার হিস্টোরি তৈরি হয়নি। উপর থেকে অটো-অ্যাডার সার্ভিস চালু করুন।</div>
   </div>
   {% endif %}
 </div>
+
+<!-- JavaScript for Live Terminal Log & Real-Time Status -->
+<script>
+let isLogPaused = false;
+
+function toggleLogPause() {
+  isLogPaused = !isLogPaused;
+  const btn = document.getElementById("toggle-log-btn");
+  const badge = document.getElementById("log-live-badge");
+  if (isLogPaused) {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-play"></i> চালু করুন';
+    if (badge) {
+      badge.className = "badge badge-yellow";
+      badge.innerHTML = '<i class="fa-solid fa-pause"></i> লগ পজ করা হয়েছে';
+    }
+  } else {
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i> পজ';
+    if (badge) {
+      badge.className = "badge badge-green";
+      badge.innerHTML = '<span class="status-dot"></span> লাইভ অটো-আপডেট সক্রিয়';
+    }
+    updateAdderLogs(true);
+  }
+}
+
+function updateAdderLogs(force = false) {
+  if (isLogPaused && !force) return;
+
+  fetch("{{ url_for('api_member_adder_status') }}")
+    .then(response => {
+      if (!response.ok) throw new Error("HTTP error " + response.status);
+      return response.json();
+    })
+    .then(data => {
+      // 1. Update terminal log box
+      const logBox = document.getElementById("adder-live-log");
+      if (logBox && data.logs) {
+        const isNearBottom = logBox.scrollHeight - logBox.clientHeight <= logBox.scrollTop + 60;
+        logBox.textContent = data.logs;
+        if (isNearBottom || force) {
+          logBox.scrollTop = logBox.scrollHeight;
+        }
+      }
+
+      // 2. Update service status pill & PIDs
+      const pill = document.getElementById("service-status-pill");
+      const pidsText = document.getElementById("service-pids-text");
+      if (pill) {
+        if (data.running) {
+          pill.innerHTML = `
+            <span class="badge" style="background:rgba(34,197,94,0.18); color:#22c55e; border:1px solid #22c55e; padding:5px 12px; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+              <span class="status-dot"></span> সার্ভিস চালু আছে (Running)
+            </span>
+          `;
+          if (pidsText) {
+            pidsText.textContent = data.pids && data.pids.length ? "PID: " + data.pids.join(', ') : "";
+          }
+        } else {
+          pill.innerHTML = `
+            <span class="badge" style="background:rgba(239,68,68,0.18); color:#ef4444; border:1px solid #ef4444; padding:5px 12px; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-circle-stop"></i> সার্ভিস বন্ধ আছে (Stopped)
+            </span>
+          `;
+          if (pidsText) pidsText.textContent = "";
+        }
+      }
+
+      // 3. Update timestamp
+      const timeSpan = document.getElementById("last-log-update");
+      if (timeSpan) {
+        const now = new Date();
+        timeSpan.textContent = "সর্বশেষ চেক: " + now.toLocaleTimeString();
+      }
+    })
+    .catch(err => {
+      console.warn("Log polling error:", err);
+    });
+}
+
+// Initial fetch & interval every 4 seconds
+updateAdderLogs(true);
+setInterval(updateAdderLogs, 4000);
+</script>
 {% endblock %}

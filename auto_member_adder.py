@@ -200,6 +200,34 @@ async def get_added_today_count(target: str, account: str = "") -> int:
             return int(row[0]) if row else 0
 
 
+async def get_db_settings() -> Dict[str, Any]:
+    """Fetch current adder settings from database table."""
+    pool = await get_db_pool()
+    settings = {
+        "daily_limit": 35,
+        "min_delay": 60,
+        "max_delay": 110,
+        "target_group": "darkfantasyloverzone",
+        "active_account": "nikita967"
+    }
+    try:
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT setting_key, setting_val FROM member_adder_settings")
+                rows = await cur.fetchall()
+                for k, v in rows:
+                    if k in ["daily_limit", "min_delay", "max_delay"]:
+                        try:
+                            settings[k] = int(v)
+                        except Exception:
+                            pass
+                    elif k in ["target_group", "active_account"]:
+                        settings[k] = (v or "").strip().lstrip("@")
+    except Exception as e:
+        logger.warning(f"Could not load settings from DB: {e}")
+    return settings
+
+
 async def get_candidate_users(target: str, limit: int = 500) -> List[Dict[str, Any]]:
     """
     Fetch candidate users from database who have not yet been attempted for this target group.
@@ -453,32 +481,41 @@ async def main_async():
 
     try:
         while True:
+            # Dynamically read latest settings configured from Admin Panel
+            db_cfg = await get_db_settings()
+            current_target = db_cfg.get("target_group", "darkfantasyloverzone") if args.target == "darkfantasyloverzone" else args.target
+            current_limit = db_cfg.get("daily_limit", 35) if args.limit == 35 else args.limit
+            current_min_delay = db_cfg.get("min_delay", 60) if args.min_delay == 60 else args.min_delay
+            current_max_delay = db_cfg.get("max_delay", 110) if args.max_delay == 110 else args.max_delay
+
             if args.all:
                 accounts = get_available_accounts()
                 if not accounts:
-                    logger.error("❌ No accounts found in sessions/! Please run 'python login_adder.py [account_name]' first.")
+                    logger.error("❌ No accounts found in sessions/! Please add an account from Admin Panel.")
                     break
                 logger.info(f"🔄 Multi-Account Rotation: Found {len(accounts)} accounts ({', '.join(accounts)}).")
+                logger.info(f"🎯 Target Group: @{current_target} | 🛡️ Daily Limit per Account: {current_limit} members | ⏱️ Delay: {current_min_delay}-{current_max_delay}s")
                 total_added_all = 0
                 for acc in accounts:
-                    logger.info(f"\n▶️ Starting batch for account: [{acc}] (Daily Target: {args.limit} members)...")
+                    logger.info(f"\n▶️ Starting batch for account: [{acc}] (Daily Target: {current_limit} members)...")
                     stats = await run_member_adder(
-                        target_group=args.target,
-                        daily_limit=args.limit,
-                        min_delay=args.min_delay,
-                        max_delay=args.max_delay,
+                        target_group=current_target,
+                        daily_limit=current_limit,
+                        min_delay=current_min_delay,
+                        max_delay=current_max_delay,
                         account_name=acc
                     )
                     total_added_all += stats.get("added", 0)
                     await asyncio.sleep(5)
                 logger.info(f"\n🎉 All {len(accounts)} accounts completed today's batches! Total added: {total_added_all} members.")
             else:
+                chosen_account = args.account or db_cfg.get("active_account", "nikita967")
                 stats = await run_member_adder(
-                    target_group=args.target,
-                    daily_limit=args.limit,
-                    min_delay=args.min_delay,
-                    max_delay=args.max_delay,
-                    account_name=args.account
+                    target_group=current_target,
+                    daily_limit=current_limit,
+                    min_delay=current_min_delay,
+                    max_delay=current_max_delay,
+                    account_name=chosen_account
                 )
 
             if not args.daemon:

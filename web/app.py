@@ -7,7 +7,9 @@ Login: admin / (PANEL_PASSWORD from .env)
 
 import sys
 import os
+import re
 import json
+import subprocess
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import datetime as dt
@@ -1123,7 +1125,119 @@ def video_collector_settings():
     return redirect(url_for("video_collector"))
 
 
-# ── Member Auto-Adder ──────────────────────────────────────────────
+# ── Member Auto-Adder Helpers ──────────────────────────────────────
+
+def format_phone_number(raw: str) -> str:
+    """Format Bangladeshi or international phone numbers to E.164 format."""
+    p = raw.strip().replace(" ", "").replace("-", "")
+    if p.startswith("01"):
+        return "+88" + p
+    if p.startswith("1") and len(p) == 10:
+        return "+880" + p
+    if not p.startswith("+"):
+        return "+" + p
+    return p
+
+
+def run_async(coro):
+    """Run an async coroutine synchronously inside Flask request thread."""
+    import asyncio
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        try:
+            loop.close()
+        except Exception:
+            pass
+
+
+def is_adder_running():
+    """Check if auto_member_adder.py is currently running."""
+    try:
+        res = subprocess.run(["pgrep", "-f", "auto_member_adder.py"], stdout=subprocess.PIPE, text=True)
+        pids = [p.strip() for p in res.stdout.strip().splitlines() if p.strip()]
+        return len(pids) > 0, pids
+    except Exception:
+        return False, []
+
+
+def start_adder_service():
+    """Start or restart auto_member_adder.py daemon in background."""
+    try:
+        subprocess.run(["pkill", "-f", "auto_member_adder.py"])
+    except Exception:
+        pass
+
+    python_bin = "/home/techandc/virtualenv/public_html/bot/3.11/bin/python"
+    if not os.path.exists(python_bin):
+        python_bin = sys.executable
+
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    script_path = os.path.join(project_dir, "auto_member_adder.py")
+    log_path = os.path.join(project_dir, "auto_adder.log")
+
+    cmd = f"nohup {python_bin} {script_path} --all --daemon > {log_path} 2>&1 &"
+    subprocess.Popen(cmd, shell=True, cwd=project_dir, preexec_fn=getattr(os, "setpgrp", None))
+
+
+def stop_adder_service():
+    """Stop auto_member_adder.py daemon."""
+    try:
+        subprocess.run(["pkill", "-f", "auto_member_adder.py"])
+    except Exception:
+        pass
+
+
+def get_connected_accounts_info():
+    """Inspect sessions/ directory and extract account details."""
+    sessions_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sessions")
+    if not os.path.exists(sessions_dir):
+        return []
+
+    from video_collector.config import TG_API_ID, TG_API_HASH
+    from telethon import TelegramClient
+
+    accounts = []
+    session_files = [f for f in os.listdir(sessions_dir) if f.endswith(".session")]
+    for sf in session_files:
+        acc_name = sf[:-8]
+        sess_base = os.path.join(sessions_dir, acc_name)
+        acc_info = {
+            "name": acc_name,
+            "display_name": acc_name,
+            "username": "",
+            "id": "",
+            "status": "authorized"
+        }
+        try:
+            async def _inspect():
+                c = TelegramClient(sess_base, TG_API_ID, TG_API_HASH)
+                await c.connect()
+                if await c.is_user_authorized():
+                    me = await c.get_me()
+                    await c.disconnect()
+                    return {
+                        "name": acc_name,
+                        "display_name": f"{me.first_name} {me.last_name or ''}".strip(),
+                        "username": me.username or "",
+                        "id": me.id,
+                        "status": "authorized"
+                    }
+                await c.disconnect()
+                return {"name": acc_name, "display_name": acc_name, "username": "", "id": "", "status": "unauthorized"}
+
+            res = run_async(_inspect())
+            if res:
+                acc_info.update(res)
+        except Exception:
+            pass
+        accounts.append(acc_info)
+    return accounts
+
+
+# ── Member Auto-Adder Routes ───────────────────────────────────────
 
 @app.route("/member-adder", methods=["GET"])
 @login_required
@@ -1137,11 +1251,13 @@ def member_adder_page():
                 first_name VARCHAR(200),
                 target_chat VARCHAR(100) NOT NULL,
                 status VARCHAR(50) NOT NULL,
+                added_by_account VARCHAR(100) DEFAULT 'nikita967',
                 error_message TEXT,
                 attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY uniq_target_user (target_chat, user_id),
                 INDEX idx_status (status),
-                INDEX idx_target (target_chat)
+                INDEX idx_target (target_chat),
+                INDEX idx_account (added_by_account)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """)
         _execute("""
@@ -1157,12 +1273,6 @@ def member_adder_page():
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('active_account', 'nikita967')")
     except Exception:
         pass
-
-    # Discover available session accounts in sessions/
-    sessions_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sessions")
-    available_accounts = []
-    if os.path.exists(sessions_dir):
-        available_accounts = [f[:-8] for f in os.listdir(sessions_dir) if f.endswith(".session")]
 
     # Total members in DB
     total_candidates_row = _query("SELECT COUNT(DISTINCT user_id) as cnt FROM users", fetchone=True)
@@ -1190,6 +1300,15 @@ def member_adder_page():
     for r in settings_rows:
         settings[r["setting_key"]] = r["setting_val"]
 
+    # Connected accounts info
+    connected_accounts = get_connected_accounts_info()
+
+    # Process running status
+    is_running, running_pids = is_adder_running()
+
+    # Pending web OTP login
+    pending_login = session.get("adder_pending_login")
+
     return render_template(
         "member_adder.html",
         total_candidates=total_candidates,
@@ -1198,7 +1317,10 @@ def member_adder_page():
         total_privacy=total_privacy,
         recent_history=recent_history,
         settings=settings,
-        available_accounts=available_accounts,
+        connected_accounts=connected_accounts,
+        is_running=is_running,
+        running_pids=running_pids,
+        pending_login=pending_login,
         active="member_adder"
     )
 
@@ -1241,6 +1363,179 @@ def member_adder_settings():
         flash(f"❌ সেটিংস সেভ করতে ব্যর্থ: {e}", "error")
 
     return redirect(url_for("member_adder_page"))
+
+
+@app.route("/member-adder/login-send-code", methods=["POST"])
+@login_required
+def member_adder_login_send_code():
+    account_name = request.form.get("account_name", "").strip().lstrip("@")
+    raw_phone = request.form.get("phone", "").strip()
+
+    if not account_name:
+        flash("❌ একাউন্টের একটি নাম দিন (যেমন: nikita2)", "error")
+        return redirect(url_for("member_adder_page"))
+
+    if not raw_phone:
+        flash("❌ ফোন নাম্বার দিন", "error")
+        return redirect(url_for("member_adder_page"))
+
+    clean_name = re.sub(r"[^\w\-]", "_", account_name).lower()
+    phone = format_phone_number(raw_phone)
+
+    sessions_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sessions")
+    os.makedirs(sessions_dir, exist_ok=True)
+    session_path = os.path.join(sessions_dir, clean_name)
+
+    from video_collector.config import TG_API_ID, TG_API_HASH
+    from telethon import TelegramClient
+
+    try:
+        async def _send():
+            client = TelegramClient(session_path, TG_API_ID, TG_API_HASH)
+            await client.connect()
+            sent_code = await client.send_code_request(phone)
+            await client.disconnect()
+            return sent_code.phone_code_hash
+
+        code_hash = run_async(_send())
+        session["adder_pending_login"] = {
+            "account_name": clean_name,
+            "phone": phone,
+            "phone_code_hash": code_hash
+        }
+        flash(f"📩 টেলিগ্রামে ৫ ডিজিটের কোড পাঠানো হয়েছে: {phone}। নিচে কোডটি দিয়ে লগইন সম্পন্ন করুন।", "success")
+    except Exception as e:
+        flash(f"❌ কোড পাঠাতে ব্যর্থ: {e}", "error")
+
+    return redirect(url_for("member_adder_page"))
+
+
+@app.route("/member-adder/login-verify-code", methods=["POST"])
+@login_required
+def member_adder_login_verify_code():
+    pending = session.get("adder_pending_login")
+    if not pending:
+        flash("❌ কোনো পেন্ডিং লগইন পাওয়া যায়নি। পুনরায় চেষ্টা করুন।", "error")
+        return redirect(url_for("member_adder_page"))
+
+    code = request.form.get("code", "").strip()
+    two_fa_password = request.form.get("password", "").strip()
+
+    if not code:
+        flash("❌ টেলিগ্রাম থেকে পাওয়া কোডটি লিখুন", "error")
+        return redirect(url_for("member_adder_page"))
+
+    account_name = pending["account_name"]
+    phone = pending["phone"]
+    phone_code_hash = pending["phone_code_hash"]
+
+    sessions_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sessions")
+    session_path = os.path.join(sessions_dir, account_name)
+
+    from video_collector.config import TG_API_ID, TG_API_HASH
+    from telethon import TelegramClient
+    from telethon.errors import SessionPasswordNeededError
+
+    try:
+        async def _verify():
+            client = TelegramClient(session_path, TG_API_ID, TG_API_HASH)
+            await client.connect()
+            try:
+                await client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
+            except SessionPasswordNeededError:
+                if not two_fa_password:
+                    raise Exception("এই একাউন্টে Two-Step Verification পাসওয়ার্ড চালু আছে। দয়া করে পাসওয়ার্ড দিন।")
+                await client.sign_in(password=two_fa_password)
+            me = await client.get_me()
+            await client.disconnect()
+            return me
+
+        me = run_async(_verify())
+        session.pop("adder_pending_login", None)
+
+        # Set as active account in settings
+        _execute("""
+            INSERT INTO member_adder_settings (setting_key, setting_val)
+            VALUES ('active_account', %s)
+            ON DUPLICATE KEY UPDATE setting_val = VALUES(setting_val)
+        """, (account_name,))
+
+        # Auto-restart adder service in background so new account starts adding immediately!
+        running, _ = is_adder_running()
+        if running:
+            start_adder_service()
+
+        flash(f"🎉 একাউন্ট সফলভাবে যুক্ত হয়েছে: {me.first_name} (@{me.username or me.id})! সার্ভিস স্বয়ংক্রিয়ভাবে আপডেট করা হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ লগইন সম্পন্ন করতে ব্যর্থ: {e}", "error")
+
+    return redirect(url_for("member_adder_page"))
+
+
+@app.route("/member-adder/login-cancel", methods=["POST"])
+@login_required
+def member_adder_login_cancel():
+    session.pop("adder_pending_login", None)
+    flash("লগইন প্রক্রিয়া বাতিল করা হয়েছে।", "info")
+    return redirect(url_for("member_adder_page"))
+
+
+@app.route("/member-adder/delete-account/<account_name>", methods=["POST"])
+@login_required
+def member_adder_delete_account(account_name):
+    clean_name = re.sub(r"[^\w\-]", "_", account_name).lower()
+    sessions_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sessions")
+    session_file = os.path.join(sessions_dir, clean_name + ".session")
+    if os.path.exists(session_file):
+        try:
+            os.remove(session_file)
+            flash(f"🗑️ একাউন্ট '{clean_name}' সফলভাবে ডিলিট করা হয়েছে।", "success")
+            running, _ = is_adder_running()
+            if running:
+                start_adder_service()
+        except Exception as e:
+            flash(f"❌ ডিলিট করতে ব্যর্থ: {e}", "error")
+    else:
+        flash("একাউন্ট পাওয়া যায়নি।", "error")
+    return redirect(url_for("member_adder_page"))
+
+
+@app.route("/member-adder/service/<action>", methods=["POST"])
+@login_required
+def member_adder_service_action(action):
+    if action == "start":
+        start_adder_service()
+        flash("▶️ মেম্বার অটো-অ্যাডার ব্যাকগ্রাউন্ডে সফলভাবে চালু করা হয়েছে!", "success")
+    elif action == "stop":
+        stop_adder_service()
+        flash("⏹️ মেম্বার অটো-অ্যাডার সার্ভিস বন্ধ করা হয়েছে।", "success")
+    elif action == "restart":
+        start_adder_service()
+        flash("🔄 মেম্বার অটো-অ্যাডার সার্ভিস রিস্টার্ট দেওয়া হয়েছে।", "success")
+    return redirect(url_for("member_adder_page"))
+
+
+@app.route("/api/member-adder/status", methods=["GET"])
+@login_required
+def api_member_adder_status():
+    running, pids = is_adder_running()
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    log_file = os.path.join(project_dir, "auto_adder.log")
+    logs = ""
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+                lines = f.readlines()
+                logs = "".join(lines[-40:])
+        except Exception as e:
+            logs = f"Error reading log: {e}"
+    else:
+        logs = "এখনো কোনো লগ তৈরি হয়নি।"
+    return jsonify({
+        "running": running,
+        "pids": pids,
+        "logs": logs
+    })
 
 
 if __name__ == "__main__":
