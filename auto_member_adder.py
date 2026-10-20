@@ -142,6 +142,51 @@ async def init_adder_tables() -> None:
             except Exception:
                 pass
 
+            # Ensure users table has created_at and updated_at columns
+            try:
+                await cur.execute("ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            except Exception:
+                pass
+            try:
+                await cur.execute("ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+            except Exception:
+                pass
+            try:
+                await cur.execute("ALTER TABLE users ADD INDEX idx_users_created (created_at)")
+            except Exception:
+                pass
+
+            # Backfill existing users' created_at from user_name_history if available
+            try:
+                await cur.execute("""
+                    UPDATE users u
+                    JOIN (
+                        SELECT user_id, MIN(recorded_at) as first_seen, MAX(recorded_at) as last_seen 
+                        FROM user_name_history 
+                        GROUP BY user_id
+                    ) unh ON u.user_id = unh.user_id
+                    SET u.created_at = FROM_UNIXTIME(unh.first_seen),
+                        u.updated_at = FROM_UNIXTIME(unh.last_seen)
+                    WHERE u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00'
+                """)
+            except Exception:
+                pass
+
+            # Also backfill from user_invites if invited recently
+            try:
+                await cur.execute("""
+                    UPDATE users u
+                    JOIN (
+                        SELECT invited_id, MAX(timestamp) as last_invite 
+                        FROM user_invites 
+                        GROUP BY invited_id
+                    ) ui ON u.user_id = ui.invited_id
+                    SET u.created_at = GREATEST(COALESCE(u.created_at, FROM_UNIXTIME(ui.last_invite)), FROM_UNIXTIME(ui.last_invite))
+                    WHERE ui.last_invite > 0 AND (u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00')
+                """)
+            except Exception:
+                pass
+
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS member_adder_settings (
                     setting_key VARCHAR(100) PRIMARY KEY,
@@ -252,23 +297,60 @@ async def update_account_status(account_name: str, status: str, detail: str = ""
 async def get_candidate_users(target: str, limit: int = 500) -> List[Dict[str, Any]]:
     """
     Fetch candidate users from database who have not yet been attempted for this target group.
-    Prioritizes users with usernames first for maximum resolution success.
+    Prioritizes:
+    1. Users with valid usernames (@username) first (for reliable Telethon resolution).
+    2. Newest members added to the database first (joined yesterday/today/recently).
     """
     pool = await get_db_pool()
     clean_target = (target or "").strip().lstrip("@")
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("""
-                SELECT DISTINCT u.user_id, u.username, u.first_name
-                FROM users u
-                LEFT JOIN member_add_history h 
-                  ON h.user_id = u.user_id AND h.target_chat = %s
-                WHERE h.id IS NULL
-                ORDER BY 
-                  CASE WHEN u.username IS NOT NULL AND u.username != '' THEN 0 ELSE 1 END,
-                  u.user_id DESC
-                LIMIT %s
-            """, (clean_target, limit))
+            # Check if created_at column exists in users table
+            has_created_at = False
+            try:
+                await cur.execute("SHOW COLUMNS FROM users LIKE 'created_at'")
+                has_created_at = bool(await cur.fetchone())
+            except Exception:
+                pass
+
+            if has_created_at:
+                await cur.execute("""
+                    SELECT 
+                        u.user_id, 
+                        MAX(u.username) AS username, 
+                        MAX(u.first_name) AS first_name,
+                        MAX(GREATEST(COALESCE(u.created_at, '2000-01-01'), COALESCE(u.updated_at, '2000-01-01'))) AS latest_seen
+                    FROM users u
+                    LEFT JOIN member_add_history h 
+                      ON h.user_id = u.user_id AND h.target_chat = %s
+                    WHERE h.id IS NULL
+                    GROUP BY u.user_id
+                    ORDER BY 
+                      CASE WHEN MAX(u.username) IS NOT NULL AND MAX(u.username) != '' THEN 0 ELSE 1 END,
+                      latest_seen DESC,
+                      u.user_id DESC
+                    LIMIT %s
+                """, (clean_target, limit))
+            else:
+                # Fallback to join with user_name_history if created_at column not yet added
+                await cur.execute("""
+                    SELECT 
+                        u.user_id, 
+                        MAX(u.username) AS username, 
+                        MAX(u.first_name) AS first_name,
+                        COALESCE(MAX(unh.recorded_at), 0) AS latest_seen
+                    FROM users u
+                    LEFT JOIN user_name_history unh ON unh.user_id = u.user_id
+                    LEFT JOIN member_add_history h 
+                      ON h.user_id = u.user_id AND h.target_chat = %s
+                    WHERE h.id IS NULL
+                    GROUP BY u.user_id
+                    ORDER BY 
+                      CASE WHEN MAX(u.username) IS NOT NULL AND MAX(u.username) != '' THEN 0 ELSE 1 END,
+                      latest_seen DESC,
+                      u.user_id DESC
+                    LIMIT %s
+                """, (clean_target, limit))
             return await cur.fetchall()
 
 
@@ -347,7 +429,7 @@ async def run_member_adder(
 
         # Fetch candidate users
         candidates = await get_candidate_users(clean_target, limit=remaining_quota * 15)
-        logger.info(f"🔍 Found {len(candidates)} unattempted candidate members in database.")
+        logger.info(f"🔍 Found {len(candidates)} unattempted candidate members in database (ordered by newest join date first).")
 
         if not candidates:
             logger.info("📭 No more candidate users left to add in database!")

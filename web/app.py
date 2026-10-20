@@ -1381,6 +1381,34 @@ def member_adder_page():
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('max_delay', '110')")
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('target_group', 'darkfantasyloverzone')")
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('active_account', 'nikita967')")
+        
+        # Ensure users table has created_at and updated_at
+        try:
+            _execute("ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        except Exception:
+            pass
+        try:
+            _execute("ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+        except Exception:
+            pass
+        try:
+            _execute("ALTER TABLE users ADD INDEX idx_users_created (created_at)")
+        except Exception:
+            pass
+        try:
+            _execute("""
+                UPDATE users u
+                JOIN (
+                    SELECT user_id, MIN(recorded_at) as first_seen, MAX(recorded_at) as last_seen 
+                    FROM user_name_history 
+                    GROUP BY user_id
+                ) unh ON u.user_id = unh.user_id
+                SET u.created_at = FROM_UNIXTIME(unh.first_seen),
+                    u.updated_at = FROM_UNIXTIME(unh.last_seen)
+                WHERE u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00'
+            """)
+        except Exception:
+            pass
     except Exception:
         pass
 

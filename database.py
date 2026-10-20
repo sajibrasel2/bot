@@ -116,9 +116,24 @@ async def init_db() -> None:
                     chat_id    BIGINT NOT NULL,
                     username   VARCHAR(100),
                     first_name VARCHAR(200),
-                    PRIMARY KEY (user_id, chat_id)
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (user_id, chat_id),
+                    INDEX idx_users_created (created_at)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
+            
+            # Dynamic migration for existing users table
+            try:
+                await cur.execute("SHOW COLUMNS FROM users LIKE 'created_at'")
+                col_exists = await cur.fetchone()
+                if not col_exists:
+                    await cur.execute("ALTER TABLE users ADD COLUMN `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+                    await cur.execute("ALTER TABLE users ADD COLUMN `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+                    await cur.execute("ALTER TABLE users ADD INDEX `idx_users_created` (created_at)")
+            except Exception:
+                pass
+
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS bot_admins (
                     user_id    BIGINT PRIMARY KEY,
@@ -511,7 +526,7 @@ async def check_and_track_user_name(user_id: int, chat_id: int, username: str, f
             # Update users table
             await cur.execute(
                 "INSERT INTO users (user_id, chat_id, username, first_name) VALUES (%s, %s, %s, %s) "
-                "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
+                "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name), updated_at=NOW()",
                 (user_id, chat_id, current_un, current_fn)
             )
 
