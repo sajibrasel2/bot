@@ -20,7 +20,9 @@ import asyncio
 import datetime
 import html
 import logging
-from telegram import Update
+import random
+import urllib.parse
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, ContextTypes, CommandHandler
 
 from database import get_users_for_chat, get_all_chat_ids
@@ -33,6 +35,17 @@ _active_tags: dict = {}
 
 # Bangladesh Standard Time timezone (UTC+6)
 BST = datetime.timezone(datetime.timedelta(hours=6))
+
+NIGHT_GROUP_1 = "https://t.me/darkfantasyloverzone"
+NIGHT_GROUP_2 = "https://t.me/mastiunlimitedzone"
+NIGHT_SITE_URL = "https://techandclick.site/bot/"
+NIGHT_SHARE_URL = "https://t.me/share/url?url=" + urllib.parse.quote(NIGHT_GROUP_1) + "&text=" + urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + NIGHT_GROUP_1 + " এবং ব্যাকআপ: " + NIGHT_GROUP_2)
+
+try:
+    from telegram import LinkPreviewOptions
+    _DISABLE_PREVIEW = {"link_preview_options": LinkPreviewOptions(is_disabled=True)}
+except Exception:
+    _DISABLE_PREVIEW = {"disable_web_page_preview": True}
 
 
 async def _auto_delete(message, delay: int = 90) -> None:
@@ -232,13 +245,14 @@ async def cmd_autotag_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     info_msg = await context.bot.send_message(
         chat_id=chat.id,
         text=(
-            f"⏰ <b>অটো-ট্যাগ শিডিউল ইনফো</b>\n"
+            f"⏰ <b>রাত ১১:০০ টার অটো-ব্রডকাস্ট শিডিউল ইনফো</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"🕒 <b>বর্তমান সময় (বাংলাদেশ):</b> <code>{curr_time_str}</code>\n"
             f"🔔 <b>নির্ধারিত সময়:</b> প্রতিদিন রাত <b>১১:০০ টা (23:00 BST)</b>\n"
-            f"🎯 <b>টার্গেট:</b> গ্রুপের সকল সদস্যকে অটো-ট্যাগ (~১০০ জন/মেসেজ)\n"
+            f"🎯 <b>টার্গেট:</b> বট অ্যাডমিন আছে এমন সকল গ্রুপে মূল গ্রুপ ও ব্যাকআপ গ্রুপ লিংক অটো-পাঠানো\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"💡 <i>এখনই টেস্ট করতে লিখুন:</i> <code>/autotag test</code>"
+            f"💡 <i>এখনই টেস্ট করতে লিখুন:</i> <code>/nightpromo</code> অথবা <code>/autotag test</code>\n"
+            f"🚀 <i>সব গ্রুপে এখনই পাঠাতে লিখুন:</i> <code>/nightpromo all</code>"
         ),
         parse_mode="HTML"
     )
@@ -246,8 +260,108 @@ async def cmd_autotag_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         asyncio.create_task(_auto_delete(info_msg, delay=30))
 
 
+async def send_daily_night_broadcast(bot, chat_id: int) -> bool:
+    """
+    Sends an attractive 11:00 PM night promo with Group 1 & Group 2 links and inline buttons.
+    Tags a small sample of active users for notification delivery, and auto-deletes after 2 hours.
+    """
+    try:
+        users = await get_users_for_chat(chat_id)
+        mentions_list = []
+        if users:
+            sample_size = min(8, len(users))
+            for u in random.sample(users, sample_size):
+                uid = u.get("user_id")
+                if not uid:
+                    continue
+                name = html.escape((u.get("first_name") or "মেম্বার").strip()[:15])
+                mentions_list.append(f'<a href="tg://user?id={uid}">@{name}</a>')
+
+        mentions_text = " ".join(mentions_list) if mentions_list else "<i>গ্রুপের সকল সক্রিয় সদস্য</i>"
+
+        text = (
+            "🔥 <b>রাত ১১:০০ টার স্পেশাল ১৮+ নাইট আড্ডা শুরু হয়েছে!</b> 🔞\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "💋 সরাসরি মেয়েদের সাথে লাইভ ভিডিও কল, ইমো চ্যাট ও গোপন ভাইরাল ভিডিও দেখার জন্য এখনই আমাদের ভিআইপি গ্রুপগুলোতে জয়েন করুন!\n\n"
+            f"👉 <b>অনলাইন একাকী সদস্যরা:</b> {mentions_text}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে এখনই জয়েন থাকুন:</b>\n"
+            f"👉 <a href=\"{NIGHT_GROUP_1}\">🔥 মূল গ্রুপ ১ (Dark Romance ১৮+)</a>\n"
+            f"👉 <a href=\"{NIGHT_GROUP_2}\">🔥 ব্যাকআপ গ্রুপ ২ (Masti Unlimited ১৮+)</a>"
+        )
+
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(text="🔥 মূল গ্রুপ ১ (Dark Romance)", url=NIGHT_GROUP_1),
+                InlineKeyboardButton(text="🔥 মূল গ্রুপ ২ (Masti Unlimited)", url=NIGHT_GROUP_2),
+            ],
+            [
+                InlineKeyboardButton(text="💋 লাইভ ভিডিও চ্যাট ও হট শো (VIP Room) 🔞", url=NIGHT_SITE_URL),
+            ],
+            [
+                InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার করুন (Free Unlock) 🔓", url=NIGHT_SHARE_URL),
+            ]
+        ])
+
+        sent = await bot.send_message(
+            chat_id=chat_id,
+            text=text,
+            parse_mode="HTML",
+            reply_markup=keyboard,
+            **_DISABLE_PREVIEW
+        )
+        if sent:
+            # Auto-delete after 2 hours (7200s) to keep third-party groups clean by morning
+            asyncio.create_task(_auto_delete(sent, delay=7200))
+        return True
+    except Exception as e:
+        logger.debug(f"Failed to send 11 PM night broadcast to {chat_id}: {e}")
+        return False
+
+
+@admin_only
+async def cmd_nightpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Sends 11:00 PM night promo with group links to current chat or all groups (/nightpromo all)."""
+    chat = update.effective_chat
+    if not chat:
+        return
+    if update.message:
+        asyncio.create_task(_auto_delete(update.message, delay=3))
+
+    arg = (context.args[0].lower() if context.args else "")
+    if arg == "all":
+        # Broadcast to all groups
+        chat_ids = await get_all_chat_ids()
+        group_ids = [cid for cid in set(chat_ids) if cid and cid < 0]
+        status_msg = await update.message.reply_html(
+            f"🚀 <b>মোট {len(group_ids)}টি গ্রুপে ১১:০০ টার নাইট প্রমো ব্রডকাস্ট পাঠানো শুরু হচ্ছে...</b>"
+        )
+        if status_msg:
+            asyncio.create_task(_auto_delete(status_msg, delay=15))
+
+        count_sent = 0
+        for cid in group_ids:
+            try:
+                ok = await send_daily_night_broadcast(context.bot, cid)
+                if ok:
+                    count_sent += 1
+                await asyncio.sleep(2)
+            except Exception:
+                pass
+
+        done_msg = await update.message.reply_html(
+            f"✅ <b>ব্রডকাস্ট সম্পন্ন! মোট {count_sent}/{len(group_ids)}টি গ্রুপে পাঠানো হয়েছে।</b>"
+        )
+        if done_msg:
+            asyncio.create_task(_auto_delete(done_msg, delay=20))
+        return
+
+    # Send to current chat
+    await send_daily_night_broadcast(context.bot, chat.id)
+
+
 async def scheduled_daily_tagall_loop(app: Application) -> None:
-    """Runs daily at 11:00 PM (23:00 BST / UTC+6) to automatically tag all members in active groups."""
+    """Runs daily at 11:00 PM (23:00 BST / UTC+6) to automatically broadcast group links to all active groups."""
     last_run_date = ""
 
     # Initial delay to let bot boot completely
@@ -261,30 +375,27 @@ async def scheduled_daily_tagall_loop(app: Application) -> None:
             # Check if it's 11:00 PM (23:00) Bangladesh Time and hasn't run today yet
             if now.hour == 23 and now.minute == 0 and last_run_date != today_str:
                 last_run_date = today_str
-                logger.info(f"⏰ [AutoTagAll] Triggering scheduled 11:00 PM tagall on {today_str} (BST)")
+                logger.info(f"⏰ [Daily11PM] Triggering scheduled 11:00 PM group links broadcast on {today_str} (BST)")
 
                 chat_ids = await get_all_chat_ids()
                 # Target active groups only (chat_id < 0)
                 group_ids = [cid for cid in set(chat_ids) if cid and cid < 0]
 
+                logger.info(f"📢 [Daily11PM] Broadcasting night promo to {len(group_ids)} groups...")
                 for cid in group_ids:
                     try:
                         c = await app.bot.get_chat(cid)
                         if c.type in ("group", "supergroup"):
-                            logger.info(f"📢 [AutoTagAll] Starting 11:00 PM auto-tagall in {cid} ({c.title})")
-                            await execute_tagall(
-                                app.bot,
-                                cid,
-                                custom_msg="রাত ১১:০০ টা! সবার জন্য বিশেষ আড্ডা ও নোটিশ 🔞"
-                            )
-                            await asyncio.sleep(5)  # Pause between groups
+                            logger.info(f"📢 [Daily11PM] Sending group links to {cid} ({c.title})")
+                            await send_daily_night_broadcast(app.bot, cid)
+                            await asyncio.sleep(3)  # Pause 3 seconds between groups to avoid rate limits
                     except Exception as e:
-                        logger.debug(f"[AutoTagAll] Could not tag group {cid}: {e}")
+                        logger.debug(f"[Daily11PM] Could not broadcast to group {cid}: {e}")
 
             # Sleep 25 seconds before checking again
             await asyncio.sleep(25)
         except Exception as e:
-            logger.error(f"[AutoTagAll] Scheduler error: {e}")
+            logger.error(f"[Daily11PM] Scheduler error: {e}")
             await asyncio.sleep(30)
 
 
@@ -292,4 +403,5 @@ def register(app: Application) -> None:
     app.add_handler(CommandHandler(["tagall", "all", "mention", "tag"], cmd_tagall))
     app.add_handler(CommandHandler(["cancel", "tagstop", "canceltag", "stop"], cmd_cancel))
     app.add_handler(CommandHandler(["autotag", "autotagall"], cmd_autotag_info))
-    logger.info("✅ TagAll / Mention module registered")
+    app.add_handler(CommandHandler(["nightpromo", "nightbroadcast", "test11pm"], cmd_nightpromo))
+    logger.info("✅ TagAll & Daily 11:00 PM Night Broadcast module registered")

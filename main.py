@@ -66,6 +66,7 @@ async def post_init(app: Application) -> None:
         BotCommand("tagall",        "সবাইকে মেনশন করুন (/all)"),
         BotCommand("cancel",        "মেনশন থামান (/tagstop)"),
         BotCommand("autotag",       "রাত ১১টার অটো-ট্যাগ শিডিউল"),
+        BotCommand("nightpromo",    "রাত ১১টার গ্রুপ লিংক ব্রডকাস্ট"),
         BotCommand("warn",          "সতর্ক করুন"),
         BotCommand("warns",         "ওয়ার্ন তালিকা দেখুন"),
         BotCommand("ban",           "ব্যান করুন"),

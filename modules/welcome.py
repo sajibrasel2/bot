@@ -561,7 +561,27 @@ async def cmd_name_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     asyncio.create_task(_auto_delete(sent, delay=60))
 
 
+async def handle_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Detects when the bot itself is added as member or promoted to administrator in any group."""
+    chat = update.effective_chat
+    if not chat or chat.type not in ("group", "supergroup"):
+        return
+    my_member = update.my_chat_member
+    if not my_member:
+        return
+    status = my_member.new_chat_member.status
+    if status in ("member", "administrator"):
+        try:
+            count = await chat.get_member_count()
+        except Exception:
+            count = 0
+        from database import update_chat_info
+        await update_chat_info(chat.id, title=chat.title or "", member_count=count)
+        logger.info(f"🎉 Bot was added to group {chat.id} ({chat.title}) as {status}! Recorded in DB.")
+
+
 def register(app) -> None:
+    app.add_handler(ChatMemberHandler(handle_my_chat_member, ChatMemberHandler.MY_CHAT_MEMBER))
     app.add_handler(ChatMemberHandler(handle_chat_member, ChatMemberHandler.CHAT_MEMBER))
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_chat_members))
     # app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER,  handle_left_member))
