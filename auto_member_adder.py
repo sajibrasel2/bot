@@ -385,19 +385,25 @@ async def main_async():
 
     await init_adder_tables()
 
-    while True:
-        stats = await run_member_adder(
-            target_group=args.target,
-            daily_limit=args.limit,
-            min_delay=args.min_delay,
-            max_delay=args.max_delay
-        )
+    try:
+        while True:
+            stats = await run_member_adder(
+                target_group=args.target,
+                daily_limit=args.limit,
+                min_delay=args.min_delay,
+                max_delay=args.max_delay
+            )
 
-        if not args.daemon:
-            break
+            if not args.daemon:
+                break
 
-        logger.info("🛌 Daemon mode active: Sleeping 24 hours until tomorrow's safe add batch...")
-        await asyncio.sleep(86400)
+            logger.info("🛌 Daemon mode active: Sleeping 24 hours until tomorrow's safe add batch...")
+            await asyncio.sleep(86400)
+    finally:
+        global _pool
+        if _pool:
+            _pool.close()
+            await _pool.wait_closed()
 
 
 if __name__ == "__main__":
