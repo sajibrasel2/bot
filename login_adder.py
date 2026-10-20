@@ -45,6 +45,42 @@ def set_active_account(account_name: str) -> None:
         print(f"Note: Could not update active account in DB: {e}")
 
 
+def register_account_in_db(account_name: str, tg_id: int, fname: str, lname: str, username: str, phone: str = "") -> None:
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS member_adder_accounts (
+                    account_name VARCHAR(100) PRIMARY KEY,
+                    phone VARCHAR(30) DEFAULT '',
+                    telegram_id BIGINT DEFAULT NULL,
+                    first_name VARCHAR(150) DEFAULT '',
+                    last_name VARCHAR(150) DEFAULT '',
+                    username VARCHAR(100) DEFAULT '',
+                    status VARCHAR(50) DEFAULT 'authorized',
+                    status_detail VARCHAR(255) DEFAULT 'সক্রিয়',
+                    last_used DATETIME DEFAULT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+            cur.execute("""
+                INSERT INTO member_adder_accounts (account_name, phone, telegram_id, first_name, last_name, username, status, status_detail)
+                VALUES (%s, %s, %s, %s, %s, %s, 'authorized', 'সক্রিয়')
+                ON DUPLICATE KEY UPDATE
+                    phone = VALUES(phone),
+                    telegram_id = VALUES(telegram_id),
+                    first_name = VALUES(first_name),
+                    last_name = VALUES(last_name),
+                    username = VALUES(username),
+                    status = 'authorized',
+                    status_detail = 'সক্রিয়'
+            """, (account_name, phone, tg_id, fname, lname or "", username or ""))
+        conn.close()
+    except Exception as e:
+        print(f"Note: Could not register in member_adder_accounts: {e}")
+
+
 def format_phone_number(raw: str) -> str:
     """Format Bangladeshi or international phone numbers to E.164 format."""
     p = raw.strip().replace(" ", "").replace("-", "")
@@ -99,6 +135,7 @@ async def main():
             relogin = input("\nআপনি কি এই একাউন্টটি পুনরায় লগইন করতে চান? (y/N): ").strip().lower()
             if relogin != "y":
                 set_active_account(clean_name)
+                register_account_in_db(clean_name, me.id, me.first_name, me.last_name or "", me.username or "")
                 print(f"🎯 সক্রিয় একাউন্ট হিসেবে '{clean_name}' সেট করা হয়েছে।")
                 print("\n👉 মেম্বার অ্যাড শুরু করতে নিচের কমান্ড দিন:")
                 print(f"python auto_member_adder.py --account {clean_name}\n")
@@ -137,6 +174,7 @@ async def main():
     print("🎉" * 20 + "\n")
 
     set_active_account(clean_name)
+    register_account_in_db(clean_name, me.id, me.first_name, me.last_name or "", me.username or "", phone=phone)
     print(f"🎯 সক্রিয় একাউন্ট হিসেবে '{clean_name}' ডাটাবেজে সেট করা হয়েছে।")
 
     print("\n👉 মেম্বার অ্যাড স্ক্রিপ্ট চালু করতে নিচের কমান্ডটি রান করুন:")

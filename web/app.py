@@ -1139,6 +1139,9 @@ def format_phone_number(raw: str) -> str:
     return p
 
 
+import time
+
+
 def run_async(coro):
     """Run an async coroutine synchronously inside Flask request thread."""
     import asyncio
@@ -1164,9 +1167,10 @@ def is_adder_running():
 
 
 def start_adder_service():
-    """Start or restart auto_member_adder.py daemon in background."""
+    """Start or restart auto_member_adder.py daemon in background with process cooldown."""
     try:
         subprocess.run(["pkill", "-f", "auto_member_adder.py"])
+        time.sleep(1)  # Allow previous process to cleanly exit and release SQLite session locks
     except Exception:
         pass
 
@@ -1178,7 +1182,7 @@ def start_adder_service():
     script_path = os.path.join(project_dir, "auto_member_adder.py")
     log_path = os.path.join(project_dir, "auto_adder.log")
 
-    cmd = f"nohup {python_bin} {script_path} --all --daemon > {log_path} 2>&1 &"
+    cmd = f"nohup {python_bin} {script_path} --all --daemon >> {log_path} 2>&1 &"
     subprocess.Popen(cmd, shell=True, cwd=project_dir, preexec_fn=getattr(os, "setpgrp", None))
 
 
@@ -1186,54 +1190,160 @@ def stop_adder_service():
     """Stop auto_member_adder.py daemon."""
     try:
         subprocess.run(["pkill", "-f", "auto_member_adder.py"])
+        time.sleep(1)
+    except Exception:
+        pass
+
+
+def init_adder_accounts_table():
+    """Ensure member_adder_accounts table exists for tracking connected IDs."""
+    try:
+        _execute("""
+            CREATE TABLE IF NOT EXISTS member_adder_accounts (
+                account_name VARCHAR(100) PRIMARY KEY,
+                phone VARCHAR(30) DEFAULT '',
+                telegram_id BIGINT DEFAULT NULL,
+                first_name VARCHAR(150) DEFAULT '',
+                last_name VARCHAR(150) DEFAULT '',
+                username VARCHAR(100) DEFAULT '',
+                status VARCHAR(50) DEFAULT 'authorized',
+                status_detail VARCHAR(255) DEFAULT 'সক্রিয়',
+                last_used DATETIME DEFAULT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """)
     except Exception:
         pass
 
 
 def get_connected_accounts_info():
-    """Inspect sessions/ directory and extract account details."""
+    """
+    High-performance account inspector optimized for 20-30+ accounts.
+    Uses database caching to eliminate blocking MTProto network calls on every HTTP request.
+    """
     sessions_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sessions")
     if not os.path.exists(sessions_dir):
         return []
 
+    init_adder_accounts_table()
+
+    # Discover all session files currently stored on disk
+    session_files = {f[:-8] for f in os.listdir(sessions_dir) if f.endswith(".session")}
+    if not session_files:
+        return []
+
+    # Clean up any removed session accounts from database
+    try:
+        db_rows = _query("SELECT * FROM member_adder_accounts", fetchall=True) or []
+    except Exception:
+        db_rows = []
+
+    db_accounts = {r["account_name"]: r for r in db_rows}
+
+    # Query today's added count and total added count per account in single aggregated queries
+    today_map = {}
+    total_map = {}
+    try:
+        today_stats = _query("""
+            SELECT added_by_account, COUNT(*) as cnt 
+            FROM member_add_history 
+            WHERE status = 'added' AND DATE(attempted_at) = CURDATE()
+            GROUP BY added_by_account
+        """, fetchall=True) or []
+        today_map = {r["added_by_account"]: r["cnt"] for r in today_stats if r.get("added_by_account")}
+
+        total_stats = _query("""
+            SELECT added_by_account, COUNT(*) as cnt 
+            FROM member_add_history 
+            WHERE status = 'added'
+            GROUP BY added_by_account
+        """, fetchall=True) or []
+        total_map = {r["added_by_account"]: r["cnt"] for r in total_stats if r.get("added_by_account")}
+    except Exception:
+        pass
+
+    accounts = []
     from video_collector.config import TG_API_ID, TG_API_HASH
     from telethon import TelegramClient
 
-    accounts = []
-    session_files = [f for f in os.listdir(sessions_dir) if f.endswith(".session")]
-    for sf in session_files:
-        acc_name = sf[:-8]
-        sess_base = os.path.join(sessions_dir, acc_name)
-        acc_info = {
-            "name": acc_name,
-            "display_name": acc_name,
-            "username": "",
-            "id": "",
-            "status": "authorized"
-        }
-        try:
-            async def _inspect():
-                c = TelegramClient(sess_base, TG_API_ID, TG_API_HASH)
-                await c.connect()
-                if await c.is_user_authorized():
-                    me = await c.get_me()
+    for acc_name in session_files:
+        rec = db_accounts.get(acc_name)
+        if not rec or not rec.get("first_name"):
+            # Uncached account: inspect once via Telethon and persist to database
+            sess_base = os.path.join(sessions_dir, acc_name)
+            first_name = acc_name
+            last_name = ""
+            username = ""
+            tg_id = None
+            status = "authorized"
+            status_detail = "সক্রিয়"
+            try:
+                async def _inspect():
+                    c = TelegramClient(sess_base, TG_API_ID, TG_API_HASH)
+                    await c.connect()
+                    if await c.is_user_authorized():
+                        me = await c.get_me()
+                        await c.disconnect()
+                        return me
                     await c.disconnect()
-                    return {
-                        "name": acc_name,
-                        "display_name": f"{me.first_name} {me.last_name or ''}".strip(),
-                        "username": me.username or "",
-                        "id": me.id,
-                        "status": "authorized"
-                    }
-                await c.disconnect()
-                return {"name": acc_name, "display_name": acc_name, "username": "", "id": "", "status": "unauthorized"}
+                    return None
 
-            res = run_async(_inspect())
-            if res:
-                acc_info.update(res)
-        except Exception:
-            pass
-        accounts.append(acc_info)
+                me = run_async(_inspect())
+                if me:
+                    first_name = me.first_name or acc_name
+                    last_name = me.last_name or ""
+                    username = me.username or ""
+                    tg_id = me.id
+                    status = "authorized"
+                else:
+                    status = "unauthorized"
+                    status_detail = "লগআউট"
+            except Exception as e:
+                status = "error"
+                status_detail = str(e)[:100]
+
+            try:
+                _execute("""
+                    INSERT INTO member_adder_accounts (account_name, telegram_id, first_name, last_name, username, status, status_detail)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE 
+                        telegram_id = VALUES(telegram_id),
+                        first_name = VALUES(first_name),
+                        last_name = VALUES(last_name),
+                        username = VALUES(username),
+                        status = VALUES(status),
+                        status_detail = VALUES(status_detail)
+                """, (acc_name, tg_id, first_name, last_name, username, status, status_detail))
+            except Exception:
+                pass
+
+            rec = {
+                "account_name": acc_name,
+                "first_name": first_name,
+                "last_name": last_name,
+                "username": username,
+                "telegram_id": tg_id,
+                "status": status,
+                "status_detail": status_detail
+            }
+
+        acc_today = today_map.get(acc_name, 0)
+        acc_total = total_map.get(acc_name, 0)
+
+        accounts.append({
+            "name": acc_name,
+            "display_name": f"{rec.get('first_name', '')} {rec.get('last_name', '')}".strip() or acc_name,
+            "username": rec.get("username", ""),
+            "id": rec.get("telegram_id", ""),
+            "status": rec.get("status", "authorized"),
+            "status_detail": rec.get("status_detail", "সক্রিয়"),
+            "added_today": acc_today,
+            "total_added": acc_total
+        })
+
+    # Sort accounts by name for clean display
+    accounts.sort(key=lambda x: x["name"])
     return accounts
 
 
@@ -1372,7 +1482,7 @@ def member_adder_login_send_code():
     raw_phone = request.form.get("phone", "").strip()
 
     if not account_name:
-        flash("❌ একাউন্টের একটি নাম দিন (যেমন: nikita2)", "error")
+        flash("❌ একাউন্টের একটি নাম দিন (যেমন: nikita2, acc3)", "error")
         return redirect(url_for("member_adder_page"))
 
     if not raw_phone:
@@ -1386,8 +1496,20 @@ def member_adder_login_send_code():
     os.makedirs(sessions_dir, exist_ok=True)
     session_path = os.path.join(sessions_dir, clean_name)
 
+    # Check if active session already exists with this name
+    if os.path.exists(session_path + ".session"):
+        existing = _query("SELECT status FROM member_adder_accounts WHERE account_name = %s", (clean_name,), fetchone=True)
+        if existing and existing.get("status") == "authorized":
+            flash(f"⚠️ '{clean_name}' নামের একটি একাউন্ট ইতিমধ্যে যুক্ত আছে! অনুগ্রহ করে ভিন্ন একটি নাম দিন (যেমন: {clean_name}_2)।", "error")
+            return redirect(url_for("member_adder_page"))
+
     from video_collector.config import TG_API_ID, TG_API_HASH
     from telethon import TelegramClient
+    from telethon.errors import (
+        PhoneNumberBannedError,
+        PhoneNumberInvalidError,
+        FloodWaitError
+    )
 
     try:
         async def _send():
@@ -1404,6 +1526,12 @@ def member_adder_login_send_code():
             "phone_code_hash": code_hash
         }
         flash(f"📩 টেলিগ্রামে ৫ ডিজিটের কোড পাঠানো হয়েছে: {phone}। নিচে কোডটি দিয়ে লগইন সম্পন্ন করুন।", "success")
+    except PhoneNumberBannedError:
+        flash(f"❌ টেলিগ্রাম জানিয়েছে এই ফোন নাম্বারটি ({phone}) ব্যান করা আছে। অন্য সচল নাম্বার ব্যবহার করুন।", "error")
+    except PhoneNumberInvalidError:
+        flash(f"❌ ফোন নাম্বারটি ({phone}) সঠিক নয়। কান্ট্রি কোডসহ নাম্বার দিন (যেমন: +88017...)।", "error")
+    except FloodWaitError as e:
+        flash(f"⏳ টেলিগ্রাম নিরাপত্তা কারণে এই নাম্বারে {e.seconds} সেকেন্ড অপেক্ষা করতে বলা হয়েছে।", "error")
     except Exception as e:
         flash(f"❌ কোড পাঠাতে ব্যর্থ: {e}", "error")
 
@@ -1418,11 +1546,14 @@ def member_adder_login_verify_code():
         flash("❌ কোনো পেন্ডিং লগইন পাওয়া যায়নি। পুনরায় চেষ্টা করুন।", "error")
         return redirect(url_for("member_adder_page"))
 
-    code = request.form.get("code", "").strip()
+    raw_code = request.form.get("code", "").strip()
     two_fa_password = request.form.get("password", "").strip()
 
+    # Clean code of non-digits
+    code = re.sub(r"\D", "", raw_code)
+
     if not code:
-        flash("❌ টেলিগ্রাম থেকে পাওয়া কোডটি লিখুন", "error")
+        flash("❌ টেলিগ্রাম থেকে পাওয়া ৫ ডিজিটের কোডটি লিখুন", "error")
         return redirect(url_for("member_adder_page"))
 
     account_name = pending["account_name"]
@@ -1434,7 +1565,13 @@ def member_adder_login_verify_code():
 
     from video_collector.config import TG_API_ID, TG_API_HASH
     from telethon import TelegramClient
-    from telethon.errors import SessionPasswordNeededError
+    from telethon.errors import (
+        SessionPasswordNeededError,
+        PhoneCodeInvalidError,
+        PhoneCodeExpiredError,
+        PasswordHashInvalidError,
+        FloodWaitError
+    )
 
     try:
         async def _verify():
@@ -1444,7 +1581,7 @@ def member_adder_login_verify_code():
                 await client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
             except SessionPasswordNeededError:
                 if not two_fa_password:
-                    raise Exception("এই একাউন্টে Two-Step Verification পাসওয়ার্ড চালু আছে। দয়া করে পাসওয়ার্ড দিন।")
+                    raise SessionPasswordNeededError("এই একাউন্টে Two-Step Verification পাসওয়ার্ড চালু আছে। দয়া করে পাসওয়ার্ড দিন।")
                 await client.sign_in(password=two_fa_password)
             me = await client.get_me()
             await client.disconnect()
@@ -1453,19 +1590,37 @@ def member_adder_login_verify_code():
         me = run_async(_verify())
         session.pop("adder_pending_login", None)
 
-        # Set as active account in settings
+        # Register/update directly in member_adder_accounts DB table
+        init_adder_accounts_table()
         _execute("""
-            INSERT INTO member_adder_settings (setting_key, setting_val)
-            VALUES ('active_account', %s)
-            ON DUPLICATE KEY UPDATE setting_val = VALUES(setting_val)
-        """, (account_name,))
+            INSERT INTO member_adder_accounts (account_name, phone, telegram_id, first_name, last_name, username, status, status_detail)
+            VALUES (%s, %s, %s, %s, %s, %s, 'authorized', 'সক্রিয়')
+            ON DUPLICATE KEY UPDATE
+                phone = VALUES(phone),
+                telegram_id = VALUES(telegram_id),
+                first_name = VALUES(first_name),
+                last_name = VALUES(last_name),
+                username = VALUES(username),
+                status = 'authorized',
+                status_detail = 'সক্রিয়'
+        """, (account_name, phone, me.id, me.first_name, me.last_name or "", me.username or ""))
 
         # Auto-restart adder service in background so new account starts adding immediately!
         running, _ = is_adder_running()
         if running:
             start_adder_service()
 
-        flash(f"🎉 একাউন্ট সফলভাবে যুক্ত হয়েছে: {me.first_name} (@{me.username or me.id})! সার্ভিস স্বয়ংক্রিয়ভাবে আপডেট করা হয়েছে।", "success")
+        flash(f"🎉 একাউন্ট সফলভাবে যুক্ত হয়েছে: {me.first_name} (@{me.username or me.id})! ব্যাকগ্রাউন্ড সার্ভিস আপডেট হয়েছে।", "success")
+    except SessionPasswordNeededError as e:
+        flash(f"🔐 {e}", "error")
+    except PhoneCodeInvalidError:
+        flash("❌ আপনার দেওয়া ৫-ডিজিটের লগইন কোডটি সঠিক নয়। টেলিগ্রাম অ্যাপ দেখে সঠিক কোড দিন।", "error")
+    except PhoneCodeExpiredError:
+        flash("❌ কোডের মেয়াদ শেষ হয়ে গেছে। দয়া করে আবার নতুন কোড পাঠান।", "error")
+    except PasswordHashInvalidError:
+        flash("❌ আপনার দেওয়া Two-Step Verification পাসওয়ার্ডটি সঠিক নয়।", "error")
+    except FloodWaitError as e:
+        flash(f"⏳ অতিরিক্ত চেষ্টার কারণে টেলিগ্রাম {e.seconds} সেকেন্ড অপেক্ষা করতে বলেছে।", "error")
     except Exception as e:
         flash(f"❌ লগইন সম্পন্ন করতে ব্যর্থ: {e}", "error")
 
@@ -1486,6 +1641,13 @@ def member_adder_delete_account(account_name):
     clean_name = re.sub(r"[^\w\-]", "_", account_name).lower()
     sessions_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sessions")
     session_file = os.path.join(sessions_dir, clean_name + ".session")
+
+    # Remove database record
+    try:
+        _execute("DELETE FROM member_adder_accounts WHERE account_name = %s", (clean_name,))
+    except Exception:
+        pass
+
     if os.path.exists(session_file):
         try:
             os.remove(session_file)
@@ -1494,9 +1656,10 @@ def member_adder_delete_account(account_name):
             if running:
                 start_adder_service()
         except Exception as e:
-            flash(f"❌ ডিলিট করতে ব্যর্থ: {e}", "error")
+            flash(f"❌ সেশন ফাইল ডিলিট করতে ব্যর্থ: {e}", "error")
     else:
-        flash("একাউন্ট পাওয়া যায়নি।", "error")
+        flash(f"🗑️ একাউন্ট '{clean_name}' সফলভাবে রিমুভ করা হয়েছে।", "success")
+
     return redirect(url_for("member_adder_page"))
 
 
@@ -1524,9 +1687,15 @@ def api_member_adder_status():
     logs = ""
     if os.path.exists(log_file):
         try:
-            with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()
-                logs = "".join(lines[-40:])
+            file_size = os.path.getsize(log_file)
+            bytes_to_read = min(file_size, 32768)  # Read up to last 32 KB
+            with open(log_file, "rb") as f:
+                if file_size > bytes_to_read:
+                    f.seek(file_size - bytes_to_read)
+                tail_bytes = f.read()
+            tail_text = tail_bytes.decode("utf-8", errors="ignore")
+            lines = tail_text.splitlines(keepends=True)
+            logs = "".join(lines[-45:])
         except Exception as e:
             logs = f"Error reading log: {e}"
     else:
