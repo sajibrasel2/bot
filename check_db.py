@@ -71,6 +71,12 @@ async def main():
 
             # Backfill timestamps from user_name_history & user_invites
             try:
+                await cur.execute("SELECT COUNT(*) as cnt FROM user_name_history")
+                unh_cnt = (await cur.fetchone())["cnt"]
+                await cur.execute("SELECT COUNT(*) as cnt FROM user_invites")
+                ui_cnt = (await cur.fetchone())["cnt"]
+                print(f"📜 হিস্টোরি ডেটা: Name History: {unh_cnt:,} টি | Invites: {ui_cnt:,} টি")
+
                 await cur.execute("""
                     UPDATE users u
                     JOIN (
@@ -80,12 +86,10 @@ async def main():
                     ) unh ON u.user_id = unh.user_id
                     SET u.created_at = FROM_UNIXTIME(unh.first_seen),
                         u.updated_at = FROM_UNIXTIME(unh.last_seen)
-                    WHERE u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00'
+                    WHERE unh.first_seen > 0
                 """)
-            except Exception:
-                pass
+                unh_updated = cur.rowcount
 
-            try:
                 await cur.execute("""
                     UPDATE users u
                     JOIN (
@@ -94,10 +98,13 @@ async def main():
                         GROUP BY invited_id
                     ) ui ON u.user_id = ui.invited_id
                     SET u.created_at = GREATEST(COALESCE(u.created_at, FROM_UNIXTIME(ui.last_invite)), FROM_UNIXTIME(ui.last_invite))
-                    WHERE ui.last_invite > 0 AND (u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00')
+                    WHERE ui.last_invite > 0
                 """)
-            except Exception:
-                pass
+                ui_updated = cur.rowcount
+                if unh_updated > 0 or ui_updated > 0:
+                    print(f"✅ {unh_updated + ui_updated:,} জন মেম্বারের আসল যোগদানের সময় সফলভাবে সিংক হয়েছে!")
+            except Exception as e:
+                print(f"⚠️ Timestamp sync notice: {e}")
 
             # Check columns in users
             await cur.execute("SHOW COLUMNS FROM users")

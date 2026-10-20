@@ -1405,7 +1405,7 @@ def member_adder_page():
                 ) unh ON u.user_id = unh.user_id
                 SET u.created_at = FROM_UNIXTIME(unh.first_seen),
                     u.updated_at = FROM_UNIXTIME(unh.last_seen)
-                WHERE u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00'
+                WHERE unh.first_seen > 0
             """)
         except Exception:
             pass

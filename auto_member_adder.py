@@ -167,7 +167,7 @@ async def init_adder_tables() -> None:
                     ) unh ON u.user_id = unh.user_id
                     SET u.created_at = FROM_UNIXTIME(unh.first_seen),
                         u.updated_at = FROM_UNIXTIME(unh.last_seen)
-                    WHERE u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00'
+                    WHERE unh.first_seen > 0
                 """)
             except Exception:
                 pass
@@ -182,7 +182,7 @@ async def init_adder_tables() -> None:
                         GROUP BY invited_id
                     ) ui ON u.user_id = ui.invited_id
                     SET u.created_at = GREATEST(COALESCE(u.created_at, FROM_UNIXTIME(ui.last_invite)), FROM_UNIXTIME(ui.last_invite))
-                    WHERE ui.last_invite > 0 AND (u.created_at IS NULL OR u.created_at = '0000-00-00 00:00:00')
+                    WHERE ui.last_invite > 0
                 """)
             except Exception:
                 pass
