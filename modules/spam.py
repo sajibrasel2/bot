@@ -64,7 +64,7 @@ _user_bio_cache: dict = {}
 BIO_CACHE_TTL = 180  # 3 minutes cache TTL
 _bio_alert_time: dict = defaultdict(lambda: defaultdict(float))
 
-DEFAULT_BIOLINK_WHITELIST = "https://t.me/darkromance4u, https://t.me/alltimefantasyzone"
+DEFAULT_BIOLINK_WHITELIST = "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone"
 
 BIO_URL_PATTERN = re.compile(
     r"(https?://[^\s]+|ftp://[^\s]+|www\.[^\s]+|t\.me/[^\s]+|telegram\.me/[^\s]+|telegram\.dog/[^\s]+|tg://[^\s]+|"
@@ -162,7 +162,7 @@ def _clean_flood(timestamps: list, now: float) -> list:
     return [t for t in timestamps if now - t < FLOOD_WINDOW_SECONDS]
 
 
-MAIN_DARK_ROMANCE_GROUP = "https://t.me/alltimefantasyzone"
+MAIN_DARK_ROMANCE_GROUP = "https://t.me/darkfantasyloverzone"
 
 try:
     from telegram import LinkPreviewOptions

@@ -61,7 +61,7 @@ STATUSES = [
 OPERATOR_PREFIXES = ["০১৭", "০১৩", "০১৯", "০১৪", "০১৮", "০১৬"]
 
 # Viral Telegram share URL (Prompts user to forward/share the group link to 5 friends/groups)
-SHARE_GROUP_URL = "https://t.me/alltimefantasyzone"
+SHARE_GROUP_URL = "https://t.me/darkfantasyloverzone"
 SHARE_TEXT_ENCODED = urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + SHARE_GROUP_URL)
 FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_ENCODED}"
 
@@ -116,7 +116,7 @@ def generate_promo_message(users: list) -> tuple:
     extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
 
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url="https://t.me/alltimefantasyzone")],
+        [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url="https://t.me/darkfantasyloverzone")],
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
         [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
         [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],

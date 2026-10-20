@@ -555,7 +555,7 @@ def _get_global_settings():
     settings = {
         "site_gate_enabled": "0",
         "site_gate_required_invites": "10",
-        "site_gate_custom_link": "https://t.me/alltimefantasyzone",
+        "site_gate_custom_link": "https://t.me/darkfantasyloverzone",
         "service_alert_enabled": "1",
         "service_alert_interval": "15",
         "service_girls_json": json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False),
@@ -598,7 +598,7 @@ def api_check_invites():
     settings = _get_global_settings()
     gate_enabled = (settings.get("site_gate_enabled", "1") == "1")
     required = int(settings.get("site_gate_required_invites", "10") or 10)
-    custom_link = settings.get("site_gate_custom_link", "https://t.me/alltimefantasyzone")
+    custom_link = settings.get("site_gate_custom_link", "https://t.me/darkfantasyloverzone")
 
     action = request.args.get("action") or (request.get_json(silent=True) or {}).get("action") or ""
     if action == "gate_status":
@@ -691,7 +691,7 @@ def site_settings():
     if request.method == "POST":
         gate_en = "1" if request.form.get("site_gate_enabled") == "1" else "0"
         req_inv = request.form.get("site_gate_required_invites", "10").strip()
-        custom_link = request.form.get("site_gate_custom_link", "https://t.me/alltimefantasyzone").strip()
+        custom_link = request.form.get("site_gate_custom_link", "https://t.me/darkfantasyloverzone").strip()
 
         try:
             req_inv_int = max(1, int(req_inv))

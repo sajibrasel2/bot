@@ -24,7 +24,7 @@ from config import OWNER_ID
 
 logger = logging.getLogger(__name__)
 
-MAIN_DARK_ROMANCE_GROUP = "https://t.me/alltimefantasyzone"
+MAIN_DARK_ROMANCE_GROUP = "https://t.me/darkfantasyloverzone"
 
 try:
     from telegram import LinkPreviewOptions

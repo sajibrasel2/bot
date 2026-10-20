@@ -35,7 +35,7 @@ DEFAULT_WELCOME = (
     "🌟 <b>স্বাগতম {mention}!</b> 🌸\n"
     "🏠 <b>{chatname}</b> • আপনি আমাদের <b>#{count}</b> তম সদস্য।\n\n"
     "🔞 <b>আমাদের মূল Dark Romance গ্রুপে জয়েন করুন:</b>\n"
-    "👉 <a href=\"https://t.me/alltimefantasyzone\">Dark Romance ১৮+ আড্ডা</a>\n\n"
+    "👉 <a href=\"https://t.me/darkfantasyloverzone\">Dark Romance ১৮+ আড্ডা</a>\n\n"
     "🔞 <b>হট ও ভাইরাল ভিডিও ক্যাটাগরি দেখতে নিচে ক্লিক করুন:</b>\n"
     "👇 আপনার পছন্দের ক্যাটাগরি বেছে নিন এবং সরাসরি সাইটে প্রবেশ করুন 👇"
 )
@@ -123,7 +123,7 @@ VIRAL_BUTTON_SETS = {
 import urllib.parse
 
 # Viral Telegram share URL (Prompts user to forward/share the group link to 5 friends/groups)
-SHARE_GROUP_URL = "https://t.me/alltimefantasyzone"
+SHARE_GROUP_URL = "https://t.me/darkfantasyloverzone"
 SHARE_TEXT_ENCODED = urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + SHARE_GROUP_URL)
 FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_ENCODED}"
 
@@ -139,7 +139,7 @@ def _build_button(settings: dict):
     extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
 
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url="https://t.me/alltimefantasyzone")],
+        [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url="https://t.me/darkfantasyloverzone")],
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
         [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
         [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],

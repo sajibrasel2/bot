@@ -93,7 +93,7 @@ if (!$pdo) {
 // Fetch Global Settings
 $site_gate_enabled = 0;
 $required = 10;
-$custom_link = 'https://t.me/alltimefantasyzone';
+$custom_link = 'https://t.me/darkfantasyloverzone';
 
 try {
     $stmt = $pdo->query("SELECT setting_key, setting_val FROM global_settings");

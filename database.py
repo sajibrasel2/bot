@@ -196,7 +196,9 @@ async def init_db() -> None:
             """)
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('site_gate_enabled', '0') ON DUPLICATE KEY UPDATE setting_val='0'")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_required_invites', '10')")
-            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/alltimefantasyzone')")
+            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/darkfantasyloverzone')")
+            # Auto-migrate old banned group link to new group link
+            await cur.execute("UPDATE global_settings SET setting_val = 'https://t.me/darkfantasyloverzone' WHERE setting_key = 'site_gate_custom_link' AND setting_val = 'https://t.me/alltimefantasyzone'")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_enabled', '1')")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_alert_interval', '15') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             default_girls_json = json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False)
@@ -218,6 +220,10 @@ async def init_db() -> None:
             await cur.execute(
                 "UPDATE chat_settings SET promo_sticker=%s WHERE promo_sticker IS NULL",
                 (DEFAULT_PROMO_STICKER,)
+            )
+            # Auto-migrate old group link in antibiolink_whitelist
+            await cur.execute(
+                "UPDATE chat_settings SET antibiolink_whitelist = REPLACE(antibiolink_whitelist, 'alltimefantasyzone', 'darkfantasyloverzone') WHERE antibiolink_whitelist LIKE '%alltimefantasyzone%'"
             )
 
 
@@ -358,7 +364,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "welcome_sticker": DEFAULT_WELCOME_STICKER, "promo_sticker": DEFAULT_PROMO_STICKER,
         "force_add_enabled": 0, "force_add_count": 5,
         "antibiolink_enabled": 1,
-        "antibiolink_whitelist": "https://t.me/darkromance4u, https://t.me/alltimefantasyzone",
+        "antibiolink_whitelist": "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone",
     }
     pool = await get_pool()
     async with pool.acquire() as conn:
@@ -732,7 +738,7 @@ async def get_all_global_settings() -> dict:
             res = {
                 "site_gate_enabled": "0",
                 "site_gate_required_invites": "10",
-                "site_gate_custom_link": "https://t.me/alltimefantasyzone",
+                "site_gate_custom_link": "https://t.me/darkfantasyloverzone",
                 "service_alert_enabled": "1",
                 "service_alert_interval": "15",
                 "service_girls_json": json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False),
