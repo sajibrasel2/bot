@@ -429,12 +429,21 @@ async def run_member_adder(
     return stats
 
 
+def get_available_accounts() -> List[str]:
+    """List all account names found in sessions/ directory."""
+    sessions_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessions")
+    if not os.path.exists(sessions_dir):
+        return []
+    return [f[:-8] for f in os.listdir(sessions_dir) if f.endswith(".session")]
+
+
 # ── Main Entrypoint ──────────────────────────────────────────────────
 async def main_async():
     parser = argparse.ArgumentParser(description="Telegram Safe Member Auto-Adder (Multi-Account)")
     parser.add_argument("--account", default=None, help="Telegram account name (e.g. nikita967)")
+    parser.add_argument("--all", action="store_true", help="Rotate across all logged-in accounts in sessions/ sequentially")
     parser.add_argument("--target", default="darkfantasyloverzone", help="Target group username (without @)")
-    parser.add_argument("--limit", type=int, default=35, help="Daily safe member addition limit (default: 35)")
+    parser.add_argument("--limit", type=int, default=35, help="Daily safe member addition limit per account (default: 35)")
     parser.add_argument("--min-delay", type=int, default=60, help="Minimum delay between adds in seconds (default: 60)")
     parser.add_argument("--max-delay", type=int, default=110, help="Maximum delay between adds in seconds (default: 110)")
     parser.add_argument("--daemon", action="store_true", help="Run in continuous background loop (repeats every 24 hours)")
@@ -444,13 +453,33 @@ async def main_async():
 
     try:
         while True:
-            stats = await run_member_adder(
-                target_group=args.target,
-                daily_limit=args.limit,
-                min_delay=args.min_delay,
-                max_delay=args.max_delay,
-                account_name=args.account
-            )
+            if args.all:
+                accounts = get_available_accounts()
+                if not accounts:
+                    logger.error("❌ No accounts found in sessions/! Please run 'python login_adder.py [account_name]' first.")
+                    break
+                logger.info(f"🔄 Multi-Account Rotation: Found {len(accounts)} accounts ({', '.join(accounts)}).")
+                total_added_all = 0
+                for acc in accounts:
+                    logger.info(f"\n▶️ Starting batch for account: [{acc}] (Daily Target: {args.limit} members)...")
+                    stats = await run_member_adder(
+                        target_group=args.target,
+                        daily_limit=args.limit,
+                        min_delay=args.min_delay,
+                        max_delay=args.max_delay,
+                        account_name=acc
+                    )
+                    total_added_all += stats.get("added", 0)
+                    await asyncio.sleep(5)
+                logger.info(f"\n🎉 All {len(accounts)} accounts completed today's batches! Total added: {total_added_all} members.")
+            else:
+                stats = await run_member_adder(
+                    target_group=args.target,
+                    daily_limit=args.limit,
+                    min_delay=args.min_delay,
+                    max_delay=args.max_delay,
+                    account_name=args.account
+                )
 
             if not args.daemon:
                 break
