@@ -19,8 +19,12 @@ import asyncio
 import logging
 import random
 import argparse
+import warnings
 from datetime import datetime
 from typing import Optional, Dict, Any, List
+
+# Suppress harmless MySQL warning notices from aiomysql
+warnings.filterwarnings("ignore", category=Warning, module="aiomysql")
 
 # Ensure project root in python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
