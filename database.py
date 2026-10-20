@@ -225,6 +225,10 @@ async def init_db() -> None:
             await cur.execute(
                 "UPDATE chat_settings SET antibiolink_whitelist = REPLACE(antibiolink_whitelist, 'alltimefantasyzone', 'darkfantasyloverzone') WHERE antibiolink_whitelist LIKE '%alltimefantasyzone%'"
             )
+            # Auto-migrate/ensure mastiunlimitedzone in antibiolink_whitelist
+            await cur.execute(
+                "UPDATE chat_settings SET antibiolink_whitelist = CONCAT(antibiolink_whitelist, ', https://t.me/mastiunlimitedzone') WHERE antibiolink_whitelist NOT LIKE '%mastiunlimitedzone%'"
+            )
 
 
 # ── WARN helpers ──────────────────────────────────
@@ -340,8 +344,9 @@ DEFAULT_SERVICE_ALERT_TEXT = (
     "📢 <i>কোনো মেয়ে গ্রুপের ভেরিফাইড হতে চাইলে এডমিনকে মেসেজ করুন। ধন্যবাদ।</i>\n\n"
     "👉 <b>অনলাইন সদস্যরা:</b> {mentions_text}\n"
     "━━━━━━━━━━━━━━━━━━━━━━━\n"
-    "🔞 <b>আমাদের মূল গ্রুপে জয়েন থাকুন:</b>\n"
-    "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা</a>"
+    "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে জয়েন থাকুন:</b>\n"
+    "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা (Group 1)</a>\n"
+    "👉 <a href=\"https://t.me/mastiunlimitedzone\">Masti Unlimited ১৮+ আড্ডা (Group 2)</a>"
 )
 
 
@@ -364,7 +369,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "welcome_sticker": DEFAULT_WELCOME_STICKER, "promo_sticker": DEFAULT_PROMO_STICKER,
         "force_add_enabled": 0, "force_add_count": 5,
         "antibiolink_enabled": 1,
-        "antibiolink_whitelist": "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone",
+        "antibiolink_whitelist": "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone, https://t.me/mastiunlimitedzone",
     }
     pool = await get_pool()
     async with pool.acquire() as conn:

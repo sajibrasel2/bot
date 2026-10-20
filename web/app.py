@@ -549,8 +549,9 @@ def _get_global_settings():
             "📢 <i>কোনো মেয়ে গ্রুপের ভেরিফাইড হতে চাইলে এডমিনকে মেসেজ করুন। ধন্যবাদ।</i>\n\n"
             "👉 <b>অনলাইন সদস্যরা:</b> {mentions_text}\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "🔞 <b>আমাদের মূল গ্রুপে জয়েন থাকুন:</b>\n"
-            "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা</a>"
+            "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে জয়েন থাকুন:</b>\n"
+            "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা (Group 1)</a>\n"
+            "👉 <a href=\"https://t.me/mastiunlimitedzone\">Masti Unlimited ১৮+ আড্ডা (Group 2)</a>"
         )
     settings = {
         "site_gate_enabled": "0",

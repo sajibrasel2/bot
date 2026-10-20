@@ -64,7 +64,7 @@ _user_bio_cache: dict = {}
 BIO_CACHE_TTL = 180  # 3 minutes cache TTL
 _bio_alert_time: dict = defaultdict(lambda: defaultdict(float))
 
-DEFAULT_BIOLINK_WHITELIST = "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone"
+DEFAULT_BIOLINK_WHITELIST = "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone, https://t.me/mastiunlimitedzone"
 
 BIO_URL_PATTERN = re.compile(
     r"(https?://[^\s]+|ftp://[^\s]+|www\.[^\s]+|t\.me/[^\s]+|telegram\.me/[^\s]+|telegram\.dog/[^\s]+|tg://[^\s]+|"
@@ -163,6 +163,7 @@ def _clean_flood(timestamps: list, now: float) -> list:
 
 
 MAIN_DARK_ROMANCE_GROUP = "https://t.me/darkfantasyloverzone"
+BACKUP_MASTI_GROUP = "https://t.me/mastiunlimitedzone"
 
 try:
     from telegram import LinkPreviewOptions
@@ -178,7 +179,8 @@ def _build_action_buttons(chat_id: int, user_id: int, chat_title: str) -> Inline
     return InlineKeyboardMarkup([
         [
             InlineKeyboardButton(text="👥 Add Members", url=share_url),
-            InlineKeyboardButton(text="🔥 Main Group", url=MAIN_DARK_ROMANCE_GROUP)
+            InlineKeyboardButton(text="🔥 Group 1", url=MAIN_DARK_ROMANCE_GROUP),
+            InlineKeyboardButton(text="🔥 Group 2", url=BACKUP_MASTI_GROUP)
         ],
         [
             InlineKeyboardButton(text="📊 My Progress", callback_data=f"myinv_{user_id}"),

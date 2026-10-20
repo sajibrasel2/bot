@@ -34,8 +34,9 @@ async def _auto_delete(message, delay: int = AUTO_DELETE_SECONDS) -> None:
 DEFAULT_WELCOME = (
     "🌟 <b>স্বাগতম {mention}!</b> 🌸\n"
     "🏠 <b>{chatname}</b> • আপনি আমাদের <b>#{count}</b> তম সদস্য।\n\n"
-    "🔞 <b>আমাদের মূল Dark Romance গ্রুপে জয়েন করুন:</b>\n"
-    "👉 <a href=\"https://t.me/darkfantasyloverzone\">Dark Romance ১৮+ আড্ডা</a>\n\n"
+    "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে জয়েন করুন:</b>\n"
+    "👉 <a href=\"https://t.me/darkfantasyloverzone\">Dark Romance ১৮+ আড্ডা (Group 1)</a>\n"
+    "👉 <a href=\"https://t.me/mastiunlimitedzone\">Masti Unlimited ১৮+ আড্ডা (Group 2)</a>\n\n"
     "🔞 <b>হট ও ভাইরাল ভিডিও ক্যাটাগরি দেখতে নিচে ক্লিক করুন:</b>\n"
     "👇 আপনার পছন্দের ক্যাটাগরি বেছে নিন এবং সরাসরি সাইটে প্রবেশ করুন 👇"
 )
@@ -139,7 +140,10 @@ def _build_button(settings: dict):
     extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
 
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন (Dark Romance)", url="https://t.me/darkfantasyloverzone")],
+        [
+            InlineKeyboardButton(text="🔥 মূল গ্রুপ ১ (Dark Romance)", url="https://t.me/darkfantasyloverzone"),
+            InlineKeyboardButton(text="🔥 মূল গ্রুপ ২ (Masti Unlimited)", url="https://t.me/mastiunlimitedzone")
+        ],
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
         [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
         [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],
