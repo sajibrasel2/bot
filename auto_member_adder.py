@@ -427,6 +427,27 @@ async def run_member_adder(
             stats["stopped_reason"] = f"target_group_error: {e}"
             return stats
 
+        # Pre-scan existing members in target group to prevent duplicate attempts on already-joined members
+        try:
+            existing_members = []
+            async for p in client.iter_participants(target_entity, limit=2000):
+                if p and getattr(p, "id", None):
+                    p_un = (getattr(p, "username", "") or "").strip().lstrip("@")
+                    p_fn = (getattr(p, "first_name", "") or "")[:200]
+                    existing_members.append((p.id, p_un, p_fn, clean_target, current_acc))
+            if existing_members:
+                pool = await get_db_pool()
+                async with pool.acquire() as conn:
+                    async with conn.cursor() as cur:
+                        await cur.executemany("""
+                            INSERT IGNORE INTO member_add_history 
+                            (user_id, username, first_name, target_chat, status, added_by_account, error_message, attempted_at)
+                            VALUES (%s, %s, %s, %s, 'already_in_group', %s, 'Pre-scanned existing group member', NOW())
+                        """, existing_members)
+                logger.info(f"🛡️ Pre-scanned {len(existing_members)} existing group members. Marked so duplicate invites are completely avoided.")
+        except Exception as e_prescan:
+            logger.debug(f"Pre-scan of existing members skipped or limited: {e_prescan}")
+
         # Fetch candidate users
         candidates = await get_candidate_users(clean_target, limit=remaining_quota * 15)
         logger.info(f"🔍 Found {len(candidates)} unattempted candidate members in database (ordered by newest join date first).")
