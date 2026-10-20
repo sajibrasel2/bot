@@ -132,7 +132,7 @@ async def main():
                     SELECT user_id, 
                            MAX(username) as username, 
                            MAX(first_name) as first_name,
-                           MAX(GREATEST(COALESCE(created_at, '2000-01-01'), COALESCE(updated_at, '2000-01-01'))) as join_time
+                           MAX(COALESCE(created_at, '2000-01-01')) as join_time
                     FROM users
                     GROUP BY user_id
                     ORDER BY join_time DESC, user_id DESC

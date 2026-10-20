@@ -319,7 +319,7 @@ async def get_candidate_users(target: str, limit: int = 500) -> List[Dict[str, A
                         u.user_id, 
                         MAX(u.username) AS username, 
                         MAX(u.first_name) AS first_name,
-                        MAX(GREATEST(COALESCE(u.created_at, '2000-01-01'), COALESCE(u.updated_at, '2000-01-01'))) AS latest_seen
+                        MAX(COALESCE(u.created_at, '2000-01-01')) AS join_time
                     FROM users u
                     LEFT JOIN member_add_history h 
                       ON h.user_id = u.user_id AND h.target_chat = %s
@@ -327,7 +327,7 @@ async def get_candidate_users(target: str, limit: int = 500) -> List[Dict[str, A
                     GROUP BY u.user_id
                     ORDER BY 
                       CASE WHEN MAX(u.username) IS NOT NULL AND MAX(u.username) != '' THEN 0 ELSE 1 END,
-                      latest_seen DESC,
+                      join_time DESC,
                       u.user_id DESC
                     LIMIT %s
                 """, (clean_target, limit))
