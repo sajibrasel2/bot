@@ -1123,6 +1123,113 @@ def video_collector_settings():
     return redirect(url_for("video_collector"))
 
 
+# ── Member Auto-Adder ──────────────────────────────────────────────
+
+@app.route("/member-adder", methods=["GET"])
+@login_required
+def member_adder_page():
+    try:
+        _execute("""
+            CREATE TABLE IF NOT EXISTS member_add_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                username VARCHAR(100),
+                first_name VARCHAR(200),
+                target_chat VARCHAR(100) NOT NULL,
+                status VARCHAR(50) NOT NULL,
+                error_message TEXT,
+                attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uniq_target_user (target_chat, user_id),
+                INDEX idx_status (status),
+                INDEX idx_target (target_chat)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """)
+        _execute("""
+            CREATE TABLE IF NOT EXISTS member_adder_settings (
+                setting_key VARCHAR(100) PRIMARY KEY,
+                setting_val TEXT
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """)
+        _execute("INSERT IGNORE INTO member_adder_settings VALUES ('daily_limit', '35')")
+        _execute("INSERT IGNORE INTO member_adder_settings VALUES ('min_delay', '60')")
+        _execute("INSERT IGNORE INTO member_adder_settings VALUES ('max_delay', '110')")
+        _execute("INSERT IGNORE INTO member_adder_settings VALUES ('target_group', 'darkfantasyloverzone')")
+    except Exception:
+        pass
+
+    # Total members in DB
+    total_candidates_row = _query("SELECT COUNT(DISTINCT user_id) as cnt FROM users", fetchone=True)
+    total_candidates = total_candidates_row["cnt"] if total_candidates_row else 0
+
+    total_added_row = _query("SELECT COUNT(*) as cnt FROM member_add_history WHERE status='added'", fetchone=True)
+    total_added = total_added_row["cnt"] if total_added_row else 0
+
+    added_today_row = _query("SELECT COUNT(*) as cnt FROM member_add_history WHERE status='added' AND DATE(attempted_at) = CURDATE()", fetchone=True)
+    added_today = added_today_row["cnt"] if added_today_row else 0
+
+    privacy_row = _query("SELECT COUNT(*) as cnt FROM member_add_history WHERE status='privacy_restricted'", fetchone=True)
+    total_privacy = privacy_row["cnt"] if privacy_row else 0
+
+    recent_history = _query("SELECT * FROM member_add_history ORDER BY id DESC LIMIT 30", fetchall=True) or []
+
+    settings_rows = _query("SELECT setting_key, setting_val FROM member_adder_settings", fetchall=True) or []
+    settings = {
+        "daily_limit": "35",
+        "min_delay": "60",
+        "max_delay": "110",
+        "target_group": "darkfantasyloverzone"
+    }
+    for r in settings_rows:
+        settings[r["setting_key"]] = r["setting_val"]
+
+    return render_template(
+        "member_adder.html",
+        total_candidates=total_candidates,
+        total_added=total_added,
+        added_today=added_today,
+        total_privacy=total_privacy,
+        recent_history=recent_history,
+        settings=settings,
+        active="member_adder"
+    )
+
+
+@app.route("/member-adder/settings", methods=["POST"])
+@login_required
+def member_adder_settings():
+    daily_limit = request.form.get("daily_limit", "35").strip()
+    min_delay = request.form.get("min_delay", "60").strip()
+    max_delay = request.form.get("max_delay", "110").strip()
+    target_group = request.form.get("target_group", "darkfantasyloverzone").strip().lstrip("@")
+
+    if not daily_limit.isdigit() or int(daily_limit) < 1 or int(daily_limit) > 50:
+        daily_limit = "35"
+    if not min_delay.isdigit() or int(min_delay) < 10:
+        min_delay = "60"
+    if not max_delay.isdigit() or int(max_delay) < int(min_delay):
+        max_delay = "110"
+    if not target_group:
+        target_group = "darkfantasyloverzone"
+
+    try:
+        for k, v in [
+            ("daily_limit", daily_limit),
+            ("min_delay", min_delay),
+            ("max_delay", max_delay),
+            ("target_group", target_group)
+        ]:
+            _execute("""
+                INSERT INTO member_adder_settings (setting_key, setting_val)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE setting_val = VALUES(setting_val)
+            """, (k, v))
+        flash("✅ মেম্বার অ্যাডার সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ সেটিংস সেভ করতে ব্যর্থ: {e}", "error")
+
+    return redirect(url_for("member_adder_page"))
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
 

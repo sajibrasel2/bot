@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block page_title %}টেলিগ্রাম মেম্বার অটো-অ্যাডার ড্যাশবোর্ড{% endblock %}
+
+{% block content %}
+<!-- Top Stats Row -->
+<div class="stats-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:18px; margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(59,130,246,0.15); color:#3b82f6;">
+      <i class="fa-solid fa-users" style="font-size:22px;"></i>
+    </div>
+    <div>
+      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">ডাটাবেজে মোট মেম্বার</div>
+      <div style="font-size:24px; font-weight:700; margin-top:2px;">{{ total_candidates }} জন</div>
+      <div style="font-size:11px; color:var(--muted);">পূর্বের ব্যান হওয়া গ্রুপ থেকে সংগৃহীত</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(34,197,94,0.15); color:#22c55e;">
+      <i class="fa-solid fa-user-check" style="font-size:22px;"></i>
+    </div>
+    <div>
+      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">সফলভাবে যুক্ত হয়েছে</div>
+      <div style="font-size:24px; font-weight:700; margin-top:2px; color:#22c55e;">{{ total_added }} জন</div>
+      <div style="font-size:11px; color:var(--muted);">নতুন গ্রুপে সরাসরি ইনভাইট সফল</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;">
+      <i class="fa-solid fa-calendar-day" style="font-size:22px;"></i>
+    </div>
+    <div>
+      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">আজকের সফল অ্যাড</div>
+      <div style="font-size:24px; font-weight:700; margin-top:2px; color:#f59e0b;">{{ added_today }} / {{ settings.daily_limit or '35' }}</div>
+      <div style="font-size:11px; color:var(--muted);">দৈনিক সর্বোচ্চ কোটা: {{ settings.daily_limit or '35' }} জন</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(239,68,68,0.15); color:#ef4444;">
+      <i class="fa-solid fa-shield-halved" style="font-size:22px;"></i>
+    </div>
+    <div>
+      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600;">প্রাইভেসি লকড ইউজার</div>
+      <div style="font-size:24px; font-weight:700; margin-top:2px; color:#ef4444;">{{ total_privacy }} জন</div>
+      <div style="font-size:11px; color:var(--muted);">টেলিগ্রাম প্রাইভেসি কারণে বাদ দেওয়া হয়েছে</div>
+    </div>
+  </div>
+</div>
+
+<!-- Safe Guidelines Notice -->
+<div style="background:linear-gradient(135deg, rgba(234,179,8,0.1), rgba(245,158,11,0.05)); border:1px solid rgba(234,179,8,0.3); border-radius:10px; padding:18px 20px; margin-bottom:24px;">
+  <div style="display:flex; align-items:center; gap:10px; font-size:15px; font-weight:700; color:#eab308; margin-bottom:8px;">
+    <i class="fa-solid fa-triangle-exclamation"></i> টেলিগ্রামের কঠোর স্প্যাম ও একাউন্ট সেফটি গাইডলাইন
+  </div>
+  <div style="font-size:13px; color:var(--text); line-height:1.6;">
+    টেলিগ্রামের সিকিউরিটি পলিসি অনুযায়ী একটি সাধারণ একাউন্ট থেকে দিনে সর্বোচ্চ <b>৩০–৪০ জনের</b> বেশি মেম্বার অ্যাড করা নিষিদ্ধ। আমাদের তৈরি অটো-অ্যাডার স্ক্রিপ্টটি প্রতি অ্যাডের মাঝে <b>৬০ থেকে ১১০ সেকেন্ড</b> স্বাভাবিক মানুষের মতো বিরতি রাখে এবং দিনে ৩৫ জন সম্পন্ন হওয়া মাত্র স্বয়ংক্রিয়ভাবে থেমে যায়। ফলে আপনার একাউন্ট বা নতুন গ্রুপ ব্যান হওয়ার কোনো ঝুঁকি থাকে না।
+  </div>
+</div>
+
+<!-- Configuration Form Card -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-sliders"></i> মেম্বার অটো-অ্যাডার কনফিগারেশন
+    </div>
+  </div>
+  <form method="POST" action="{{ url_for('member_adder_settings') }}">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:18px; margin-bottom:18px;">
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
+          🎯 টার্গেট গ্রুপ ইউজারনেম (যেখানে মেম্বার ঢুকবে)
+        </label>
+        <div style="display:flex; align-items:center;">
+          <span style="padding:10px 12px; background:var(--card2); border:1px solid var(--border); border-right:none; border-radius:8px 0 0 8px; color:var(--muted);">@</span>
+          <input type="text" name="target_group" value="{{ settings.target_group or 'darkfantasyloverzone' }}" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:0 8px 8px 0; color:#fff; font-size:14px; font-weight:600;">
+        </div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">যেমন: darkfantasyloverzone বা mastiunlimitedzone</div>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
+          🛡️ দৈনিক নিরাপদ সীমা (মেম্বার সংখ্যা)
+        </label>
+        <input type="number" name="daily_limit" value="{{ settings.daily_limit or '35' }}" min="5" max="50" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#22c55e; font-size:14px; font-weight:700;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">নিরাপদ রিকমেন্ডেড: ৩০ থেকে ৩৫ জন (সর্বোচ্চ ৪০ জন)।</div>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
+          ⏱️ ন্যূনতম বিরতি (সেকেন্ড)
+        </label>
+        <input type="number" name="min_delay" value="{{ settings.min_delay or '60' }}" min="30" max="300" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#38bdf8; font-size:14px; font-weight:700;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">ডিফল্ট ৬০ সেকেন্ড (প্রতি সফল অ্যাডের পর অপেক্ষা)।</div>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted);">
+          ⏱️ সর্বোচ্চ বিরতি (সেকেন্ড)
+        </label>
+        <input type="number" name="max_delay" value="{{ settings.max_delay or '110' }}" min="60" max="600" required class="form-input" style="width:100%; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:8px; color:#38bdf8; font-size:14px; font-weight:700;">
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">ডিফল্ট ১১০ সেকেন্ড।</div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="padding:10px 24px; font-size:13px; font-weight:600; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; cursor:pointer;">
+      <i class="fa-solid fa-floppy-disk"></i> সেটিংস সংরক্ষণ করুন
+    </button>
+  </form>
+</div>
+
+<!-- cPanel Terminal Execution Guide -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-terminal"></i> সার্ভার থেকে চালানোর কমান্ড (Terminal Commands)
+    </div>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <div>
+      <div style="font-size:13px; font-weight:700; margin-bottom:6px; color:var(--text);">
+        ১. ব্যাকগ্রাউন্ডে স্বয়ংক্রিয়ভাবে চালু করতে (Daemon Mode - প্রতিদিন নিজে নিজে ৩৫ জন করে অ্যাড করবে):
+      </div>
+      <div style="background:#090d16; border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-family:monospace; font-size:13px; color:#38bdf8; overflow-x:auto;">
+        cd /home/techandc/public_html/bot && source /home/techandc/virtualenv/public_html/bot/3.11/bin/activate && nohup python auto_member_adder.py --daemon > auto_adder.log 2>&1 &
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:13px; font-weight:700; margin-bottom:6px; color:var(--text);">
+        ২. তাৎক্ষণিক লাইভ লগ ও অগ্রগতি দেখতে:
+      </div>
+      <div style="background:#090d16; border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-family:monospace; font-size:13px; color:#22c55e; overflow-x:auto;">
+        tail -f auto_adder.log
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Addition History Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-clock-rotate-left"></i> সাম্প্রতিক মেম্বার অ্যাড হিস্টোরি (সর্বশেষ ৩০টি)
+    </div>
+    <span class="badge badge-blue">হিস্টোরি ট্র্যাকিং</span>
+  </div>
+
+  {% if recent_history %}
+  <div class="table-responsive">
+    <table class="table" style="width:100%; border-collapse:collapse; font-size:13px;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border); text-align:left; color:var(--muted);">
+          <th style="padding:10px 14px;">ইউজার</th>
+          <th style="padding:10px 14px;">টার্গেট গ্রুপ</th>
+          <th style="padding:10px 14px;">স্ট্যাটাস</th>
+          <th style="padding:10px 14px;">বিবরণ</th>
+          <th style="padding:10px 14px;">সময়</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in recent_history %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="padding:10px 14px;">
+            <div style="font-weight:600; color:#fff;">
+              {% if h.username %}@{{ h.username }}{% else %}{{ h.first_name or 'Unknown' }}{% endif %}
+            </div>
+            <div style="font-size:11px; color:var(--muted);">ID: {{ h.user_id }}</div>
+          </td>
+          <td style="padding:10px 14px; font-weight:600; color:var(--accent);">
+            @{{ h.target_chat }}
+          </td>
+          <td style="padding:10px 14px;">
+            {% if h.status == 'added' %}
+            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(34,197,94,0.15); color:#22c55e;">
+              <i class="fa-solid fa-check"></i> সফলভাবে যুক্ত
+            </span>
+            {% elif h.status == 'privacy_restricted' %}
+            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(239,68,68,0.15); color:#ef4444;">
+              <i class="fa-solid fa-lock"></i> প্রাইভেসি রেস্ট্রিক্টেড
+            </span>
+            {% elif h.status == 'already_in_group' %}
+            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(59,130,246,0.15); color:#3b82f6;">
+              <i class="fa-solid fa-circle-info"></i> ইতিমধ্যে মেম্বার
+            </span>
+            {% elif h.status == 'channels_full' %}
+            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(245,158,11,0.15); color:#f59e0b;">
+              <i class="fa-solid fa-triangle-exclamation"></i> লিমিট শেষ
+            </span>
+            {% else %}
+            <span style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(148,163,184,0.15); color:#94a3b8;">
+              {{ h.status }}
+            </span>
+            {% endif %}
+          </td>
+          <td style="padding:10px 14px; font-size:12px; color:var(--muted);">
+            {{ h.error_message or 'সফলভাবে যুক্ত হয়েছে' }}
+          </td>
+          <td style="padding:10px 14px; font-size:12px; color:var(--muted);">
+            {{ h.attempted_at }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center; padding:36px; color:var(--muted);">
+    <i class="fa-solid fa-clipboard-list" style="font-size:32px; margin-bottom:12px; opacity:0.5;"></i>
+    <div>এখনো কোনো মেম্বার অ্যাড করার প্রচেষ্টা শুরু হয়নি। উপরের কমান্ড দিয়ে স্ক্রিপ্ট চালু করুন।</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
