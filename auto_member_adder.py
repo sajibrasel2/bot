@@ -1,14 +1,15 @@
 """
 Safe Telegram Member Auto-Adder Script (Telethon Userbot)
 Safely adds users from MySQL database (users table) to target Telegram group.
+Supports multiple Telegram accounts (e.g. nikita967) with dedicated sessions.
 
 Key Safety Features:
-- Safe Daily Limit: Default 35 members per day (prevents Telegram account bans).
+- Multi-Account Support: Easily switch or rotate between accounts (e.g. nikita967).
+- Safe Daily Limit: Default 35 members per day per account (prevents bans).
 - Human-like Random Delays: 60-110 seconds between successful adds.
 - Smart Skip: Skips users with privacy restrictions, already in group, or deleted accounts.
 - Emergency Brake: Immediately halts on PeerFloodError to protect user account.
-- History Tracking: Records all attempts in member_add_history table.
-- Independent Session: Clones collector_userbot session to prevent SQLite locks with video_collector.
+- History Tracking: Records all attempts in member_add_history table with account attribution.
 """
 
 import sys
@@ -40,6 +41,7 @@ from telethon.errors import (
 )
 
 import aiomysql
+import pymysql
 from config import (
     MYSQL_HOST, MYSQL_PORT, MYSQL_USER,
     MYSQL_PASSWORD, MYSQL_DB
@@ -54,22 +56,37 @@ logger = logging.getLogger("member_adder")
 
 
 # ── Session Resolution ──────────────────────────────────────────────
-def resolve_session_path() -> str:
-    """Ensure dedicated userbot session for adder to avoid SQLite locks."""
-    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_collector")
-    adder_session = os.path.join(base_dir, "adder_userbot")
-    collector_session = os.path.join(base_dir, "collector_userbot")
+def resolve_session_path(account_name: Optional[str] = None) -> str:
+    """Ensure dedicated userbot session path based on account name or active DB setting."""
+    project_dir = os.path.dirname(os.path.abspath(__file__))
+    sessions_dir = os.path.join(project_dir, "sessions")
+    os.makedirs(sessions_dir, exist_ok=True)
 
-    # If adder session does not exist but collector session exists, clone it
-    if not os.path.exists(adder_session + ".session") and os.path.exists(collector_session + ".session"):
+    target_acc = (account_name or "").strip().lstrip("@")
+
+    # If account_name not passed via CLI, look up active_account in database
+    if not target_acc:
         try:
-            shutil.copy2(collector_session + ".session", adder_session + ".session")
-            logger.info("📋 Created independent adder_userbot.session from collector session.")
-        except Exception as e:
-            logger.warning(f"Could not clone session, using collector_userbot: {e}")
-            return collector_session
+            conn = pymysql.connect(
+                host=MYSQL_HOST, port=MYSQL_PORT,
+                user=MYSQL_USER, password=MYSQL_PASSWORD,
+                database=MYSQL_DB, charset="utf8mb4",
+                cursorclass=pymysql.cursors.DictCursor
+            )
+            with conn.cursor() as cur:
+                cur.execute("SELECT setting_val FROM member_adder_settings WHERE setting_key='active_account'")
+                row = cur.fetchone()
+                if row and row.get("setting_val"):
+                    target_acc = row["setting_val"].strip().lstrip("@")
+            conn.close()
+        except Exception:
+            pass
 
-    return adder_session if os.path.exists(adder_session + ".session") else collector_session
+    if not target_acc:
+        target_acc = "nikita967"
+
+    session_path = os.path.join(sessions_dir, target_acc)
+    return session_path
 
 
 # ── Database Helpers ────────────────────────────────────────────────
@@ -93,7 +110,7 @@ async def get_db_pool() -> aiomysql.Pool:
 
 
 async def init_adder_tables() -> None:
-    """Ensure member_add_history table exists."""
+    """Ensure member_add_history & settings tables exist."""
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
@@ -105,13 +122,22 @@ async def init_adder_tables() -> None:
                     first_name VARCHAR(200),
                     target_chat VARCHAR(100) NOT NULL,
                     status VARCHAR(50) NOT NULL,
+                    added_by_account VARCHAR(100) DEFAULT 'nikita967',
                     error_message TEXT,
                     attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE KEY uniq_target_user (target_chat, user_id),
                     INDEX idx_status (status),
-                    INDEX idx_target (target_chat)
+                    INDEX idx_target (target_chat),
+                    INDEX idx_account (added_by_account)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
+
+            # Ensure added_by_account column exists for existing tables
+            try:
+                await cur.execute("ALTER TABLE member_add_history ADD COLUMN added_by_account VARCHAR(100) DEFAULT 'nikita967'")
+            except Exception:
+                pass
+
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS member_adder_settings (
                     setting_key VARCHAR(100) PRIMARY KEY,
@@ -123,10 +149,11 @@ async def init_adder_tables() -> None:
             await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('min_delay', '60')")
             await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('max_delay', '110')")
             await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('target_group', 'darkfantasyloverzone')")
+            await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('active_account', 'nikita967')")
     logger.info("✅ Member adder database tables ready.")
 
 
-async def record_attempt(user_id: int, username: str, first_name: str, target: str, status: str, error: str = "") -> None:
+async def record_attempt(user_id: int, username: str, first_name: str, target: str, status: str, account: str = "nikita967", error: str = "") -> None:
     """Record member addition attempt in history."""
     pool = await get_db_pool()
     clean_user = (username or "").strip().lstrip("@")
@@ -134,27 +161,37 @@ async def record_attempt(user_id: int, username: str, first_name: str, target: s
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute("""
-                INSERT INTO member_add_history (user_id, username, first_name, target_chat, status, error_message, attempted_at)
-                VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                INSERT INTO member_add_history (user_id, username, first_name, target_chat, status, added_by_account, error_message, attempted_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
                 ON DUPLICATE KEY UPDATE 
                     status = VALUES(status),
+                    added_by_account = VALUES(added_by_account),
                     error_message = VALUES(error_message),
                     attempted_at = NOW()
-            """, (user_id, clean_user, first_name or "", clean_target, status, error[:250]))
+            """, (user_id, clean_user, first_name or "", clean_target, status, account, error[:250]))
 
 
-async def get_added_today_count(target: str) -> int:
-    """Get number of members successfully added today."""
+async def get_added_today_count(target: str, account: str = "") -> int:
+    """Get number of members successfully added today by this account for target."""
     pool = await get_db_pool()
     clean_target = (target or "").strip().lstrip("@")
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
-            await cur.execute("""
-                SELECT COUNT(*) FROM member_add_history 
-                WHERE target_chat = %s 
-                  AND status = 'added' 
-                  AND DATE(attempted_at) = CURDATE()
-            """, (clean_target,))
+            if account:
+                await cur.execute("""
+                    SELECT COUNT(*) FROM member_add_history 
+                    WHERE target_chat = %s 
+                      AND status = 'added' 
+                      AND DATE(attempted_at) = CURDATE()
+                      AND (added_by_account = %s OR added_by_account IS NULL)
+                """, (clean_target, account))
+            else:
+                await cur.execute("""
+                    SELECT COUNT(*) FROM member_add_history 
+                    WHERE target_chat = %s 
+                      AND status = 'added' 
+                      AND DATE(attempted_at) = CURDATE()
+                """, (clean_target,))
             row = await cur.fetchone()
             return int(row[0]) if row else 0
 
@@ -183,10 +220,16 @@ async def get_candidate_users(target: str, limit: int = 500) -> List[Dict[str, A
 
 
 # ── Member Adder Core Logic ──────────────────────────────────────────
-async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: int = 60, max_delay: int = 110) -> Dict[str, Any]:
-    """Execute safe member addition batch."""
-    session_path = resolve_session_path()
-    client = TelegramClient(session_path, TG_API_ID, TG_API_HASH)
+async def run_member_adder(
+    target_group: str,
+    daily_limit: int = 35,
+    min_delay: int = 60,
+    max_delay: int = 110,
+    account_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """Execute safe member addition batch using specified Telegram account."""
+    session_path = resolve_session_path(account_name)
+    current_acc = os.path.basename(session_path)
     clean_target = target_group.strip().lstrip("@")
 
     stats = {
@@ -195,26 +238,38 @@ async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: 
         "already_member": 0,
         "skipped": 0,
         "errors": 0,
-        "stopped_reason": None
+        "stopped_reason": None,
+        "account": current_acc
     }
 
-    logger.info(f"🚀 Initializing Userbot Client for target: @{clean_target}...")
+    logger.info(f"🚀 Initializing Userbot Client with account: [{current_acc}] for target: @{clean_target}...")
+    logger.info(f"📁 Session file: {session_path}.session")
+
+    if not os.path.exists(session_path + ".session"):
+        logger.error(f"❌ Session file not found: {session_path}.session")
+        logger.error(f"👉 Please log in to this account first by running:")
+        logger.error(f"   python login_adder.py {current_acc}\n")
+        stats["stopped_reason"] = "session_not_found"
+        return stats
+
+    client = TelegramClient(session_path, TG_API_ID, TG_API_HASH)
     await client.connect()
 
     if not await client.is_user_authorized():
-        logger.error("❌ Userbot session is not authorized! Please run 'python video_collector/login.py' first.")
+        logger.error(f"❌ Userbot session [{current_acc}] is not authorized!")
+        logger.error(f"👉 Please log in by running: python login_adder.py {current_acc}")
         await client.disconnect()
         stats["stopped_reason"] = "unauthorized"
         return stats
 
     me = await client.get_me()
-    logger.info(f"✅ Logged in as: {me.first_name} (@{me.username or me.id})")
+    logger.info(f"✅ Logged in successfully as: {me.first_name} (@{me.username or me.id}) [ID: {me.id}]")
 
-    # Check today's progress
-    added_today = await get_added_today_count(clean_target)
-    logger.info(f"📊 Already added today for @{clean_target}: {added_today}/{daily_limit}")
+    # Check today's progress for this specific account
+    added_today = await get_added_today_count(clean_target, account=current_acc)
+    logger.info(f"📊 Already added today by [{current_acc}] for @{clean_target}: {added_today}/{daily_limit}")
     if added_today >= daily_limit:
-        logger.info(f"🎉 Today's limit of {daily_limit} members has already been reached! Stopping.")
+        logger.info(f"🎉 Today's limit of {daily_limit} members has already been reached for [{current_acc}]! Stopping.")
         await client.disconnect()
         stats["stopped_reason"] = "daily_limit_already_reached"
         return stats
@@ -224,7 +279,6 @@ async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: 
     # Resolve target group entity
     try:
         target_entity = await client.get_entity(clean_target)
-        # Attempt to auto-join if not joined
         try:
             await client(JoinChannelRequest(target_entity))
         except Exception:
@@ -250,7 +304,7 @@ async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: 
 
     for user in candidates:
         if added_in_this_session >= remaining_quota:
-            logger.info(f"🎉 Successfully reached today's target quota ({daily_limit} members)! Session finished.")
+            logger.info(f"🎉 Successfully reached today's target quota ({daily_limit} members) for [{current_acc}]! Session finished.")
             stats["stopped_reason"] = "quota_reached"
             break
 
@@ -267,12 +321,11 @@ async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: 
             else:
                 user_entity = await client.get_entity(uid)
         except ValueError:
-            # Cannot resolve uncached numeric ID
-            await record_attempt(uid, uname, fname, clean_target, "uncached_id", "Numeric ID not seen in dialog cache")
+            await record_attempt(uid, uname, fname, clean_target, "uncached_id", account=current_acc, error="Numeric ID not seen in dialog cache")
             stats["skipped"] += 1
             continue
         except Exception as e_res:
-            await record_attempt(uid, uname, fname, clean_target, "resolve_failed", str(e_res))
+            await record_attempt(uid, uname, fname, clean_target, "resolve_failed", account=current_acc, error=str(e_res))
             stats["skipped"] += 1
             continue
 
@@ -282,14 +335,14 @@ async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: 
 
         # Attempt to invite
         try:
-            logger.info(f"➕ [{added_in_this_session + 1}/{remaining_quota}] Inviting {user_identifier} to @{clean_target}...")
+            logger.info(f"➕ [{added_in_this_session + 1}/{remaining_quota}] Account [{current_acc}] inviting {user_identifier} to @{clean_target}...")
             await client(InviteToChannelRequest(target_entity, [user_entity]))
 
             # Success!
             added_in_this_session += 1
             stats["added"] += 1
-            await record_attempt(uid, uname, fname, clean_target, "added")
-            logger.info(f"✅ Successfully added {user_identifier}! (Total today: {added_today + added_in_this_session}/{daily_limit})")
+            await record_attempt(uid, uname, fname, clean_target, "added", account=current_acc)
+            logger.info(f"✅ Successfully added {user_identifier}! (Total today by [{current_acc}]: {added_today + added_in_this_session}/{daily_limit})")
 
             # Human-like delay after successful addition
             delay = random.randint(min_delay, max_delay)
@@ -298,50 +351,49 @@ async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: 
 
         except UserPrivacyRestrictedError:
             logger.warning(f"🔒 [Privacy] {user_identifier} has privacy settings preventing group invites. Skipping...")
-            await record_attempt(uid, uname, fname, clean_target, "privacy_restricted", "UserPrivacyRestrictedError")
+            await record_attempt(uid, uname, fname, clean_target, "privacy_restricted", account=current_acc, error="UserPrivacyRestrictedError")
             stats["privacy_restricted"] += 1
             await asyncio.sleep(random.randint(5, 10))
 
         except UserNotMutualContactError:
             logger.warning(f"🔒 [Non-Contact] {user_identifier} only allows mutual contacts. Skipping...")
-            await record_attempt(uid, uname, fname, clean_target, "privacy_restricted", "UserNotMutualContactError")
+            await record_attempt(uid, uname, fname, clean_target, "privacy_restricted", account=current_acc, error="UserNotMutualContactError")
             stats["privacy_restricted"] += 1
             await asyncio.sleep(random.randint(5, 10))
 
         except UserAlreadyParticipantError:
             logger.info(f"ℹ️ [Already Member] {user_identifier} is already in @{clean_target}.")
-            await record_attempt(uid, uname, fname, clean_target, "already_in_group")
+            await record_attempt(uid, uname, fname, clean_target, "already_in_group", account=current_acc)
             stats["already_member"] += 1
             await asyncio.sleep(random.randint(3, 6))
 
         except UserChannelsTooMuchError:
             logger.warning(f"⚠️ [Full] {user_identifier} is already in maximum allowed groups/channels.")
-            await record_attempt(uid, uname, fname, clean_target, "channels_full", "UserChannelsTooMuchError")
+            await record_attempt(uid, uname, fname, clean_target, "channels_full", account=current_acc, error="UserChannelsTooMuchError")
             stats["skipped"] += 1
             await asyncio.sleep(5)
 
         except UserBannedInChannelError:
             logger.warning(f"🚫 [Banned] {user_identifier} is banned in @{clean_target}.")
-            await record_attempt(uid, uname, fname, clean_target, "banned_in_channel", "UserBannedInChannelError")
+            await record_attempt(uid, uname, fname, clean_target, "banned_in_channel", account=current_acc, error="UserBannedInChannelError")
             stats["skipped"] += 1
             await asyncio.sleep(3)
 
         except UserDeactivatedError:
             logger.warning(f"❌ [Deleted] {user_identifier} account has been deleted.")
-            await record_attempt(uid, uname, fname, clean_target, "account_deleted", "UserDeactivatedError")
+            await record_attempt(uid, uname, fname, clean_target, "account_deleted", account=current_acc, error="UserDeactivatedError")
             stats["skipped"] += 1
             await asyncio.sleep(3)
 
         except ChatAdminRequiredError:
-            logger.error(f"❌ [Admin Required] Your account needs Admin permissions with 'Add Members' right in @{clean_target}!")
+            logger.error(f"❌ [Admin Required] Account [{current_acc}] needs Admin permissions with 'Add Members' right in @{clean_target}!")
             stats["stopped_reason"] = "admin_required"
             break
 
         except PeerFloodError:
-            # CRITICAL EMERGENCY BRAKE: Telegram flagged too many invites
-            logger.error("🛑 [CRITICAL PEER_FLOOD] Telegram has paused invites for this account today!")
-            logger.error("🛑 Halting auto-adder immediately to protect your account from ban.")
-            await record_attempt(uid, uname, fname, clean_target, "peer_flood", "Telegram PeerFloodError")
+            logger.error(f"🛑 [CRITICAL PEER_FLOOD] Telegram has paused invites for [{current_acc}] today!")
+            logger.error("🛑 Halting auto-adder immediately to protect this account from ban.")
+            await record_attempt(uid, uname, fname, clean_target, "peer_flood", account=current_acc, error="Telegram PeerFloodError")
             stats["stopped_reason"] = "peer_flood_protection"
             break
 
@@ -356,13 +408,13 @@ async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: 
 
         except Exception as e_unknown:
             logger.error(f"❌ Unexpected error inviting {user_identifier}: {e_unknown}")
-            await record_attempt(uid, uname, fname, clean_target, "error", str(e_unknown))
+            await record_attempt(uid, uname, fname, clean_target, "error", account=current_acc, error=str(e_unknown))
             stats["errors"] += 1
             await asyncio.sleep(8)
 
     await client.disconnect()
     logger.info("\n" + "═" * 60)
-    logger.info("📋 AUTO-ADDER SESSION REPORT:")
+    logger.info(f"📋 AUTO-ADDER SESSION REPORT FOR [{current_acc}]:")
     logger.info(f"✅ Newly Added       : {stats['added']} members")
     logger.info(f"🔒 Privacy Blocked   : {stats['privacy_restricted']} members")
     logger.info(f"ℹ️ Already in Group  : {stats['already_member']} members")
@@ -375,7 +427,8 @@ async def run_member_adder(target_group: str, daily_limit: int = 35, min_delay: 
 
 # ── Main Entrypoint ──────────────────────────────────────────────────
 async def main_async():
-    parser = argparse.ArgumentParser(description="Telegram Safe Member Auto-Adder")
+    parser = argparse.ArgumentParser(description="Telegram Safe Member Auto-Adder (Multi-Account)")
+    parser.add_argument("--account", default=None, help="Telegram account name (e.g. nikita967)")
     parser.add_argument("--target", default="darkfantasyloverzone", help="Target group username (without @)")
     parser.add_argument("--limit", type=int, default=35, help="Daily safe member addition limit (default: 35)")
     parser.add_argument("--min-delay", type=int, default=60, help="Minimum delay between adds in seconds (default: 60)")
@@ -391,7 +444,8 @@ async def main_async():
                 target_group=args.target,
                 daily_limit=args.limit,
                 min_delay=args.min_delay,
-                max_delay=args.max_delay
+                max_delay=args.max_delay,
+                account_name=args.account
             )
 
             if not args.daemon:

@@ -1154,8 +1154,15 @@ def member_adder_page():
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('min_delay', '60')")
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('max_delay', '110')")
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('target_group', 'darkfantasyloverzone')")
+        _execute("INSERT IGNORE INTO member_adder_settings VALUES ('active_account', 'nikita967')")
     except Exception:
         pass
+
+    # Discover available session accounts in sessions/
+    sessions_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sessions")
+    available_accounts = []
+    if os.path.exists(sessions_dir):
+        available_accounts = [f[:-8] for f in os.listdir(sessions_dir) if f.endswith(".session")]
 
     # Total members in DB
     total_candidates_row = _query("SELECT COUNT(DISTINCT user_id) as cnt FROM users", fetchone=True)
@@ -1177,7 +1184,8 @@ def member_adder_page():
         "daily_limit": "35",
         "min_delay": "60",
         "max_delay": "110",
-        "target_group": "darkfantasyloverzone"
+        "target_group": "darkfantasyloverzone",
+        "active_account": "nikita967"
     }
     for r in settings_rows:
         settings[r["setting_key"]] = r["setting_val"]
@@ -1190,6 +1198,7 @@ def member_adder_page():
         total_privacy=total_privacy,
         recent_history=recent_history,
         settings=settings,
+        available_accounts=available_accounts,
         active="member_adder"
     )
 
@@ -1201,6 +1210,7 @@ def member_adder_settings():
     min_delay = request.form.get("min_delay", "60").strip()
     max_delay = request.form.get("max_delay", "110").strip()
     target_group = request.form.get("target_group", "darkfantasyloverzone").strip().lstrip("@")
+    active_account = request.form.get("active_account", "nikita967").strip().lstrip("@")
 
     if not daily_limit.isdigit() or int(daily_limit) < 1 or int(daily_limit) > 50:
         daily_limit = "35"
@@ -1210,13 +1220,16 @@ def member_adder_settings():
         max_delay = "110"
     if not target_group:
         target_group = "darkfantasyloverzone"
+    if not active_account:
+        active_account = "nikita967"
 
     try:
         for k, v in [
             ("daily_limit", daily_limit),
             ("min_delay", min_delay),
             ("max_delay", max_delay),
-            ("target_group", target_group)
+            ("target_group", target_group),
+            ("active_account", active_account)
         ]:
             _execute("""
                 INSERT INTO member_adder_settings (setting_key, setting_val)
