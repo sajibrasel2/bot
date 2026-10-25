@@ -349,8 +349,64 @@ async def cmd_sendpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         asyncio.create_task(_auto_delete(sent_promo, delay=PROMO_LIFETIME_SECONDS))
 
 
+async def cmd_hotvideo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Sends professional VIP hot video and live portal buttons for users, and auto-deletes in 10s."""
+    chat = update.effective_chat
+    user = update.effective_user
+    msg = update.effective_message
+    if not chat or not msg:
+        return
+
+    name = html.escape(user.first_name if user else "Member")
+    uid = user.id if user else 0
+    mention = f"<a href=\"tg://user?id={uid}\">{name}</a>" if uid else "Member"
+
+    site_url = "https://techandclick.site/bot/?v=live"
+
+    text = (
+        f"🔥 🔞 <b>EXCLUSIVE VIP HOT VIDEOS & LIVE</b> 🔞 🔥\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"👋 <b>Welcome, {mention}!</b>\n"
+        f"🎥 <b>1080p Ultra HD</b> Uncut Viral Videos & Private Cam.\n"
+        f"⚡ <i>Instant Streaming • No Buffering • 100% Free Access</i>\n\n"
+        f"👇 <b>ভিডিও ও লাইভ দেখতে নিচের বাটনে ক্লিক করুন:</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"⏱️ <i>Notice: This access message will self-destruct in 10s!</i>"
+    )
+
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(text="🔥 🔞 WATCH VIRAL HOT VIDEOS 🔞 🔥", url=site_url)
+        ],
+        [
+            InlineKeyboardButton(text="⚡ 🔴 ENTER LIVE VIP STREAMING", url=site_url)
+        ],
+        [
+            InlineKeyboardButton(text="💋 BANGLA BOUDHI & DESHI CLIPS", url=site_url)
+        ],
+        [
+            InlineKeyboardButton(text="💬 PRIVATE 1-ON-1 VIDEO CHAT", url=site_url)
+        ],
+        [
+            InlineKeyboardButton(text="🔥 VIP Group 1", url="https://t.me/darkfantasyloverzone"),
+            InlineKeyboardButton(text="🔥 VIP Group 2", url="https://t.me/mastiunlimitedzone")
+        ]
+    ])
+
+    try:
+        sent = await msg.reply_html(text, reply_markup=keyboard, disable_web_page_preview=True)
+        # 10 second auto delete for the response message
+        asyncio.create_task(auto_delete_message(sent, delay=10))
+        # In groups, also delete the user's triggering command message so chat stays clean
+        if chat.type != "private":
+            asyncio.create_task(auto_delete_message(msg, delay=10))
+    except Exception as e:
+        logger.debug(f"Failed to handle cmd_hotvideo: {e}")
+
+
 def register(app: Application) -> None:
     app.add_handler(CommandHandler(["setpromosticker"], set_promo_sticker))
     app.add_handler(CommandHandler(["delpromosticker"], del_promo_sticker))
     app.add_handler(CommandHandler(["promo", "sendpromo", "broadcast"], cmd_sendpromo))
+    app.add_handler(CommandHandler(["hotvideo", "hotvideos", "videos", "video", "hot"], cmd_hotvideo))
     logger.info("✅ Promo module handlers registered")

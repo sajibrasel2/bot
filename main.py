@@ -36,6 +36,7 @@ async def post_init(app: Application) -> None:
     # 1. Commands for private chat with bot (ব্যক্তিগত চ্যাটে মেনু)
     private_commands = [
         BotCommand("start",         "বট শুরু করুন"),
+        BotCommand("hotvideo",      "🔥 ১৮+ হট ভিডিও ও লাইভ স্ট্রিম"),
         BotCommand("help",          "সাহায্য মেনু ও সকল কমান্ড"),
         BotCommand("commands",      "সকল কমান্ডের সম্পূর্ণ তালিকা"),
         BotCommand("settings",      "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),
@@ -50,14 +51,16 @@ async def post_init(app: Application) -> None:
 
     # 2. Commands for general members in groups (গ্রুপের সাধারণ সদস্যদের জন্য মেনু)
     group_member_commands = [
-        BotCommand("rules", "গ্রুপের নিয়ম দেখুন"),
+        BotCommand("hotvideo",  "🔥 ১৮+ হট ভিডিও ও লাইভ স্ট্রিম"),
+        BotCommand("rules",     "গ্রুপের নিয়ম দেখুন"),
         BotCommand("myinvites", "আপনার ইনভাইট অগ্রগতি"),
-        BotCommand("top", "সেরা ইনভাইটার লিডারবোর্ড"),
+        BotCommand("top",       "সেরা ইনভাইটার লিডারবোর্ড"),
     ]
     await app.bot.set_my_commands(group_member_commands, scope=BotCommandScopeAllGroupChats())
 
     # 3. Commands for group administrators (শুধুমাত্র অ্যাডমিনদের জন্য সম্পূর্ণ কন্ট্রোল মেনু)
     admin_commands = [
+        BotCommand("hotvideo",          "🔥 ১৮+ হট ভিডিও ও লাইভ স্ট্রিম"),
         BotCommand("help",              "সকল কমান্ড তালিকা ও গাইড"),
         BotCommand("commands",          "সকল কমান্ডের সম্পূর্ণ তালিকা"),
         BotCommand("settings",          "গ্রুপ সেটিংস কন্ট্রোল প্যানেল"),

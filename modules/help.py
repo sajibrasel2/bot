@@ -149,6 +149,7 @@ HELP_SECTIONS = {
             "• <code>/forceadd 5</code> — ফোর্স অ্যাড ইনভাইট সংখ্যা\n"
             "• <code>/forceunlock</code> / <code>/forcelock</code> — মেম্বার চ্যাট আনলক/লক\n"
             "• <code>/pin</code> / <code>/unpin</code> — পিন মেসেজ কন্ট্রোল\n"
+            "• <code>/hotvideo</code> — মেম্বারদের জন্য হট ভিডিও ও লাইভ বাটন (১০ সে. অটো-ডিলিট)\n"
             "• <code>/rules</code> / <code>/notes</code> — নিয়ম ও নোটস\n"
             "━━━━━━━━━━━━━━━━━━━━━━━"
         ),
