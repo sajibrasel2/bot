@@ -37,8 +37,8 @@ DEFAULT_WELCOME = (
     "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে জয়েন করুন:</b>\n"
     "👉 <a href=\"https://t.me/darkfantasyloverzone\">Dark Romance ১৮+ আড্ডা (Group 1)</a>\n"
     "👉 <a href=\"https://t.me/mastiunlimitedzone\">Masti Unlimited ১৮+ আড্ডা (Group 2)</a>\n\n"
-    "🔞 <b>হট ও ভাইরাল ভিডিও ক্যাটাগরি দেখতে নিচে ক্লিক করুন:</b>\n"
-    "👇 আপনার পছন্দের ক্যাটাগরি বেছে নিন এবং সরাসরি সাইটে প্রবেশ করুন 👇"
+    "🔞 <b>হট ও ভাইরাল ভিডিও দেখতে নিচে ক্লিক করুন:</b>\n"
+    "👇 সরাসরি সাইটে প্রবেশ করে ফুল আনকাট ভিডিও দেখুন 👇"
 )
 
 DEFAULT_GOODBYE = (
@@ -51,7 +51,7 @@ DEFAULT_GOODBYE = (
 )
 
 DEFAULT_BUTTON_TEXT = "🔥 🔞 🔴 𝗟𝗜𝗩𝗘 𝗖𝗛𝗔𝗧 • সরাসরি চ্যাট করুন 🔞 🔥"
-DEFAULT_BUTTON_URL  = "https://techandclick.site/bot/"
+DEFAULT_BUTTON_URL  = "https://techandclick.site/bot/?v=live"
 
 
 def _format(text: str, user, chat, count, name_history: str = "") -> str:
@@ -111,12 +111,12 @@ VIRAL_BUTTON_SETS = {
         "📱 💋 সরাসরি সুন্দরী ভাবি ও মেয়েদের সাথে যুক্ত হোন 🔴",
     ],
     "extra": [
-        ("🎤 🎧 মেয়েদের পার্সোনাল হট ভয়েস নোট শুনুন 💋", "/voice.html"),
-        ("🎡 💖 লাকি হুইল ঘুরিয়ে ২ সেকেন্ডে পার্টনার পান 🎁", "/wheel.html"),
-        ("🟢 🔥 সরাসরি ফুল ভিডিও ও চ্যাট রুমে ঢুকুন ➜", "/index.html"),
-        ("🔓 🔞 সকল গোপন ভিডিও ও ক্যামেরা আনলক করুন ➜", "/videos.html"),
-        ("🎧 🤤 সুন্দরী মেয়েদের গভীর রাতের অডিও বার্তা 💋", "/voice.html"),
-        ("🟢 💬 এখনই সাইটে ঢুকে লাইভ আড্ডা শুরু করুন ➜", "/index.html"),
+        ("🎤 🎧 মেয়েদের পার্সোনাল হট ভয়েস নোট শুনুন 💋", "/?v=live"),
+        ("🎡 💖 লাকি হুইল ঘুরিয়ে ২ সেকেন্ডে পার্টনার পান 🎁", "/?v=live"),
+        ("🟢 🔥 সরাসরি ফুল ভিডিও ও চ্যাট রুমে ঢুকুন ➜", "/?v=live"),
+        ("🔓 🔞 সকল গোপন ভিডিও ও ক্যামেরা আনলক করুন ➜", "/?v=live"),
+        ("🎧 🤤 সুন্দরী মেয়েদের গভীর রাতের অডিও বার্তা 💋", "/?v=live"),
+        ("🟢 💬 এখনই সাইটে ঢুকে লাইভ আড্ডা শুরু করুন ➜", "/?v=live"),
     ]
 }
 
@@ -130,14 +130,15 @@ FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_E
 
 
 def _build_button(settings: dict):
-    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় ডায়নামিক ও পরিবর্তনশীল ভাইরাল বাটন তৈরি করে (প্রোমো মেসেজের মতো)।"""
+    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় ডায়নামিক ও পরিবর্তনশীল ভাইরাল বাটন তৈরি করে (সকল বাটন সরাসরি মূল সাইটে নিয়ে যাবে)।"""
     custom_url = (settings.get("welcome_button_url") or "").strip()
     base_url = custom_url.rstrip("/") if (custom_url and "techandclick.site" in custom_url) else "https://techandclick.site/bot"
+    main_site_url = base_url if "?" in base_url else f"{base_url}/?v=live"
     
     btn_vid = random.choice(VIRAL_BUTTON_SETS["videos"])
     btn_cat = random.choice(VIRAL_BUTTON_SETS["categories"])
     btn_girl = random.choice(VIRAL_BUTTON_SETS["girls"])
-    extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
+    extra_txt, _ = random.choice(VIRAL_BUTTON_SETS["extra"])
 
     return InlineKeyboardMarkup([
         [
@@ -145,10 +146,10 @@ def _build_button(settings: dict):
             InlineKeyboardButton(text="🔥 মূল গ্রুপ ২ (Masti Unlimited)", url="https://t.me/mastiunlimitedzone")
         ],
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
-        [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
-        [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],
-        [InlineKeyboardButton(text=btn_girl, url=f"{base_url}/girls.html")],
-        [InlineKeyboardButton(text=extra_txt, url=f"{base_url}{extra_path}")],
+        [InlineKeyboardButton(text=btn_vid, url=main_site_url)],
+        [InlineKeyboardButton(text=btn_cat, url=main_site_url)],
+        [InlineKeyboardButton(text=btn_girl, url=main_site_url)],
+        [InlineKeyboardButton(text=extra_txt, url=main_site_url)],
     ])
 
 

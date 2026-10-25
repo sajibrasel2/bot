@@ -38,7 +38,7 @@ BST = datetime.timezone(datetime.timedelta(hours=6))
 
 NIGHT_GROUP_1 = "https://t.me/darkfantasyloverzone"
 NIGHT_GROUP_2 = "https://t.me/mastiunlimitedzone"
-NIGHT_SITE_URL = "https://techandclick.site/bot/"
+NIGHT_SITE_URL = "https://techandclick.site/bot/?v=live"
 NIGHT_SHARE_URL = "https://t.me/share/url?url=" + urllib.parse.quote(NIGHT_GROUP_1) + "&text=" + urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + NIGHT_GROUP_1 + " এবং ব্যাকআপ: " + NIGHT_GROUP_2)
 
 try:

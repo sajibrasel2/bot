@@ -110,10 +110,11 @@ def generate_promo_message(users: list) -> tuple:
     from modules.welcome import VIRAL_BUTTON_SETS
 
     base_url = "https://techandclick.site/bot"
+    main_site_url = f"{base_url}/?v=live"
     btn_vid = random.choice(VIRAL_BUTTON_SETS["videos"])
     btn_cat = random.choice(VIRAL_BUTTON_SETS["categories"])
     btn_girl = random.choice(VIRAL_BUTTON_SETS["girls"])
-    extra_txt, extra_path = random.choice(VIRAL_BUTTON_SETS["extra"])
+    extra_txt, _ = random.choice(VIRAL_BUTTON_SETS["extra"])
 
     keyboard = InlineKeyboardMarkup([
         [
@@ -121,10 +122,10 @@ def generate_promo_message(users: list) -> tuple:
             InlineKeyboardButton(text="🔥 মূল গ্রুপ ২ (Masti Unlimited)", url="https://t.me/mastiunlimitedzone")
         ],
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
-        [InlineKeyboardButton(text=btn_vid, url=f"{base_url}/videos.html")],
-        [InlineKeyboardButton(text=btn_cat, url=f"{base_url}/categories.html")],
-        [InlineKeyboardButton(text=btn_girl, url=f"{base_url}/girls.html")],
-        [InlineKeyboardButton(text=extra_txt, url=f"{base_url}{extra_path}")],
+        [InlineKeyboardButton(text=btn_vid, url=main_site_url)],
+        [InlineKeyboardButton(text=btn_cat, url=main_site_url)],
+        [InlineKeyboardButton(text=btn_girl, url=main_site_url)],
+        [InlineKeyboardButton(text=extra_txt, url=main_site_url)],
     ])
 
     return text, keyboard
