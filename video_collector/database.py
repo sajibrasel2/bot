@@ -659,3 +659,50 @@ async def set_setting(key: str, value: str) -> None:
                 VALUES (%s, %s)
                 ON DUPLICATE KEY UPDATE value = VALUES(value)
             """, (key, value))
+
+
+# ── Portal Videos Auto-FIFO Rotation ───────────────
+
+async def add_portal_video_auto_rotate(title: str, category_slug: str, video_url: str, thumb_url: str, duration: str = "05:20") -> None:
+    """
+    Insert a newly collected video into portal_videos and enforce the 10-video FIFO limit.
+    When new videos arrive, the oldest ones beyond 10 are automatically deleted.
+    """
+    import random
+    views = random.randint(35000, 95000)
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            # Ensure table exists
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS portal_videos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    title VARCHAR(255) NOT NULL,
+                    category_slug VARCHAR(100) NOT NULL,
+                    video_url VARCHAR(500) NOT NULL,
+                    thumb_url VARCHAR(500) DEFAULT '',
+                    duration VARCHAR(50) DEFAULT '04:15',
+                    views INT DEFAULT 1200,
+                    is_active TINYINT(1) DEFAULT 1,
+                    order_num INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_cat (category_slug),
+                    INDEX idx_active (is_active)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+
+            await cur.execute("""
+                INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active)
+                VALUES (%s, %s, %s, %s, %s, %s, 1)
+            """, (title, category_slug, video_url, thumb_url, duration, views))
+
+            # Maintain exactly the 10 newest videos (FIFO auto-rotation)
+            await cur.execute("""
+                DELETE FROM portal_videos 
+                WHERE id NOT IN (
+                    SELECT id FROM (
+                        SELECT id FROM portal_videos ORDER BY id DESC LIMIT 10
+                    ) AS keep_rows
+                )
+            """)
+

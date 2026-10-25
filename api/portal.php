@@ -1,6 +1,7 @@
 <?php
 /**
  * Video Portal API — Public API for Category & Video & Ads Delivery
+ * Always maintains and delivers the 10 freshest collected videos (FIFO rotation).
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -16,142 +17,107 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
     exit;
 }
 
-// Default Fallback Data (Always available even if DB is offline)
+// Default English Categories (High-Converting)
 $default_categories = [
-    ['id' => 1, 'name' => '🔥 সব ভিডিও (All)', 'slug' => 'all', 'icon' => 'fa-fire', 'order_num' => 0],
-    ['id' => 2, 'name' => '🔞 এক্সক্লুসিভ (Exclusive)', 'slug' => 'exclusive', 'icon' => 'fa-star', 'order_num' => 1],
-    ['id' => 3, 'name' => '🇧🇩 দেশি হট (Desi)', 'slug' => 'desi', 'icon' => 'fa-heart', 'order_num' => 2],
-    ['id' => 4, 'name' => '💎 ভিআইপি লিকস (VIP)', 'slug' => 'vip', 'icon' => 'fa-gem', 'order_num' => 3],
-    ['id' => 5, 'name' => '🎥 লাইভ ক্যামেরা (Live)', 'slug' => 'live', 'icon' => 'fa-video', 'order_num' => 4],
-    ['id' => 6, 'name' => '⚡ ভাইরাল কালেকশন (Viral)', 'slug' => 'viral', 'icon' => 'fa-bolt', 'order_num' => 5]
+    ['id' => 1, 'name' => '🔥 All Leaks', 'slug' => 'all', 'icon' => 'fa-fire', 'order_num' => 0],
+    ['id' => 2, 'name' => '🔞 Exclusive Uncut', 'slug' => 'exclusive', 'icon' => 'fa-star', 'order_num' => 1],
+    ['id' => 3, 'name' => '💋 Hot Desi MMS', 'slug' => 'desi', 'icon' => 'fa-heart', 'order_num' => 2],
+    ['id' => 4, 'name' => '💎 VIP Vault', 'slug' => 'vip', 'icon' => 'fa-gem', 'order_num' => 3],
+    ['id' => 5, 'name' => '🎥 Live Webcams', 'slug' => 'live', 'icon' => 'fa-video', 'order_num' => 4],
+    ['id' => 6, 'name' => '⚡ Trending Viral', 'slug' => 'viral', 'icon' => 'fa-bolt', 'order_num' => 5]
 ];
 
+// Default 10 English High-Converting Videos
 $default_videos = [
     [
         'id' => 1,
-        'title' => 'হোটেল রুমের এক্সক্লুসিভ ভাইরাল পার্ট ১',
+        'title' => 'Hotel Room Secret Uncut Leak Part 1',
         'category_slug' => 'viral',
         'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
         'thumb_url' => 'assets/img/video1.jpg',
         'duration' => '04:12',
-        'views' => 28450
+        'views' => 58450
     ],
     [
         'id' => 2,
-        'title' => 'ঢাকা কাপল প্রাইভেট ফোন চ্যাট রেকর্ড',
+        'title' => 'Dhaka Couple Private Phone Chat Tape',
         'category_slug' => 'desi',
         'video_url' => 'https://www.w3schools.com/html/movie.mp4',
         'thumb_url' => 'assets/img/video2.jpg',
         'duration' => '07:45',
-        'views' => 35300
+        'views' => 75300
     ],
     [
         'id' => 3,
-        'title' => 'ভিআইপি রুম আনকাট লিকস ক্লিপ',
+        'title' => 'VIP Luxury Suite Uncensored Cam Session',
         'category_slug' => 'vip',
         'video_url' => 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
         'thumb_url' => 'assets/img/video3.jpg',
         'duration' => '05:20',
-        'views' => 41200
+        'views' => 91200
     ],
     [
         'id' => 4,
-        'title' => 'মাঝরাতের স্পেশাল লাইভ ওয়েবক্যাম শো',
+        'title' => 'Midnight Special Live 1-on-1 Cam Show',
         'category_slug' => 'live',
         'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
         'thumb_url' => 'assets/img/mitu.jpg',
         'duration' => '12:15',
-        'views' => 52100
+        'views' => 82100
     ],
     [
         'id' => 5,
-        'title' => 'হোস্টেল রুমের গোপন ভিডিও ফাঁস',
+        'title' => 'Hostel Room Secret Hidden Cam Exposed',
         'category_slug' => 'exclusive',
         'video_url' => 'https://www.w3schools.com/html/movie.mp4',
         'thumb_url' => 'assets/img/riya.jpg',
         'duration' => '03:50',
-        'views' => 39800
+        'views' => 69800
     ],
     [
         'id' => 6,
-        'title' => 'চট্টগ্রাম কলেজ ফ্রেন্ডস নাইট পার্টি',
+        'title' => 'College Friends Private Night Party MMS',
         'category_slug' => 'desi',
         'video_url' => 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
         'thumb_url' => 'assets/img/sadia.jpg',
         'duration' => '08:35',
-        'views' => 48900
+        'views' => 68900
     ],
     [
         'id' => 7,
-        'title' => 'ভিআইপি প্রাইভেট ক্যাবিন ভিডিও লিক',
+        'title' => 'VIP Private Cabin Leaked Model Video',
         'category_slug' => 'vip',
         'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
         'thumb_url' => 'assets/img/nusrat.jpg',
         'duration' => '06:18',
-        'views' => 55600
+        'views' => 85600
     ],
     [
         'id' => 8,
-        'title' => 'টপ ট্রেন্ডিং ভাইরাল ক্লিপ এইচডি',
+        'title' => 'Top Trending Viral MMS Clip Full 1080p',
         'category_slug' => 'viral',
         'video_url' => 'https://www.w3schools.com/html/movie.mp4',
         'thumb_url' => 'assets/img/mim.jpg',
         'duration' => '09:40',
-        'views' => 62100
+        'views' => 112100
     ],
     [
         'id' => 9,
-        'title' => 'লাইভ ক্যামেরা প্রাইভেট শো ২',
+        'title' => 'Live Webcam Secret Bedroom Session 2',
         'category_slug' => 'live',
         'video_url' => 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
         'thumb_url' => 'assets/img/tania.jpg',
         'duration' => '14:22',
-        'views' => 33700
+        'views' => 53700
     ],
     [
         'id' => 10,
-        'title' => '১-অন-১ সিক্রেট চ্যাট পার্টনার শো',
+        'title' => 'Exclusive Uncut 1-on-1 Video Call Leak',
         'category_slug' => 'exclusive',
         'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
         'thumb_url' => 'assets/img/video1.jpg',
         'duration' => '11:05',
-        'views' => 51800
-    ],
-    [
-        'id' => 11,
-        'title' => 'অফিস ট্যুরের গোপন রেকর্ড ভাইরাল',
-        'category_slug' => 'desi',
-        'video_url' => 'https://www.w3schools.com/html/movie.mp4',
-        'thumb_url' => 'assets/img/video2.jpg',
-        'duration' => '04:55',
-        'views' => 26900
-    ],
-    [
-        'id' => 12,
-        'title' => 'ভিআইপি মেম্বার্স অনলি আনকাট লিক',
-        'category_slug' => 'vip',
-        'video_url' => 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-        'thumb_url' => 'assets/img/video3.jpg',
-        'duration' => '15:30',
-        'views' => 74500
-    ],
-    [
-        'id' => 13,
-        'title' => 'মধ্যরাতের হট চ্যাট ভাইরাল ক্লিপ',
-        'category_slug' => 'viral',
-        'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
-        'thumb_url' => 'assets/img/mitu.jpg',
-        'duration' => '06:40',
-        'views' => 47800
-    ],
-    [
-        'id' => 14,
-        'title' => 'আনলকড ফুল এইচডি এক্সক্লুসিভ শো',
-        'category_slug' => 'exclusive',
-        'video_url' => 'https://www.w3schools.com/html/movie.mp4',
-        'thumb_url' => 'assets/img/riya.jpg',
-        'duration' => '08:15',
-        'views' => 59200
+        'views' => 71800
     ]
 ];
 
@@ -162,7 +128,7 @@ $default_settings = [
     'social_ad_enabled' => '1',
     'social_ad_script' => '',
     'telegram_group_url' => 'https://t.me/darkfantasyloverzone',
-    'portal_title' => 'EXCLUSIVE DESI & VIRAL VAULT',
+    'portal_title' => 'ADULT HUB LIVE — VIP PRIVATE LEAKS & WEBCAMS',
     'portal_blur' => '14'
 ];
 
@@ -195,11 +161,9 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
-} catch (Exception $e) {
-    // If remote or local fails, $pdo remains null and fallbacks are used
-}
+} catch (Exception $e) {}
 
-// Ensure database tables exist if DB is connected
+// Ensure schema and auto-clean
 if ($pdo) {
     try {
         $pdo->exec("
@@ -237,7 +201,7 @@ if ($pdo) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
-        // Seed default categories if empty
+        // Seed or refresh categories if none
         $cntCat = (int) $pdo->query("SELECT COUNT(*) FROM portal_categories")->fetchColumn();
         if ($cntCat === 0) {
             $stmtC = $pdo->prepare("INSERT IGNORE INTO portal_categories (name, slug, icon, order_num) VALUES (?, ?, ?, ?)");
@@ -247,7 +211,7 @@ if ($pdo) {
             }
         }
 
-        // Seed default videos if empty
+        // Seed default 10 videos if none
         $cntVid = (int) $pdo->query("SELECT COUNT(*) FROM portal_videos")->fetchColumn();
         if ($cntVid === 0) {
             $stmtV = $pdo->prepare("INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active, order_num) VALUES (?, ?, ?, ?, ?, ?, 1, ?)");
@@ -257,7 +221,17 @@ if ($pdo) {
             }
         }
 
-        // Seed default settings if empty
+        // Maintain exact 10 latest videos (FIFO limit)
+        $pdo->exec("
+            DELETE FROM portal_videos 
+            WHERE id NOT IN (
+                SELECT id FROM (
+                    SELECT id FROM portal_videos ORDER BY id DESC LIMIT 10
+                ) AS keep_rows
+            )
+        ");
+
+        // Seed settings if none
         $cntSet = (int) $pdo->query("SELECT COUNT(*) FROM portal_settings")->fetchColumn();
         if ($cntSet === 0) {
             $stmtS = $pdo->prepare("INSERT IGNORE INTO portal_settings (setting_key, setting_val) VALUES (?, ?)");
@@ -265,9 +239,7 @@ if ($pdo) {
                 $stmtS->execute([$k, $v]);
             }
         }
-    } catch (Exception $e) {
-        // Table creation warning ignored
-    }
+    } catch (Exception $e) {}
 }
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'get_data';
@@ -282,15 +254,14 @@ if ($action === 'get_data') {
             // Fetch DB categories
             $db_cats = $pdo->query("SELECT id, name, slug, icon, order_num FROM portal_categories ORDER BY order_num ASC, id ASC")->fetchAll();
             if (!empty($db_cats)) {
-                // Ensure 'all' is at front
                 $categories = array_merge(
-                    [['id' => 0, 'name' => '🔥 সব ভিডিও (All)', 'slug' => 'all', 'icon' => 'fa-fire', 'order_num' => 0]],
+                    [['id' => 0, 'name' => '🔥 All Leaks', 'slug' => 'all', 'icon' => 'fa-fire', 'order_num' => 0]],
                     $db_cats
                 );
             }
 
-            // Fetch DB videos
-            $db_vids = $pdo->query("SELECT id, title, category_slug, video_url, thumb_url, duration, views FROM portal_videos WHERE is_active=1 ORDER BY order_num ASC, id DESC LIMIT 25")->fetchAll();
+            // Fetch exactly latest 10 active videos
+            $db_vids = $pdo->query("SELECT id, title, category_slug, video_url, thumb_url, duration, views FROM portal_videos WHERE is_active=1 ORDER BY id DESC LIMIT 10")->fetchAll();
             if (!empty($db_vids)) {
                 $videos = $db_vids;
             }
@@ -300,9 +271,7 @@ if ($action === 'get_data') {
             foreach ($db_sets as $r) {
                 $settings[$r['setting_key']] = $r['setting_val'];
             }
-        } catch (Exception $e) {
-            // Use defaults on error
-        }
+        } catch (Exception $e) {}
     }
 
     echo json_encode([

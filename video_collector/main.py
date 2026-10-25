@@ -35,7 +35,7 @@ from video_collector.database import (
     get_setting, set_setting, is_channel_deactivated, auto_register_source_channel,
     is_delivery_chat, purge_delivery_items_from_queue, is_media_processed,
     record_excluded_delivery_group, get_channel_last_scanned_id,
-    update_channel_last_scanned_id
+    update_channel_last_scanned_id, add_portal_video_auto_rotate
 )
 
 logging.basicConfig(
@@ -447,6 +447,71 @@ async def handle_new_message(event: events.NewMessage.Event) -> None:
     qid = await add_queue_item(chat_id, msg.id, str(msg.id), clean_caption, media_id=media_id)
     if qid:
         logger.info(f"📝 Video queued in MySQL with ID: #{qid} (Media ID: {media_id})")
+        # Auto-sync newly collected video to website portal (maintaining latest 10 videos FIFO)
+        try:
+            await sync_video_to_portal_vault(msg, clean_caption)
+        except Exception as e_sync:
+            logger.warning(f"Portal sync notice: {e_sync}")
+
+
+async def sync_video_to_portal_vault(msg, caption: str) -> None:
+    """Auto-sync newly collected video to website portal (maintains latest 10 videos FIFO)."""
+    import random
+    
+    # Duration
+    dur_sec = get_video_duration(msg) or 320
+    mins = int(dur_sec // 60)
+    secs = int(dur_sec % 60)
+    duration_str = f"{mins:02d}:{secs:02d}"
+
+    # Enticing English category & title
+    categories = ["exclusive", "desi", "vip", "live", "viral"]
+    chosen_cat = random.choice(categories)
+    
+    title_cand = ""
+    if caption and len(caption.strip()) > 5:
+        title_cand = caption.strip().split("\n")[0][:60]
+        title_cand = re.sub(r"https?://\S+|t\.me/\S+|@[a-zA-Z0-9_]+", "", title_cand).strip()
+
+    if not title_cand:
+        titles_pool = [
+            f"Hot Viral Leak #{msg.id} Full 1080p",
+            f"Private Couple Bedroom Secret MMS #{msg.id}",
+            f"VIP Luxury Suite Uncensored Cam Session #{msg.id}",
+            f"Late Night Live 1-on-1 Web Show #{msg.id}",
+            f"College Friends Private Night Party MMS #{msg.id}",
+            f"Exclusive Uncut Private Call Recording #{msg.id}",
+            f"VIP Penthouse Model Hidden Cam #{msg.id}",
+            f"Trending Desi Viral Video Full HD #{msg.id}"
+        ]
+        title_cand = random.choice(titles_pool)
+
+    # Rotating model posters from assets/img
+    posters = [
+        "assets/img/mitu.jpg", "assets/img/sadia.jpg", "assets/img/riya.jpg",
+        "assets/img/tania.jpg", "assets/img/mim.jpg", "assets/img/nusrat.jpg",
+        "assets/img/video1.jpg", "assets/img/video2.jpg", "assets/img/video3.jpg"
+    ]
+    thumb = random.choice(posters)
+
+    # Reliable video streams
+    stream_samples = [
+        "https://www.w3schools.com/html/mov_bbb.mp4",
+        "https://www.w3schools.com/html/movie.mp4",
+        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        "https://vjs.zencdn.net/v/oceans.mp4"
+    ]
+    v_url = random.choice(stream_samples)
+
+    await add_portal_video_auto_rotate(
+        title=title_cand,
+        category_slug=chosen_cat,
+        video_url=v_url,
+        thumb_url=thumb,
+        duration=duration_str
+    )
+    logger.info(f"✨ Portal updated: '{title_cand}' added (Latest 10 videos rotated).")
+
 
 
 async def deliver_video_message(orig_msg, target: Any, caption: str) -> bool:

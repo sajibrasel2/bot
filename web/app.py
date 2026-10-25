@@ -1938,7 +1938,17 @@ def portal_add_video():
             INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active)
             VALUES (%s, %s, %s, %s, %s, %s, 1)
         """, (title, category_slug, video_url, thumb_url, duration, initial_views))
-        flash(f"✅ ভিডিও '{title}' সফলভাবে যোগ করা হয়েছে।", "success")
+
+        # Enforce FIFO rotation: keep only latest 10 videos on portal
+        _execute("""
+            DELETE FROM portal_videos 
+            WHERE id NOT IN (
+                SELECT id FROM (
+                    SELECT id FROM portal_videos ORDER BY id DESC LIMIT 10
+                ) AS keep_rows
+            )
+        """)
+        flash(f"✅ ভিডিও '{title}' সফলভাবে যোগ করা হয়েছে (সর্বশেষ ১০টি ভিডিও পোর্টাল রোটেট হচ্ছে)।", "success")
     except Exception as e:
         flash(f"❌ ভিডিও সংরক্ষণে সমস্যা হয়েছে: {e}", "error")
 
