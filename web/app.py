@@ -186,11 +186,16 @@ def ensure_db_schema():
                         views INT DEFAULT 1200,
                         is_active TINYINT(1) DEFAULT 1,
                         order_num INT DEFAULT 0,
+                        keywords TEXT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         INDEX idx_cat (category_slug),
                         INDEX idx_active (is_active)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """)
+                try:
+                    cur.execute("ALTER TABLE portal_videos ADD COLUMN keywords TEXT NULL")
+                except Exception:
+                    pass
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS portal_settings (
                         setting_key VARCHAR(100) PRIMARY KEY,
@@ -1901,6 +1906,7 @@ def portal_add_video():
     duration = request.form.get("duration", "04:15").strip()
     direct_url = request.form.get("video_url", "").strip()
     thumb_url = request.form.get("thumb_url", "").strip()
+    keywords = request.form.get("keywords", "").strip()
 
     if not title or not category_slug:
         flash("❌ টাইটেল এবং ক্যাটেগরি প্রদান করুন।", "error")
@@ -1935,9 +1941,9 @@ def portal_add_video():
 
     try:
         _execute("""
-            INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active)
-            VALUES (%s, %s, %s, %s, %s, %s, 1)
-        """, (title, category_slug, video_url, thumb_url, duration, initial_views))
+            INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active, keywords)
+            VALUES (%s, %s, %s, %s, %s, %s, 1, %s)
+        """, (title, category_slug, video_url, thumb_url, duration, initial_views, keywords))
 
         # Enforce FIFO rotation: keep only latest 10 videos on portal
         _execute("""

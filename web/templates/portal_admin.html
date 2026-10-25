@@ -122,6 +122,14 @@
           <div class="form-hint">ভিডিও লোড হওয়ার আগে এই পোস্টার বা থাম্বনেইল দেখা যাবে।</div>
         </div>
 
+        <div class="form-group" style="margin-top: 10px;">
+          <label class="form-label" style="color: #f472b6; font-weight: 600;">
+            <i class="fa-solid fa-magnifying-glass"></i> গুগল এসইও কী-ওয়ার্ড ও ট্যাগস (Google SEO Keywords / Tags)
+          </label>
+          <input type="text" name="keywords" class="form-control" placeholder="যেমন: XYZ viral leak, XYZ telegram full video, leaked mms 1080p, uncut private tape">
+          <div class="form-hint">কমা (,) দিয়ে কি-ওয়ার্ড লিখুন। যেমন: <code>viral leak, telegram mms, uncut 1080p, hotel tape</code> (গুগল সার্চে আসার জন্য)।</div>
+        </div>
+
         <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
           <i class="fa-solid fa-plus"></i> ভিডিও সেভ ও যোগ করুন
         </button>
@@ -144,7 +152,7 @@
               <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--muted);">
                 <th style="padding: 12px 10px;">আইডি</th>
                 <th style="padding: 12px 10px;">প্রিভিউ</th>
-                <th style="padding: 12px 10px;">টাইটেল</th>
+                <th style="padding: 12px 10px;">টাইটেল ও এসইও ট্যাগস</th>
                 <th style="padding: 12px 10px;">ক্যাটেগরি</th>
                 <th style="padding: 12px 10px;">ডিউরেশন</th>
                 <th style="padding: 12px 10px;">ভিউস</th>
@@ -161,7 +169,16 @@
                   </td>
                   <td style="padding: 12px 10px; font-weight: 500;">
                     <div style="color: var(--text); font-size: 14px;">{{ v.title }}</div>
-                    <div style="font-size: 11px; color: var(--muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {% if v.keywords %}
+                      <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;">
+                        {% for kw in v.keywords.split(',') %}
+                          {% if kw.strip() %}
+                            <span style="background: rgba(236,72,153,0.15); color: #f472b6; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 500;">#{{ kw.strip() }}</span>
+                          {% endif %}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                    <div style="font-size: 11px; color: var(--muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;">
                       {{ v.video_url }}
                     </div>
                   </td>

@@ -501,16 +501,26 @@ async def sync_video_to_portal_vault(msg, caption: str) -> None:
         "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
         "https://vjs.zencdn.net/v/oceans.mp4"
     ]
-    v_url = random.choice(stream_samples)
+    # Auto-generate high-converting Google SEO keywords
+    kw_parts = [
+        title_cand,
+        f"{chosen_cat} viral video",
+        "telegram leak link",
+        "uncut full video",
+        "mms video download",
+        "private tape 1080p"
+    ]
+    seo_keywords = ", ".join(kw_parts)
 
     await add_portal_video_auto_rotate(
         title=title_cand,
         category_slug=chosen_cat,
         video_url=v_url,
         thumb_url=thumb,
-        duration=duration_str
+        duration=duration_str,
+        keywords=seo_keywords
     )
-    logger.info(f"✨ Portal updated: '{title_cand}' added (Latest 10 videos rotated).")
+    logger.info(f"✨ Portal updated: '{title_cand}' added (Latest 10 videos rotated with SEO keywords).")
 
 
 

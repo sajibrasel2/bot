@@ -29,7 +29,7 @@ $default_categories = [
     ['id' => 6, 'name' => '⚡ Trending Viral', 'slug' => 'viral', 'icon' => 'fa-bolt', 'order_num' => 5]
 ];
 
-// Default 10 English High-Converting Videos
+// Default 10 English High-Converting Videos with SEO Keywords
 $default_videos = [
     [
         'id' => 1,
@@ -38,7 +38,8 @@ $default_videos = [
         'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
         'thumb_url' => 'assets/img/video1.jpg',
         'duration' => '04:12',
-        'views' => 58450
+        'views' => 58450,
+        'keywords' => 'hotel room leak, secret recording, viral mms, uncut 1080p, telegram link'
     ],
     [
         'id' => 2,
@@ -47,7 +48,8 @@ $default_videos = [
         'video_url' => 'https://www.w3schools.com/html/movie.mp4',
         'thumb_url' => 'assets/img/video2.jpg',
         'duration' => '07:45',
-        'views' => 75300
+        'views' => 75300,
+        'keywords' => 'dhaka couple leak, private phone chat, hot desi mms, bangla viral video, telegram link'
     ],
     [
         'id' => 3,
@@ -56,7 +58,8 @@ $default_videos = [
         'video_url' => 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
         'thumb_url' => 'assets/img/video3.jpg',
         'duration' => '05:20',
-        'views' => 91200
+        'views' => 91200,
+        'keywords' => 'vip luxury suite, uncensored cam show, private vault leak, 4k hd stream'
     ],
     [
         'id' => 4,
@@ -65,7 +68,8 @@ $default_videos = [
         'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
         'thumb_url' => 'assets/img/mitu.jpg',
         'duration' => '12:15',
-        'views' => 82100
+        'views' => 82100,
+        'keywords' => 'midnight special cam, 1 on 1 live webcam, webcam leaked video, private session'
     ],
     [
         'id' => 5,
@@ -74,7 +78,8 @@ $default_videos = [
         'video_url' => 'https://www.w3schools.com/html/movie.mp4',
         'thumb_url' => 'assets/img/riya.jpg',
         'duration' => '03:50',
-        'views' => 69800
+        'views' => 69800,
+        'keywords' => 'hostel room secret, hidden cam exposed, exclusive uncut, viral mms 2026'
     ],
     [
         'id' => 6,
@@ -83,7 +88,8 @@ $default_videos = [
         'video_url' => 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
         'thumb_url' => 'assets/img/sadia.jpg',
         'duration' => '08:35',
-        'views' => 68900
+        'views' => 68900,
+        'keywords' => 'college friends night party, desi mms leak, private party video, uncut telegram'
     ],
     [
         'id' => 7,
@@ -92,7 +98,8 @@ $default_videos = [
         'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
         'thumb_url' => 'assets/img/nusrat.jpg',
         'duration' => '06:18',
-        'views' => 85600
+        'views' => 85600,
+        'keywords' => 'vip private cabin, leaked model video, uncut private tape, telegram full link'
     ],
     [
         'id' => 8,
@@ -101,7 +108,8 @@ $default_videos = [
         'video_url' => 'https://www.w3schools.com/html/movie.mp4',
         'thumb_url' => 'assets/img/mim.jpg',
         'duration' => '09:40',
-        'views' => 112100
+        'views' => 112100,
+        'keywords' => 'top trending viral clip, mms full 1080p, viral telegram video, direct stream'
     ],
     [
         'id' => 9,
@@ -110,7 +118,8 @@ $default_videos = [
         'video_url' => 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
         'thumb_url' => 'assets/img/tania.jpg',
         'duration' => '14:22',
-        'views' => 53700
+        'views' => 53700,
+        'keywords' => 'live webcam secret, bedroom session part 2, web show leak, 1080p hd'
     ],
     [
         'id' => 10,
@@ -119,7 +128,8 @@ $default_videos = [
         'video_url' => 'https://www.w3schools.com/html/mov_bbb.mp4',
         'thumb_url' => 'assets/img/video1.jpg',
         'duration' => '11:05',
-        'views' => 71800
+        'views' => 71800,
+        'keywords' => 'exclusive uncut, 1 on 1 video call leak, leaked phone call mms, telegram'
     ]
 ];
 
@@ -190,11 +200,16 @@ if ($pdo) {
                 views INT DEFAULT 1200,
                 is_active TINYINT(1) DEFAULT 1,
                 order_num INT DEFAULT 0,
+                keywords TEXT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 INDEX idx_cat (category_slug),
                 INDEX idx_active (is_active)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
+
+        try {
+            $pdo->exec("ALTER TABLE portal_videos ADD COLUMN keywords TEXT NULL");
+        } catch (Exception $e) {}
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS portal_settings (
@@ -240,10 +255,11 @@ if ($pdo) {
 
         if ($cntVid === 0 || $hasBengaliVid) {
             $pdo->exec("DELETE FROM portal_videos");
-            $stmtV = $pdo->prepare("INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active, order_num) VALUES (?, ?, ?, ?, ?, ?, 1, ?)");
+            $stmtV = $pdo->prepare("INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active, order_num, keywords) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)");
             $ord = 1;
             foreach ($default_videos as $v) {
-                $stmtV->execute([$v['title'], $v['category_slug'], $v['video_url'], $v['thumb_url'], $v['duration'], $v['views'], $ord++]);
+                $kw = $v['keywords'] ?? ($v['title'] . ', viral leak, telegram link');
+                $stmtV->execute([$v['title'], $v['category_slug'], $v['video_url'], $v['thumb_url'], $v['duration'], $v['views'], $ord++, $kw]);
             }
         }
 
@@ -328,8 +344,8 @@ if ($action === 'get_data') {
                 );
             }
 
-            // Fetch exactly latest 10 active videos
-            $db_vids = $pdo->query("SELECT id, title, category_slug, video_url, thumb_url, duration, views FROM portal_videos WHERE is_active=1 ORDER BY id DESC LIMIT 10")->fetchAll();
+            // Fetch exactly latest 10 active videos with SEO keywords
+            $db_vids = $pdo->query("SELECT id, title, category_slug, video_url, thumb_url, duration, views, keywords, created_at FROM portal_videos WHERE is_active=1 ORDER BY id DESC LIMIT 10")->fetchAll();
             if (!empty($db_vids)) {
                 $cleaned_vids = [];
                 $vidx = 0;
@@ -341,6 +357,9 @@ if ($action === 'get_data') {
                         $vtitle = $default_videos[$vidx % count($default_videos)]['title'];
                     }
                     $v['title'] = $vtitle;
+                    if (empty($v['keywords'])) {
+                        $v['keywords'] = $default_videos[$vidx % count($default_videos)]['keywords'] ?? ($vtitle . ', viral leak, telegram mms, full uncut 1080p');
+                    }
                     $cleaned_vids[] = $v;
                     $vidx++;
                 }
@@ -362,6 +381,44 @@ if ($action === 'get_data') {
         'settings' => $settings,
         'total' => count($videos)
     ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($action === 'sitemap') {
+    header('Content-Type: application/xml; charset=utf-8');
+    $site_url = 'https://techandclick.site/bot/';
+    echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">' . "\n";
+    echo '  <url>' . "\n";
+    echo '    <loc>' . htmlspecialchars($site_url) . '</loc>' . "\n";
+    echo '    <changefreq>hourly</changefreq>' . "\n";
+    echo '    <priority>1.0</priority>' . "\n";
+    
+    $s_vids = $default_videos;
+    if ($pdo) {
+        try {
+            $db_s = $pdo->query("SELECT id, title, category_slug, video_url, thumb_url, duration, views, keywords, created_at FROM portal_videos WHERE is_active=1 ORDER BY id DESC LIMIT 10")->fetchAll();
+            if (!empty($db_s)) $s_vids = $db_s;
+        } catch (Exception $e) {}
+    }
+    
+    foreach ($s_vids as $sv) {
+        $th = (strpos($sv['thumb_url'], 'http') === 0) ? $sv['thumb_url'] : $site_url . ltrim($sv['thumb_url'], '/');
+        $kw = !empty($sv['keywords']) ? $sv['keywords'] : ($sv['title'] . ', viral leak, telegram link');
+        $dt = !empty($sv['created_at']) ? date('c', strtotime($sv['created_at'])) : date('c');
+        echo '    <video:video>' . "\n";
+        echo '      <video:thumbnail_loc>' . htmlspecialchars($th) . '</video:thumbnail_loc>' . "\n";
+        echo '      <video:title>' . htmlspecialchars($sv['title']) . '</video:title>' . "\n";
+        echo '      <video:description>' . htmlspecialchars("Watch " . $sv['title'] . " full uncut 1080p private leak on Telegram & Web.") . '</video:description>' . "\n";
+        echo '      <video:content_loc>' . htmlspecialchars($sv['video_url']) . '</video:content_loc>' . "\n";
+        echo '      <video:publication_date>' . htmlspecialchars($dt) . '</video:publication_date>' . "\n";
+        echo '      <video:family_friendly>no</video:family_friendly>' . "\n";
+        echo '      <video:tag>' . htmlspecialchars($kw) . '</video:tag>' . "\n";
+        echo '    </video:video>' . "\n";
+    }
+    
+    echo '  </url>' . "\n";
+    echo '</urlset>';
     exit;
 }
 

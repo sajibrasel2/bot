@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>ADULT HUB LIVE — 18+ VIP Private Leaks & Webcams</title>
   
+  <meta name="description" id="meta-description" content="Watch trending viral leaks, private bedroom webcam sessions, and exclusive uncut MMS videos in full 1080p on Telegram & Web." />
+  <meta name="keywords" id="meta-keywords" content="viral video leak, telegram mms, hotel leak, private video recording, uncut 1080p, leaked video link, viral mms tape" />
+  <meta property="og:title" content="ADULT HUB LIVE — 18+ VIP Private Leaks & Webcams" />
+  <meta property="og:description" content="Watch trending viral leaks and exclusive uncut MMS videos in full 1080p." />
+  <meta property="og:type" content="video.other" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1" />
+
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -1077,6 +1084,7 @@
       // 1. Immediately render default working 10 videos
       renderBackdropVideos(DEFAULT_VIDEOS);
       renderVideoCards(DEFAULT_VIDEOS);
+      injectGoogleVideoSEO(DEFAULT_VIDEOS);
 
       // 2. Fetch fresh 10 videos & categories from API (Bypass Telegram cache)
       try {
@@ -1100,6 +1108,7 @@
             const latest10 = json.videos.slice(0, 10);
             renderBackdropVideos(latest10);
             renderVideoCards(latest10);
+            injectGoogleVideoSEO(latest10);
           }
         }
       } catch (err) {
@@ -1270,6 +1279,12 @@
         const thumb = v.thumb_url || DEFAULT_VIDEOS[i % DEFAULT_VIDEOS.length].thumb_url;
         const videoSrc = v.video_url || DEFAULT_VIDEOS[i % DEFAULT_VIDEOS.length].video_url;
         const enTitle = toEnglishVideoTitle(v.title, i);
+        const kws = v.keywords || DEFAULT_VIDEOS[i % DEFAULT_VIDEOS.length].keywords || "";
+        const kwBadges = kws ? `
+          <div style="margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; overflow: hidden; max-height: 20px;">
+            ${kws.split(',').slice(0, 3).map(k => `<span style="font-size: 10px; color: var(--accent-pink); background: rgba(236,72,153,0.12); padding: 1px 6px; border-radius: 4px;">#${k.trim()}</span>`).join('')}
+          </div>
+        ` : '';
 
         return `
           <div class="video-card" onclick="openVideoModal(${v.id})">
@@ -1289,6 +1304,7 @@
                 <span><i class="fa-solid fa-eye" style="color:var(--accent-cyan);"></i> ${viewsFormatted} views</span>
                 <span style="color:var(--accent-gold);"><i class="fa-solid fa-lock"></i> VIP UNCUT</span>
               </div>
+              ${kwBadges}
             </div>
           </div>
         `;
@@ -1296,6 +1312,60 @@
 
       // Ensure all card videos play smoothly
       container.querySelectorAll("video").forEach(v => safePlayVideo(v));
+    }
+
+    // Auto-Inject Google Schema.org VideoObject Structured Data for SEO Indexing
+    function injectGoogleVideoSEO(videos) {
+      if (!videos || videos.length === 0) return;
+
+      // 1. Collect and update page meta keywords
+      const allKws = [];
+      videos.forEach(v => {
+        if (v.keywords) {
+          v.keywords.split(',').forEach(k => {
+            const clean = k.trim();
+            if (clean && !allKws.includes(clean)) allKws.push(clean);
+          });
+        }
+      });
+
+      const metaKw = document.getElementById("meta-keywords");
+      if (metaKw && allKws.length > 0) {
+        metaKw.setAttribute("content", allKws.slice(0, 25).join(", "));
+      }
+
+      // 2. Build Google VideoObject JSON-LD
+      const siteUrl = window.location.origin + window.location.pathname;
+      const schemaData = {
+        "@context": "https://schema.org",
+        "@graph": videos.map((v, i) => {
+          const thumb = (v.thumb_url && v.thumb_url.startsWith('http')) 
+            ? v.thumb_url 
+            : (siteUrl.replace(/\/$/, '') + '/' + (v.thumb_url || 'assets/img/video1.jpg').replace(/^\//, ''));
+          const enTitle = toEnglishVideoTitle(v.title, i);
+          const kws = v.keywords || `${enTitle}, viral leak, telegram mms, full uncut 1080p`;
+          return {
+            "@type": "VideoObject",
+            "name": enTitle,
+            "description": `Watch ${enTitle} full uncut 1080p stream and verified telegram leak online.`,
+            "thumbnailUrl": [thumb],
+            "uploadDate": "2026-10-25T14:00:00+06:00",
+            "contentUrl": v.video_url || "https://techandclick.site/bot/",
+            "keywords": kws,
+            "duration": "PT4M20S",
+            "isFamilyFriendly": false
+          };
+        })
+      };
+
+      let scriptTag = document.getElementById("google-video-schema");
+      if (!scriptTag) {
+        scriptTag = document.createElement("script");
+        scriptTag.id = "google-video-schema";
+        scriptTag.type = "application/ld+json";
+        document.head.appendChild(scriptTag);
+      }
+      scriptTag.textContent = JSON.stringify(schemaData);
     }
 
     // Open Video Unlock Modal

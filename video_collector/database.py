@@ -663,7 +663,7 @@ async def set_setting(key: str, value: str) -> None:
 
 # ── Portal Videos Auto-FIFO Rotation ───────────────
 
-async def add_portal_video_auto_rotate(title: str, category_slug: str, video_url: str, thumb_url: str, duration: str = "05:20") -> None:
+async def add_portal_video_auto_rotate(title: str, category_slug: str, video_url: str, thumb_url: str, duration: str = "05:20", keywords: str = "") -> None:
     """
     Insert a newly collected video into portal_videos and enforce the 10-video FIFO limit.
     When new videos arrive, the oldest ones beyond 10 are automatically deleted.
@@ -685,16 +685,22 @@ async def add_portal_video_auto_rotate(title: str, category_slug: str, video_url
                     views INT DEFAULT 1200,
                     is_active TINYINT(1) DEFAULT 1,
                     order_num INT DEFAULT 0,
+                    keywords TEXT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     INDEX idx_cat (category_slug),
                     INDEX idx_active (is_active)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
 
+            try:
+                await cur.execute("ALTER TABLE portal_videos ADD COLUMN keywords TEXT NULL")
+            except Exception:
+                pass
+
             await cur.execute("""
-                INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active)
-                VALUES (%s, %s, %s, %s, %s, %s, 1)
-            """, (title, category_slug, video_url, thumb_url, duration, views))
+                INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active, keywords)
+                VALUES (%s, %s, %s, %s, %s, %s, 1, %s)
+            """, (title, category_slug, video_url, thumb_url, duration, views, keywords))
 
             # Maintain exactly the 10 newest videos (FIFO auto-rotation)
             await cur.execute("""
