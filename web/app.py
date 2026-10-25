@@ -567,14 +567,18 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
     errors = []
 
     # 1. Fetch tracked video messages from DB
-    sql = "SELECT message_id FROM group_video_messages WHERE chat_id=%s ORDER BY message_id DESC"
-    args = [chat_id]
-    if limit and limit > 0:
-        sql += " LIMIT %s"
-        args.append(limit)
+    db_ids = []
+    try:
+        sql = "SELECT message_id FROM group_video_messages WHERE chat_id=%s ORDER BY message_id DESC"
+        args = [chat_id]
+        if limit and limit > 0:
+            sql += " LIMIT %s"
+            args.append(limit)
 
-    rows = _query(sql, args, fetchall=True)
-    db_ids = [int(r["message_id"]) for r in rows if r.get("message_id")] if rows else []
+        rows = _query(sql, args, fetchall=True)
+        db_ids = [int(r["message_id"]) for r in rows if r.get("message_id")] if rows else []
+    except Exception as e:
+        errors.append(f"DB query error: {e}")
 
     # Batch delete tracked videos via Telegram Bot API
     if db_ids and token:
@@ -640,11 +644,15 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
                 async def _telethon_clean():
                     t_del = 0
                     for sc in sess_candidates:
+                        t_client = TelegramClient(sc, TG_API_ID, TG_API_HASH)
                         try:
-                            t_client = TelegramClient(sc, TG_API_ID, TG_API_HASH)
                             await t_client.connect()
                             if not await t_client.is_user_authorized():
-                                await t_client.disconnect()
+                                continue
+
+                            try:
+                                await t_client.get_input_entity(chat_id)
+                            except Exception:
                                 continue
 
                             t_ids = []
@@ -661,11 +669,16 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
                                     except Exception:
                                         pass
                                     await asyncio.sleep(0.2)
-                            await t_client.disconnect()
                             if t_del > 0 or t_ids:
                                 break
                         except Exception:
                             pass
+                        finally:
+                            try:
+                                if t_client.is_connected():
+                                    await t_client.disconnect()
+                            except Exception:
+                                pass
                     return t_del
 
                 deleted_telethon = run_async(_telethon_clean()) or 0
@@ -713,11 +726,15 @@ def scan_group_videos_sync(chat_id: int, limit: int = 1000) -> dict:
     async def _scan():
         total_found = 0
         for sc in sess_candidates:
+            client = TelegramClient(sc, TG_API_ID, TG_API_HASH)
             try:
-                client = TelegramClient(sc, TG_API_ID, TG_API_HASH)
                 await client.connect()
                 if not await client.is_user_authorized():
-                    await client.disconnect()
+                    continue
+
+                try:
+                    await client.get_input_entity(chat_id)
+                except Exception:
                     continue
 
                 scanned_ids = []
@@ -737,49 +754,63 @@ def scan_group_videos_sync(chat_id: int, limit: int = 1000) -> dict:
                     finally:
                         conn.close()
                     total_found = len(scanned_ids)
-                    await client.disconnect()
                     break
-                await client.disconnect()
             except Exception:
                 pass
+            finally:
+                try:
+                    if client.is_connected():
+                        await client.disconnect()
+                except Exception:
+                    pass
         return total_found
 
-    found = run_async(_scan()) or 0
+    try:
+        found = run_async(_scan()) or 0
+    except Exception:
+        found = 0
     return {"success": True, "found": found}
 
 
-@app.route("/group/<string:chat_id>/scan-videos", methods=["POST"])
+@app.route("/group/<string:chat_id>/scan-videos", methods=["GET", "POST"])
 @login_required
 def group_scan_videos(chat_id):
-    chat_id = int(chat_id)
-    res = scan_group_videos_sync(chat_id, limit=1000)
-    found = res.get("found", 0)
-    row_vc = _query("SELECT COUNT(*) AS cnt FROM group_video_messages WHERE chat_id=%s", (chat_id,), fetchone=True)
-    total = row_vc["cnt"] if row_vc and "cnt" in row_vc else 0
-    if total > 0:
-        flash(f"🔍 গ্রুপ স্ক্যান সম্পন্ন! মোট {total}টি ভিডিও মেসেজ সনাক্ত ও সিঙ্ক করা হয়েছে।", "success")
-    else:
-        flash("ℹ️ কোনো পুরাতন ভিডিও মেসেজ পাওয়া যায়নি বা সেশন অ্যাকাউন্ট গ্রুপে নেই। নতুন পাঠানো যেকোনো ভিডিও স্বয়ংক্রিয়ভাবে ট্র্যাক হবে।", "info")
+    if request.method == "GET":
+        return redirect(url_for("group_moderation", chat_id=chat_id))
+    try:
+        chat_id = int(chat_id)
+        res = scan_group_videos_sync(chat_id, limit=1000)
+        found = res.get("found", 0)
+        row_vc = _query("SELECT COUNT(*) AS cnt FROM group_video_messages WHERE chat_id=%s", (chat_id,), fetchone=True)
+        total = row_vc["cnt"] if row_vc and "cnt" in row_vc else 0
+        if total > 0:
+            flash(f"🔍 গ্রুপ স্ক্যান সম্পন্ন! মোট {total}টি ভিডিও মেসেজ সনাক্ত ও সিঙ্ক করা হয়েছে।", "success")
+        else:
+            flash("ℹ️ কোনো পুরাতন ভিডিও মেসেজ পাওয়া যায়নি বা সেশন অ্যাকাউন্ট গ্রুপে নেই। তবে নতুন পাঠানো যেকোনো ভিডিও সাথে সাথে ট্র্যাক হবে।", "info")
+    except Exception as e:
+        flash(f"⚠️ স্ক্যান করার সময় ত্রুটি: {e}", "error")
     return redirect(url_for("group_moderation", chat_id=chat_id))
 
 
-@app.route("/group/<string:chat_id>/clean-videos", methods=["POST"])
+@app.route("/group/<string:chat_id>/clean-videos", methods=["GET", "POST"])
 @login_required
 def group_clean_videos(chat_id):
-    chat_id = int(chat_id)
+    if request.method == "GET":
+        return redirect(url_for("group_moderation", chat_id=chat_id))
     try:
+        chat_id = int(chat_id)
         raw_limit = request.form.get("limit", "0")
         limit = int(raw_limit) if raw_limit and raw_limit.isdigit() else 0
         limit = limit if limit > 0 else None
-    except Exception:
-        limit = None
 
-    res = clean_group_videos_sync(chat_id, limit=limit)
-    deleted = res.get("deleted", 0)
-    if deleted > 0:
-        flash(f"🎬 সফলভাবে গ্রুপের মোট {deleted}টি ভিডিও মুছে ফেলা হয়েছে!", "success")
-    else:
-        flash("ℹ️ কোনো ভিডিও মেসেজ পাওয়া যায়নি বা ইতিমধ্যে সব ভিডিও মুছে ফেলা হয়েছে।", "info")
+        res = clean_group_videos_sync(chat_id, limit=limit)
+        deleted = res.get("deleted", 0)
+        if deleted > 0:
+            flash(f"🎬 সফলভাবে গ্রুপের মোট {deleted}টি ভিডিও মুছে ফেলা হয়েছে!", "success")
+        else:
+            flash("ℹ️ কোনো ভিডিও মেসেজ পাওয়া যায়নি বা ইতিমধ্যে সব ভিডিও মুছে ফেলা হয়েছে।", "info")
+    except Exception as e:
+        flash(f"⚠️ ভিডিও মোছার সময় ত্রুটি: {e}", "error")
 
     return redirect(url_for("group_moderation", chat_id=chat_id))
 
@@ -795,7 +826,10 @@ def api_group_clean_videos(chat_id):
     except Exception:
         limit = None
 
-    res = clean_group_videos_sync(chat_id, limit=limit)
+    try:
+        res = clean_group_videos_sync(chat_id, limit=limit)
+    except Exception as e:
+        res = {"success": False, "deleted": 0, "error": str(e)}
     return jsonify(res)
 
 
