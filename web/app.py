@@ -621,22 +621,17 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
     if telethon_limit > 0:
         try:
             project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            sess_candidates = [
-                os.path.join(project_dir, "video_collector", "collector_userbot"),
-            ]
+            sess_candidates = []
             sessions_dir = os.path.join(project_dir, "sessions")
             if os.path.isdir(sessions_dir):
                 for f in os.listdir(sessions_dir):
                     if f.endswith(".session"):
                         sess_candidates.append(os.path.join(sessions_dir, f[:-8]))
+            vc_sess = os.path.join(project_dir, "video_collector", "collector_userbot")
+            if os.path.exists(vc_sess + ".session"):
+                sess_candidates.append(vc_sess)
 
-            valid_sess = None
-            for sc in sess_candidates:
-                if os.path.exists(sc + ".session"):
-                    valid_sess = sc
-                    break
-
-            if valid_sess:
+            if sess_candidates:
                 from video_collector.config import TG_API_ID, TG_API_HASH
                 from telethon import TelegramClient
                 from telethon.tl.types import InputMessagesFilterVideo
@@ -644,24 +639,33 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
 
                 async def _telethon_clean():
                     t_del = 0
-                    t_client = TelegramClient(valid_sess, TG_API_ID, TG_API_HASH)
-                    await t_client.connect()
-                    try:
-                        if await t_client.is_user_authorized():
+                    for sc in sess_candidates:
+                        try:
+                            t_client = TelegramClient(sc, TG_API_ID, TG_API_HASH)
+                            await t_client.connect()
+                            if not await t_client.is_user_authorized():
+                                await t_client.disconnect()
+                                continue
+
                             t_ids = []
                             async for m in t_client.iter_messages(chat_id, filter=InputMessagesFilterVideo, limit=telethon_limit):
                                 if m and m.id and m.id not in db_ids:
                                     t_ids.append(m.id)
-                            for i in range(0, len(t_ids), 100):
-                                c_chunk = t_ids[i:i + 100]
-                                try:
-                                    await t_client.delete_messages(chat_id, c_chunk)
-                                    t_del += len(c_chunk)
-                                except Exception:
-                                    pass
-                                await asyncio.sleep(0.2)
-                    finally:
-                        await t_client.disconnect()
+
+                            if t_ids:
+                                for i in range(0, len(t_ids), 100):
+                                    c_chunk = t_ids[i:i + 100]
+                                    try:
+                                        await t_client.delete_messages(chat_id, c_chunk)
+                                        t_del += len(c_chunk)
+                                    except Exception:
+                                        pass
+                                    await asyncio.sleep(0.2)
+                            await t_client.disconnect()
+                            if t_del > 0 or t_ids:
+                                break
+                        except Exception:
+                            pass
                     return t_del
 
                 deleted_telethon = run_async(_telethon_clean()) or 0
@@ -676,6 +680,87 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
         "deleted_telethon": deleted_telethon,
         "errors": errors
     }
+
+
+def scan_group_videos_sync(chat_id: int, limit: int = 1000) -> dict:
+    """
+    Scans historical video messages from the Telegram group using available Telethon sessions,
+    and records their message IDs into group_video_messages table.
+    """
+    import os
+    import asyncio
+    chat_id = int(chat_id)
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sessions_dir = os.path.join(project_dir, "sessions")
+
+    sess_candidates = []
+    if os.path.isdir(sessions_dir):
+        for f in os.listdir(sessions_dir):
+            if f.endswith(".session"):
+                sess_candidates.append(os.path.join(sessions_dir, f[:-8]))
+
+    vc_sess = os.path.join(project_dir, "video_collector", "collector_userbot")
+    if os.path.exists(vc_sess + ".session"):
+        sess_candidates.append(vc_sess)
+
+    if not sess_candidates:
+        return {"success": False, "found": 0, "message": "কোনো সক্রিয় Telethon ইউজারবট সেশন পাওয়া যায়নি।"}
+
+    from video_collector.config import TG_API_ID, TG_API_HASH
+    from telethon import TelegramClient
+    from telethon.tl.types import InputMessagesFilterVideo
+
+    async def _scan():
+        total_found = 0
+        for sc in sess_candidates:
+            try:
+                client = TelegramClient(sc, TG_API_ID, TG_API_HASH)
+                await client.connect()
+                if not await client.is_user_authorized():
+                    await client.disconnect()
+                    continue
+
+                scanned_ids = []
+                async for m in client.iter_messages(chat_id, filter=InputMessagesFilterVideo, limit=limit):
+                    if m and m.id:
+                        sender_id = getattr(m, 'sender_id', 0) or 0
+                        scanned_ids.append((chat_id, m.id, sender_id))
+
+                if scanned_ids:
+                    conn = get_db()
+                    try:
+                        with conn.cursor() as cur:
+                            cur.executemany(
+                                "INSERT IGNORE INTO group_video_messages (chat_id, message_id, sender_id) VALUES (%s, %s, %s)",
+                                scanned_ids
+                            )
+                    finally:
+                        conn.close()
+                    total_found = len(scanned_ids)
+                    await client.disconnect()
+                    break
+                await client.disconnect()
+            except Exception:
+                pass
+        return total_found
+
+    found = run_async(_scan()) or 0
+    return {"success": True, "found": found}
+
+
+@app.route("/group/<string:chat_id>/scan-videos", methods=["POST"])
+@login_required
+def group_scan_videos(chat_id):
+    chat_id = int(chat_id)
+    res = scan_group_videos_sync(chat_id, limit=1000)
+    found = res.get("found", 0)
+    row_vc = _query("SELECT COUNT(*) AS cnt FROM group_video_messages WHERE chat_id=%s", (chat_id,), fetchone=True)
+    total = row_vc["cnt"] if row_vc and "cnt" in row_vc else 0
+    if total > 0:
+        flash(f"🔍 গ্রুপ স্ক্যান সম্পন্ন! মোট {total}টি ভিডিও মেসেজ সনাক্ত ও সিঙ্ক করা হয়েছে।", "success")
+    else:
+        flash("ℹ️ কোনো পুরাতন ভিডিও মেসেজ পাওয়া যায়নি বা সেশন অ্যাকাউন্ট গ্রুপে নেই। নতুন পাঠানো যেকোনো ভিডিও স্বয়ংক্রিয়ভাবে ট্র্যাক হবে।", "info")
+    return redirect(url_for("group_moderation", chat_id=chat_id))
 
 
 @app.route("/group/<string:chat_id>/clean-videos", methods=["POST"])

@@ -45,6 +45,7 @@ HELP_SECTIONS = {
             "• <code>/unban &lt;User ID&gt;</code> — ব্যান তুলে নিন\n"
             "• <code>/del [Reply]</code> — টার্গেট মেসেজ মুছে দিন\n"
             "• <code>/purge &lt;সংখ্যা&gt;</code> — শেষ N টি মেসেজ একসাথে ডিলিট করুন\n"
+            "• <code>/scanvideos</code> — গ্রুপের অতীতের সব ভিডিও স্ক্যান ও সিঙ্ক করুন\n"
             "• <code>/cleanvideos</code> (বা <code>/delvideos</code>) — এক ক্লিকে গ্রুপের সব ভিডিও মুছুন"
         ),
     },

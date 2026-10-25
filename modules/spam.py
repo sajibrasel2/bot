@@ -882,7 +882,7 @@ VALID_COMMANDS = {
     "pin", "pinsilent", "unpin", "unpinall", "lock", "unlock",
     "setrules", "setwarnaction", "setwarnlimit",
     "promote", "addadmin", "setadmin", "makeadmin", "demote", "removeadmin", "deladmin", "unadmin",
-    "del", "delete", "purge", "cleanvideos", "delvideos", "purgevideos", "cleanvideo", "delvideo", "setgrouptitle", "setdesc",
+    "del", "delete", "purge", "cleanvideos", "delvideos", "purgevideos", "cleanvideo", "delvideo", "scanvideos", "scanvideo", "setgrouptitle", "setdesc",
     "setwelcome", "setgoodbye", "welcome", "goodbye", "resetwelcome", "setwelcomesticker", "delwelcomesticker", "setwelcomebtn", "delwelcomebtn", "welcometest", "testwelcome",
     "promo", "sendpromo", "setpromosticker", "delpromosticker",
     "servicealert", "sendalert", "girlnotice",

@@ -33,16 +33,21 @@
         <div style="font-size:12px;color:#94a3b8;font-weight:normal;margin-top:2px;">One-Click Group Video Cleaner & Bulk Purge</div>
       </div>
     </div>
-    <div>
-      <span class="badge" style="background:rgba(239, 68, 68, 0.2);color:#fca5a5;border:1px solid rgba(239, 68, 68, 0.4);font-size:12px;padding:5px 12px;border-radius:20px;">
-        <i class="fa-solid fa-database"></i> {{ tracked_videos_count }} টি ভিডিও ট্র্যাক করা আছে
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <form method="POST" action="{{ url_for('group_scan_videos', chat_id=chat_id) }}" style="display:inline;margin:0;" id="scanVideosForm">
+        <button type="submit" id="btnScanVideos" class="btn btn-sm" style="background:rgba(99, 102, 241, 0.2);color:#a5b4fc;border:1px solid rgba(99, 102, 241, 0.4);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.2s;" onmouseover="this.style.background='rgba(99, 102, 241, 0.35)'" onmouseout="this.style.background='rgba(99, 102, 241, 0.2)'">
+          <i class="fa-solid fa-arrows-rotate"></i> আগের সব ভিডিও স্ক্যান করুন
+        </button>
+      </form>
+      <span class="badge" style="background:rgba(239, 68, 68, 0.2);color:#fca5a5;border:1px solid rgba(239, 68, 68, 0.4);font-size:12px;padding:6px 14px;border-radius:20px;">
+        <i class="fa-solid fa-database"></i> {{ tracked_videos_count }} টি ভিডিও পাওয়া গেছে
       </span>
     </div>
   </div>
 
   <div style="padding-top:14px;">
     <div style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid #ef4444; padding: 12px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; color: #cbd5e1; line-height: 1.6;">
-      <b style="color:#fca5a5;">⚡ কীভাবে কাজ করে:</b> গ্রুপে কোনো সদস্য বা অ্যাডমিন ভিডিও পাঠালে বট স্বয়ংক্রিয়ভাবে তা ট্র্যাক করে রাখে। নিচের বাটনে চাপ দিলে টেলিগ্রাম বট এপিআই এবং টেলিথন হাই-স্পিড ব্যাচ ইঞ্জিনের সাহায্যে মুহূর্তের মধ্যে গ্রুপের ভিডিও মেসেজগুলো স্থায়ীভাবে মুছে ফেলা হবে।
+      <b style="color:#fca5a5;">⚡ কীভাবে কাজ করে:</b> গ্রুপে নতুন পাঠানো যেকোনো ভিডিও বট রিয়েল-টাইমে ট্র্যাক করে রাখে। আর নতুন কোড ইনস্টলের আগের অতীতের পুরাতন ভিডিওগুলো সনাক্ত করতে উপরের <b>'আগের সব ভিডিও স্ক্যান করুন'</b> বাটনে চাপ দিন। এরপর নিচের লাল বাটনে চাপ দিলে টেলিগ্রাম বট এপিআই ও টেলিথন হাই-স্পিড ইঞ্জিনের মাধ্যমে মুহূর্তেই সমস্ত ভিডিও মুছে ফেলা হবে।
     </div>
 
     <form id="cleanVideosForm" method="POST" action="{{ url_for('group_clean_videos', chat_id=chat_id) }}">
@@ -268,6 +273,19 @@ if (cleanVideosForm) {
     if (btn) {
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ভিডিও মুছে ফেলা হচ্ছে...';
+      btn.style.opacity = '0.75';
+    }
+  });
+}
+
+// Group Video Scanner loading state
+const scanVideosForm = document.getElementById('scanVideosForm');
+if (scanVideosForm) {
+  scanVideosForm.addEventListener('submit', function() {
+    const btn = document.getElementById('btnScanVideos');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> স্ক্যান করা হচ্ছে...';
       btn.style.opacity = '0.75';
     }
   });
