@@ -201,19 +201,43 @@ if ($pdo) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
-        // Seed or refresh categories if none
+        // Check if categories contain Bengali text or are empty
         $cntCat = (int) $pdo->query("SELECT COUNT(*) FROM portal_categories")->fetchColumn();
-        if ($cntCat === 0) {
-            $stmtC = $pdo->prepare("INSERT IGNORE INTO portal_categories (name, slug, icon, order_num) VALUES (?, ?, ?, ?)");
+        $hasBengaliCat = false;
+        if ($cntCat > 0) {
+            $catNames = $pdo->query("SELECT name FROM portal_categories")->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($catNames as $cn) {
+                if (preg_match('/[\x{0980}-\x{09FF}]/u', $cn)) {
+                    $hasBengaliCat = true;
+                    break;
+                }
+            }
+        }
+
+        if ($cntCat === 0 || $hasBengaliCat) {
+            $pdo->exec("DELETE FROM portal_categories");
+            $stmtC = $pdo->prepare("INSERT INTO portal_categories (name, slug, icon, order_num) VALUES (?, ?, ?, ?)");
             foreach ($default_categories as $c) {
                 if ($c['slug'] === 'all') continue;
                 $stmtC->execute([$c['name'], $c['slug'], $c['icon'], $c['order_num']]);
             }
         }
 
-        // Seed default 10 videos if none
+        // Check if videos contain Bengali text or are empty
         $cntVid = (int) $pdo->query("SELECT COUNT(*) FROM portal_videos")->fetchColumn();
-        if ($cntVid === 0) {
+        $hasBengaliVid = false;
+        if ($cntVid > 0) {
+            $vidTitles = $pdo->query("SELECT title FROM portal_videos")->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($vidTitles as $vt) {
+                if (preg_match('/[\x{0980}-\x{09FF}]/u', $vt)) {
+                    $hasBengaliVid = true;
+                    break;
+                }
+            }
+        }
+
+        if ($cntVid === 0 || $hasBengaliVid) {
+            $pdo->exec("DELETE FROM portal_videos");
             $stmtV = $pdo->prepare("INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active, order_num) VALUES (?, ?, ?, ?, ?, ?, 1, ?)");
             $ord = 1;
             foreach ($default_videos as $v) {
@@ -249,21 +273,76 @@ if ($action === 'get_data') {
     $videos = $default_videos;
     $settings = $default_settings;
 
+    // Translation dictionary for fallback
+    $bn_cat_map = [
+        'সব ভিডিও' => '🔥 All Leaks',
+        'ভাইরাল ভাইরাল' => '⚡ Trending Viral',
+        'দেশি হট' => '💋 Hot Desi MMS',
+        'এক্সক্লুসিভ' => '🔞 Exclusive Uncut',
+        'ভিআইপি লিকস' => '💎 VIP Vault',
+        'লাইভ ক্যামেরা' => '🎥 Live Webcams'
+    ];
+    $bn_vid_map = [
+        'আনলকড ফুল এইচডি এক্সক্লুসিভ শো' => 'Unlocked Full HD 4K Exclusive Leak',
+        'মধ্যরাতের হট চ্যাট ভাইরাল ক্লিপ' => 'Midnight Secret Hot Chat Viral Leak',
+        'ভিআইপি মেম্বার্স অনলি আনকাট লিক' => 'VIP Members Only Uncut Tape',
+        'অফিস ট্যুরের গোপন রেকর্ড ভাইরাল' => 'Office Tour Hidden Record Viral Clip',
+        '১-অন-১ সিক্রেট চ্যাট পার্টনার শো' => '1-on-1 Private Live Cam Partner Show',
+        'লাইভ ক্যামেরা প্রাইভেট শো ২' => 'Live Webcam Private Bedroom Session 2',
+        'টপ ট্রেন্ডিং ভাইরাল ক্লিপ এইচডি' => 'Top Trending Viral MMS Tape 1080p',
+        'ভিআইপি প্রাইভেট ক্যাবিন ভিডিও লিক' => 'VIP Private Cabin Leaked Model Video',
+        'চট্টগ্রাম কলেজ ফ্রেন্ডস নাইট পার্টি' => 'College Friends Secret Night Party MMS',
+        'হোস্টেল রুমের গোপন ভিডিও ফাঁস' => 'Hostel Room Secret Hidden Cam Exposed'
+    ];
+
     if ($pdo) {
         try {
             // Fetch DB categories
             $db_cats = $pdo->query("SELECT id, name, slug, icon, order_num FROM portal_categories ORDER BY order_num ASC, id ASC")->fetchAll();
             if (!empty($db_cats)) {
+                $cleaned_cats = [];
+                foreach ($db_cats as $c) {
+                    $catName = trim($c['name']);
+                    if (isset($bn_cat_map[$catName])) {
+                        $catName = $bn_cat_map[$catName];
+                    } elseif (preg_match('/[\x{0980}-\x{09FF}]/u', $catName)) {
+                        $slugMap = [
+                            'all' => '🔥 All Leaks',
+                            'exclusive' => '🔞 Exclusive Uncut',
+                            'desi' => '💋 Hot Desi MMS',
+                            'vip' => '💎 VIP Vault',
+                            'live' => '🎥 Live Webcams',
+                            'viral' => '⚡ Trending Viral'
+                        ];
+                        $catName = $slugMap[$c['slug']] ?? '🔥 All Leaks';
+                    }
+                    $c['name'] = $catName;
+                    $cleaned_cats[] = $c;
+                }
+
                 $categories = array_merge(
                     [['id' => 0, 'name' => '🔥 All Leaks', 'slug' => 'all', 'icon' => 'fa-fire', 'order_num' => 0]],
-                    $db_cats
+                    $cleaned_cats
                 );
             }
 
             // Fetch exactly latest 10 active videos
             $db_vids = $pdo->query("SELECT id, title, category_slug, video_url, thumb_url, duration, views FROM portal_videos WHERE is_active=1 ORDER BY id DESC LIMIT 10")->fetchAll();
             if (!empty($db_vids)) {
-                $videos = $db_vids;
+                $cleaned_vids = [];
+                $vidx = 0;
+                foreach ($db_vids as $v) {
+                    $vtitle = trim($v['title']);
+                    if (isset($bn_vid_map[$vtitle])) {
+                        $vtitle = $bn_vid_map[$vtitle];
+                    } elseif (preg_match('/[\x{0980}-\x{09FF}]/u', $vtitle)) {
+                        $vtitle = $default_videos[$vidx % count($default_videos)]['title'];
+                    }
+                    $v['title'] = $vtitle;
+                    $cleaned_vids[] = $v;
+                    $vidx++;
+                }
+                $videos = $cleaned_vids;
             }
 
             // Fetch DB settings

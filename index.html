@@ -1124,6 +1124,57 @@
       });
     }
 
+    // Safe English Category & Video Sanitizer
+    const BN_CATEGORY_MAP = {
+      "সব ভিডিও": "🔥 All Leaks",
+      "ভাইরাল ভাইরাল": "⚡ Trending Viral",
+      "দেশি হট": "💋 Hot Desi MMS",
+      "এক্সক্লুসিভ": "🔞 Exclusive Uncut",
+      "ভিআইপি লিকস": "💎 VIP Vault",
+      "লাইভ ক্যামেরা": "🎥 Live Webcams"
+    };
+
+    const BN_VIDEO_MAP = {
+      "আনলকড ফুল এইচডি এক্সক্লুসিভ শো": "Unlocked Full HD 4K Exclusive Leak",
+      "মধ্যরাতের হট চ্যাট ভাইরাল ক্লিপ": "Midnight Secret Hot Chat Viral Leak",
+      "ভিআইপি মেম্বার্স অনলি আনকাট লিক": "VIP Members Only Uncut Tape",
+      "অফিস ট্যুরের গোপন রেকর্ড ভাইরাল": "Office Tour Hidden Record Viral Clip",
+      "১-অন-১ সিক্রেট চ্যাট পার্টনার শো": "1-on-1 Private Live Cam Partner Show",
+      "লাইভ ক্যামেরা প্রাইভেট শো ২": "Live Webcam Private Bedroom Session 2",
+      "টপ ট্রেন্ডিং ভাইরাল ক্লিপ এইচডি": "Top Trending Viral MMS Tape 1080p",
+      "ভিআইপি প্রাইভেট ক্যাবিন ভিডিও লিক": "VIP Private Cabin Leaked Model Video",
+      "চট্টগ্রাম কলেজ ফ্রেন্ডস নাইট পার্টি": "College Friends Secret Night Party MMS",
+      "হোস্টেল রুমের গোপন ভিডিও ফাঁস": "Hostel Room Secret Hidden Cam Exposed"
+    };
+
+    function toEnglishCategoryName(name, slug) {
+      if (!name) return "🔥 All Leaks";
+      const clean = name.trim();
+      if (BN_CATEGORY_MAP[clean]) return BN_CATEGORY_MAP[clean];
+      if (/[\u0980-\u09FF]/.test(clean)) {
+        const slugMap = {
+          all: "🔥 All Leaks",
+          exclusive: "🔞 Exclusive Uncut",
+          desi: "💋 Hot Desi MMS",
+          vip: "💎 VIP Vault",
+          live: "🎥 Live Webcams",
+          viral: "⚡ Trending Viral"
+        };
+        return slugMap[slug] || "🔥 All Leaks";
+      }
+      return clean;
+    }
+
+    function toEnglishVideoTitle(title, idx = 0) {
+      if (!title) return DEFAULT_VIDEOS[idx % DEFAULT_VIDEOS.length].title;
+      const clean = title.trim();
+      if (BN_VIDEO_MAP[clean]) return BN_VIDEO_MAP[clean];
+      if (/[\u0980-\u09FF]/.test(clean)) {
+        return DEFAULT_VIDEOS[idx % DEFAULT_VIDEOS.length].title;
+      }
+      return clean;
+    }
+
     // Render category buttons on top
     function renderCategories(categories) {
       const bar = document.getElementById("category-pills-bar");
@@ -1133,10 +1184,11 @@
       categories.forEach(c => {
         const iconClass = c.icon ? c.icon : 'fa-tag';
         const isActive = (activeCategory === c.slug) ? 'active' : '';
+        const enName = toEnglishCategoryName(c.name, c.slug);
         html += `
           <button class="category-pill ${isActive}" onclick="filterCategory('${c.slug}', this)">
             <i class="fa-solid ${iconClass}"></i>
-            <span>${c.name}</span>
+            <span>${enName}</span>
           </button>
         `;
       });
@@ -1191,9 +1243,10 @@
       container.innerHTML = displayList.map((v, i) => {
         const viewsFormatted = (v.views || 48500).toLocaleString();
         const duration = v.duration || "06:30";
-        const categoryName = v.category_name || (v.category_slug ? v.category_slug.toUpperCase() : "EXCLUSIVE");
+        const categoryName = (v.category_slug ? v.category_slug.toUpperCase() : "EXCLUSIVE");
         const thumb = v.thumb_url || DEFAULT_VIDEOS[i % DEFAULT_VIDEOS.length].thumb_url;
         const videoSrc = v.video_url || DEFAULT_VIDEOS[i % DEFAULT_VIDEOS.length].video_url;
+        const enTitle = toEnglishVideoTitle(v.title, i);
 
         return `
           <div class="video-card" onclick="openVideoModal(${v.id})">
@@ -1208,7 +1261,7 @@
               <span class="badge-duration">${duration}</span>
             </div>
             <div class="video-card-body">
-              <h4 class="video-card-title">${v.title}</h4>
+              <h4 class="video-card-title">${enTitle}</h4>
               <div class="video-card-meta">
                 <span><i class="fa-solid fa-eye" style="color:var(--accent-cyan);"></i> ${viewsFormatted} views</span>
                 <span style="color:var(--accent-gold);"><i class="fa-solid fa-lock"></i> VIP UNCUT</span>
@@ -1230,7 +1283,7 @@
 
       const modalTitle = document.getElementById("modal-video-title");
       if (modalTitle && selectedVideo) {
-        modalTitle.textContent = selectedVideo.title;
+        modalTitle.textContent = toEnglishVideoTitle(selectedVideo.title, 0);
       }
 
       const modal = document.getElementById("portal-modal");
