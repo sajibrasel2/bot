@@ -9,6 +9,22 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   
+  <script>
+    // Force Telegram In-App Browser to bypass cached versions
+    (function() {
+      try {
+        var BUILD_REV = "20261025_en_v4";
+        var q = new URLSearchParams(window.location.search);
+        var curRev = q.get("_v");
+        if (curRev !== BUILD_REV) {
+          q.set("_v", BUILD_REV);
+          q.set("_t", Date.now());
+          window.location.replace(window.location.pathname + "?" + q.toString() + window.location.hash);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#07090e" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1062,9 +1078,16 @@
       renderBackdropVideos(DEFAULT_VIDEOS);
       renderVideoCards(DEFAULT_VIDEOS);
 
-      // 2. Fetch fresh 10 videos & categories from API
+      // 2. Fetch fresh 10 videos & categories from API (Bypass Telegram cache)
       try {
-        const res = await fetch("api/portal.php?action=get_data");
+        const bustKey = Date.now() + "_" + Math.floor(Math.random() * 10000);
+        const res = await fetch("api/portal.php?action=get_data&_nocache=" + bustKey, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache"
+          }
+        });
         const json = await res.json();
         if (json && json.status === "success") {
           portalData = json;

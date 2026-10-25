@@ -11,6 +11,8 @@ header('Access-Control-Allow-Headers: Content-Type, Cache-Control, Pragma');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0');
 header('Pragma: no-cache');
 header('Expires: 0');
+header('Surrogate-Control: no-store');
+header('Clear-Site-Data: "cache"');
 
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
