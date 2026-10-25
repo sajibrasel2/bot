@@ -63,6 +63,7 @@ _antiforward_strike_time: dict = defaultdict(lambda: defaultdict(float))
 _user_bio_cache: dict = {}
 BIO_CACHE_TTL = 180  # 3 minutes cache TTL
 _bio_alert_time: dict = defaultdict(lambda: defaultdict(float))
+_charlimit_alert_time: dict = defaultdict(lambda: defaultdict(float))
 
 DEFAULT_BIOLINK_WHITELIST = "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone, https://t.me/mastiunlimitedzone"
 
@@ -399,6 +400,33 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
     if chat.type != "private" and chat.title:
         asyncio.create_task(update_chat_info(chat.id, title=chat.title))
+
+    # ── 100 Characters Limit Protection (১০০ অক্ষরের বেশি মেসেজ প্রতিরোধ) ───────────
+    max_chars = int(settings.get("max_message_chars") or 100)
+    if max_chars > 0:
+        text_content = (msg.text or msg.caption or "").strip()
+        if text_content and len(text_content) > max_chars:
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+
+            now = time.time()
+            last_alert = _charlimit_alert_time[chat.id][user.id]
+            if now - last_alert > 8:
+                _charlimit_alert_time[chat.id][user.id] = now
+                char_count = len(text_content)
+                alert_text = (
+                    f"⚠️ <b>Message Too Long! / মেসেজ অতিরিক্ত বড়!</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"👤 <b>User:</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
+                    f"📏 <b>Length:</b> <code>{char_count}</code> / <b>{max_chars} characters max</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🚫 <i>১০০ অক্ষরের বেশি মেসেজ পাঠানো নিষিদ্ধ। অনুগ্রহ করে সংক্ষেপে লিখুন।</i>\n"
+                    f"ℹ️ <i>Messages exceeding {max_chars} characters are restricted. Please keep it brief.</i>"
+                )
+                await _send_and_delete(context, chat.id, alert_text, delay=BOT_MSG_AUTO_DELETE)
+            return
 
     # ── Anti-Bio-Link (অননুমোদিত প্রোফাইল বায়ো লিংক প্রটেকশন) ────────────────
     if settings.get("antibiolink_enabled", 1):
@@ -796,6 +824,43 @@ async def cmd_badwordlist(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_html(f"🚫 <b>নিষিদ্ধ শব্দ তালিকা:</b>\n\n{word_list}")
 
 
+@admin_only
+async def cmd_charlimit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Set maximum character limit for member messages (default 100, or 'off')."""
+    chat = update.effective_chat
+    if not chat:
+        return
+    args = context.args
+    if not args:
+        settings = await get_chat_settings(chat.id)
+        current = settings.get("max_message_chars", 100)
+        status_str = f"<b>{current} characters</b>" if current and int(current) > 0 else "<b>Disabled (Off)</b>"
+        await update.message.reply_html(
+            f"📏 <b>Character Limit Setting / ক্যারেক্টার লিমিট</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎯 <b>Current limit:</b> {status_str}\n\n"
+            f"💡 <b>Usage:</b>\n"
+            f"• <code>/charlimit 100</code> (মেসেজ সর্বোচ্চ ১০০ অক্ষর নির্ধারণ)\n"
+            f"• <code>/charlimit 50</code> (কাস্টম লিমিট সেট করুন)\n"
+            f"• <code>/charlimit off</code> (ক্যারেক্টার লিমিট বন্ধ করুন)"
+        )
+        return
+
+    arg = args[0].strip().lower()
+    if arg in ("off", "disable", "0"):
+        await update_chat_setting(chat.id, "max_message_chars", 0)
+        await update.message.reply_html("✅ <b>মেসেজ ক্যারেক্টার লিমিট বন্ধ করা হয়েছে (Unlimited)।</b>")
+    elif arg.isdigit():
+        val = int(arg)
+        if val < 10:
+            await update.message.reply_html("⚠️ ক্যারেক্টার লিমিট সর্বনিম্ন ১০ হতে হবে।")
+            return
+        await update_chat_setting(chat.id, "max_message_chars", val)
+        await update.message.reply_html(f"✅ <b>মেসেজ লিমিট সফলভাবে {val} অক্ষরে নির্ধারণ করা হয়েছে!</b>")
+    else:
+        await update.message.reply_html("⚠️ ব্যবহার: <code>/charlimit 100</code> অথবা <code>/charlimit off</code>")
+
+
 # ── Unknown / Spam Slash Command Cleaner ──────────
 VALID_COMMANDS = {
     # Member & General
@@ -809,10 +874,10 @@ VALID_COMMANDS = {
     "setrules", "setwarnaction", "setwarnlimit",
     "promote", "addadmin", "setadmin", "makeadmin", "demote", "removeadmin", "deladmin", "unadmin",
     "del", "delete", "purge", "setgrouptitle", "setdesc",
-    "setwelcome", "setgoodbye", "welcome", "goodbye", "resetwelcome", "setwelcomesticker", "delwelcomesticker", "setwelcomebtn", "delwelcomebtn",
+    "setwelcome", "setgoodbye", "welcome", "goodbye", "resetwelcome", "setwelcomesticker", "delwelcomesticker", "setwelcomebtn", "delwelcomebtn", "welcometest", "testwelcome",
     "promo", "sendpromo", "setpromosticker", "delpromosticker",
     "servicealert", "sendalert", "girlnotice",
-    "antiflood", "antilink", "antiforward", "antibiolink", "badwords", "addbadword", "delbadword", "badwordlist",
+    "antiflood", "antilink", "antiforward", "antibiolink", "charlimit", "setcharlimit", "badwords", "addbadword", "delbadword", "badwordlist",
     "notes", "save", "get", "clear"
 }
 
@@ -863,6 +928,7 @@ def register(app) -> None:
     app.add_handler(CommandHandler("antilink",    cmd_antilink))
     app.add_handler(CommandHandler("antiforward", cmd_antiforward))
     app.add_handler(CommandHandler("antibiolink", cmd_antibiolink))
+    app.add_handler(CommandHandler(["charlimit", "setcharlimit"], cmd_charlimit))
     app.add_handler(CommandHandler("badwords",    cmd_badwords_toggle))
     app.add_handler(CommandHandler("addbadword",  cmd_addbadword))
     app.add_handler(CommandHandler("delbadword",  cmd_delbadword))

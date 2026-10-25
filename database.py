@@ -94,7 +94,8 @@ async def init_db() -> None:
                 ("antilink_required_invites", "INT DEFAULT 10"),
                 ("antiforward_required_invites", "INT DEFAULT 10"),
                 ("antibiolink_enabled", "TINYINT DEFAULT 1"),
-                ("antibiolink_whitelist", "TEXT")
+                ("antibiolink_whitelist", "TEXT"),
+                ("max_message_chars", "INT DEFAULT 100")
             ]
             for col_name, col_type in columns_to_add:
                 await cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
@@ -244,6 +245,10 @@ async def init_db() -> None:
             await cur.execute(
                 "UPDATE chat_settings SET antibiolink_whitelist = CONCAT(antibiolink_whitelist, ', https://t.me/mastiunlimitedzone') WHERE antibiolink_whitelist NOT LIKE '%mastiunlimitedzone%'"
             )
+            # Reset old long Bengali welcome text to default empty so new English welcome message activates
+            await cur.execute(
+                "UPDATE chat_settings SET welcome_text = '' WHERE welcome_text LIKE '%স্বাগতম%' OR welcome_text LIKE '%ক্যাটাগরি%'"
+            )
 
 
 # ── WARN helpers ──────────────────────────────────
@@ -385,6 +390,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "force_add_enabled": 0, "force_add_count": 5,
         "antibiolink_enabled": 1,
         "antibiolink_whitelist": "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone, https://t.me/mastiunlimitedzone",
+        "max_message_chars": 100,
     }
     pool = await get_pool()
     async with pool.acquire() as conn:

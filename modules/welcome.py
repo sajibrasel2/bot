@@ -32,25 +32,20 @@ async def _auto_delete(message, delay: int = AUTO_DELETE_SECONDS) -> None:
 
 
 DEFAULT_WELCOME = (
-    "🌟 <b>স্বাগতম {mention}!</b> 🌸\n"
-    "🏠 <b>{chatname}</b> • আপনি আমাদের <b>#{count}</b> তম সদস্য।\n\n"
-    "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে জয়েন করুন:</b>\n"
-    "👉 <a href=\"https://t.me/darkfantasyloverzone\">Dark Romance ১৮+ আড্ডা (Group 1)</a>\n"
-    "👉 <a href=\"https://t.me/mastiunlimitedzone\">Masti Unlimited ১৮+ আড্ডা (Group 2)</a>\n\n"
-    "🔞 <b>হট ও ভাইরাল ভিডিও দেখতে নিচে ক্লিক করুন:</b>\n"
-    "👇 সরাসরি সাইটে প্রবেশ করে ফুল আনকাট ভিডিও দেখুন 👇"
+    "✨ <b>Welcome, {mention}!</b>\n"
+    "🏠 <b>{chatname}</b> • Member <b>#{count}</b>\n\n"
+    "🔞 <b>Official VIP Groups:</b>\n"
+    "👉 <a href=\"https://t.me/darkfantasyloverzone\">Group 1 (Dark Romance)</a>\n"
+    "👉 <a href=\"https://t.me/mastiunlimitedzone\">Group 2 (Masti Unlimited)</a>\n\n"
+    "🌐 <i>Tap below to access live portal & private rooms:</i>"
 )
 
 DEFAULT_GOODBYE = (
-    "━━━━━━━━━━━━━━━━━━━━━━━\n"
-    "👋  <b>বিদায়!</b>\n"
-    "━━━━━━━━━━━━━━━━━━━━━━━\n"
-    "😢 <b>{full}</b> আমাদের ছেড়ে চলে গেলেন।\n\n"
-    "🌟 <i>যেখানেই থাকুন ভালো থাকুন!</i>\n"
-    "━━━━━━━━━━━━━━━━━━━━━━━"
+    "👋 <b>Goodbye, {full}!</b>\n"
+    "<i>We wish you all the best.</i>"
 )
 
-DEFAULT_BUTTON_TEXT = "🔥 🔞 🔴 𝗟𝗜𝗩𝗘 𝗖𝗛𝗔𝗧 • সরাসরি চ্যাট করুন 🔞 🔥"
+DEFAULT_BUTTON_TEXT = "🔥 🔞 🔴 LIVE PORTAL • Enter Now 🔞 🔥"
 DEFAULT_BUTTON_URL  = "https://techandclick.site/bot/?v=live"
 
 
@@ -123,33 +118,47 @@ VIRAL_BUTTON_SETS = {
 
 import urllib.parse
 
+# Professional English Button Sets for Welcome Message
+WELCOME_BUTTONS_EN = {
+    "videos": [
+        "🔞 Watch VIP Videos & Live Cam ➜",
+        "🎬 Stream Uncut HD Videos ➜",
+        "🔥 Exclusive 18+ VIP Videos ➜",
+        "🔞 Latest Trending VIP Clips ➜",
+        "🍒 Private Uncensored Videos ➜",
+    ],
+    "portal": [
+        "🔴 1-on-1 Private Live Cam Chat ➜",
+        "💬 Connect With Active Models ➜",
+        "💋 Live Video Call & Chat Room ➜",
+        "🍓 Enter VIP Members Lounge ➜",
+        "📱 Instant Direct Video Chat ➜",
+    ]
+}
+
 # Viral Telegram share URL (Prompts user to forward/share the group link to 5 friends/groups)
 SHARE_GROUP_URL = "https://t.me/darkfantasyloverzone"
-SHARE_TEXT_ENCODED = urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + SHARE_GROUP_URL)
+SHARE_TEXT_ENCODED = urllib.parse.quote("🔥 Join now for exclusive 18+ live video chat & VIP videos! 🔞👉 " + SHARE_GROUP_URL)
 FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_ENCODED}"
 
 
 def _build_button(settings: dict):
-    """ওয়েলকাম মেসেজের সাথে আকর্ষণীয় ডায়নামিক ও পরিবর্তনশীল ভাইরাল বাটন তৈরি করে (সকল বাটন সরাসরি মূল সাইটে নিয়ে যাবে)।"""
+    """Generates sleek, professional inline buttons leading directly to main portal."""
     custom_url = (settings.get("welcome_button_url") or "").strip()
     base_url = custom_url.rstrip("/") if (custom_url and "techandclick.site" in custom_url) else "https://techandclick.site/bot"
     main_site_url = base_url if "?" in base_url else f"{base_url}/?v=live"
-    
-    btn_vid = random.choice(VIRAL_BUTTON_SETS["videos"])
-    btn_cat = random.choice(VIRAL_BUTTON_SETS["categories"])
-    btn_girl = random.choice(VIRAL_BUTTON_SETS["girls"])
-    extra_txt, _ = random.choice(VIRAL_BUTTON_SETS["extra"])
+
+    btn_vid = random.choice(WELCOME_BUTTONS_EN["videos"])
+    btn_portal = random.choice(WELCOME_BUTTONS_EN["portal"])
 
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(text="🔥 মূল গ্রুপ ১ (Dark Romance)", url="https://t.me/darkfantasyloverzone"),
-            InlineKeyboardButton(text="🔥 মূল গ্রুপ ২ (Masti Unlimited)", url="https://t.me/mastiunlimitedzone")
+            InlineKeyboardButton(text="🔥 Group 1 (Dark Romance)", url="https://t.me/darkfantasyloverzone"),
+            InlineKeyboardButton(text="🔥 Group 2 (Masti Unlimited)", url="https://t.me/mastiunlimitedzone")
         ],
-        [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
+        [InlineKeyboardButton(text="📤 Share to 5 Friends (Unlock Free) 🔓", url=FORWARD_LINK)],
         [InlineKeyboardButton(text=btn_vid, url=main_site_url)],
-        [InlineKeyboardButton(text=btn_cat, url=main_site_url)],
-        [InlineKeyboardButton(text=btn_girl, url=main_site_url)],
-        [InlineKeyboardButton(text=extra_txt, url=main_site_url)],
+        [InlineKeyboardButton(text=btn_portal, url=main_site_url)],
     ])
 
 
@@ -200,19 +209,18 @@ async def _send_welcome(chat, user, context: ContextTypes.DEFAULT_TYPE) -> None:
     name_history_block = ""
     if name_info.get("has_changed"):
         import html
-        old_fn = html.escape(name_info.get("prev_first_name") or "অজানা")
-        old_un = f"@{name_info.get('prev_username')}" if name_info.get("prev_username") else "নেই"
-        curr_fn = html.escape(user.first_name or "মেম্বার")
-        curr_un = f"@{user.username}" if user.username else "নেই"
+        old_fn = html.escape(name_info.get("prev_first_name") or "Unknown")
+        old_un = f"@{name_info.get('prev_username')}" if name_info.get("prev_username") else "None"
+        curr_fn = html.escape(user.first_name or "Member")
+        curr_un = f"@{user.username}" if user.username else "None"
 
         name_history_block = (
             f"\n\n━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🚨 <b>সতর্কবার্তা: নাম পরিবর্তনকারী ইউজার!</b>\n"
-            f"⚠️ <i>এই ইউজার পূর্বে অন্য নাম/ইউজারনেম ব্যবহার করেছিলেন:</i>\n"
-            f"🏷️ <b>পূর্বের নাম:</b> <s>{old_fn}</s> (<code>{old_un}</code>)\n"
-            f"🆕 <b>বর্তমান নাম:</b> <b>{curr_fn}</b> (<code>{curr_un}</code>)\n"
-            f"🆔 <b>ইউজার আইডি:</b> <code>{user.id}</code>\n"
-            f"🛡️ <i>(স্ক্যাম ও ছদ্মবেশ রোধে মেম্বারদের সতর্কতার জন্য প্রদর্শিত)</i>"
+            f"🚨 <b>Notice: Name Change Detected!</b>\n"
+            f"🏷️ <b>Previous Name:</b> <s>{old_fn}</s> (<code>{old_un}</code>)\n"
+            f"🆕 <b>Current Name:</b> <b>{curr_fn}</b> (<code>{curr_un}</code>)\n"
+            f"🆔 <b>User ID:</b> <code>{user.id}</code>\n"
+            f"🛡️ <i>(Identity history logged for member safety)</i>"
         )
 
     text = settings.get("welcome_text") or DEFAULT_WELCOME
@@ -581,6 +589,33 @@ async def handle_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TY
         logger.info(f"🎉 Bot was added to group {chat.id} ({chat.title}) as {status}! Recorded in DB.")
 
 
+@admin_only
+async def cmd_test_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Test preview the welcome message in current chat."""
+    chat = update.effective_chat
+    user = update.effective_user
+    if not chat or not user:
+        return
+    settings = await get_chat_settings(chat.id)
+    text = settings.get("welcome_text") or DEFAULT_WELCOME
+    try:
+        count = await chat.get_member_count()
+    except Exception:
+        count = 100
+    try:
+        formatted = _format(text, user, chat, count)
+    except Exception:
+        formatted = text
+    sent = await context.bot.send_message(
+        chat_id=chat.id,
+        text=formatted,
+        parse_mode="HTML",
+        reply_markup=_build_button(settings)
+    )
+    if sent:
+        asyncio.create_task(_auto_delete(sent, delay=30))
+
+
 def register(app) -> None:
     app.add_handler(ChatMemberHandler(handle_my_chat_member, ChatMemberHandler.MY_CHAT_MEMBER))
     app.add_handler(ChatMemberHandler(handle_chat_member, ChatMemberHandler.CHAT_MEMBER))
@@ -595,4 +630,5 @@ def register(app) -> None:
     app.add_handler(CommandHandler(["setwelcomesticker", "setsticker"], set_welcome_sticker))
     app.add_handler(CommandHandler(["delwelcomesticker", "delsticker"], del_welcome_sticker))
     app.add_handler(CommandHandler(["names", "namehistory", "userhistory", "whois"], cmd_name_history))
+    app.add_handler(CommandHandler(["testwelcome", "welcometest"], cmd_test_welcome))
 
