@@ -132,6 +132,29 @@
         <input type="text" id="category-search-input" class="category-search-input" placeholder="ক্যাটাগরি বা চ্যাট রুম খুঁজুন..." oninput="filterCategories()" />
       </div>
 
+      <!-- Horizontal Swipe Categories Slider (Mobile & Desktop) -->
+      <div class="category-slider-section">
+        <div class="slider-header-wrap">
+          <div class="slider-header-title">
+            <i class="fa-solid fa-fire" style="color:var(--pink);"></i>
+            <span>জনপ্রিয় ক্যাটাগরি (স্লাইড করুন)</span>
+          </div>
+          <div class="slider-controls">
+            <span class="slide-badge-hint"><i class="fa-solid fa-arrows-left-right"></i> স্লাইড করুন</span>
+            <button class="cat-arrow-btn" onclick="slideCategoriesPage(-1)" title="Previous"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="cat-arrow-btn" onclick="slideCategoriesPage(1)" title="Next"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="category-chips-slider" id="categories-chips-slider">
+          <div class="chip-item active" onclick="filterCategoryBySlug('all', this)"><i class="fa-solid fa-fire"></i> সব ক্যাটাগরি</div>
+          <div class="chip-item" onclick="filterCategoryBySlug('desi', this)"><i class="fa-solid fa-heart"></i> দেবর-ভাবি</div>
+          <div class="chip-item" onclick="filterCategoryBySlug('college', this)"><i class="fa-solid fa-graduation-cap"></i> কলেজ স্পেশাল</div>
+          <div class="chip-item" onclick="filterCategoryBySlug('bhabi', this)"><i class="fa-solid fa-ring"></i> প্রবাসী ভাবি</div>
+          <div class="chip-item" onclick="filterCategoryBySlug('live', this)"><i class="fa-solid fa-camera"></i> লাইভ শো</div>
+          <div class="chip-item" onclick="filterCategoryBySlug('viral', this)"><i class="fa-solid fa-bolt"></i> ভাইরাল</div>
+        </div>
+      </div>
+
       <!-- Categories Action Grid (12 Items Linking to Content) -->
       <div class="action-grid" id="categories-grid">
 
@@ -317,6 +340,21 @@
           let catsHtml = "";
           let validCats = json.categories.filter(c => c.slug !== 'all');
           if (validCats.length > 0) {
+            // Populate horizontal swipeable category chips slider
+            const slider = document.getElementById('categories-chips-slider');
+            if (slider) {
+              let sliderHtml = `<div class="chip-item active" onclick="filterCategoryBySlug('all', this)"><i class="fa-solid fa-fire"></i> সব ক্যাটাগরি (${validCats.length})</div>`;
+              validCats.forEach(cat => {
+                const icon = cat.icon ? cat.icon : 'fa-tags';
+                sliderHtml += `
+                  <div class="chip-item" onclick="filterCategoryBySlug('${cat.slug}', this)">
+                    <i class="fa-solid ${icon}"></i> ${cat.name}
+                  </div>
+                `;
+              });
+              slider.innerHTML = sliderHtml;
+            }
+
             validCats.forEach((cat, idx) => {
               const cStyle = colors[idx % colors.length];
               const icon = cat.icon ? cat.icon : 'fa-fire';
@@ -341,6 +379,36 @@
         console.warn("Categories fetch error:", e);
       }
     }
+
+    function slideCategoriesPage(direction) {
+      const slider = document.getElementById('categories-chips-slider');
+      if (slider) {
+        const step = Math.max(160, Math.floor(slider.clientWidth * 0.7)) * direction;
+        slider.scrollBy({ left: step, behavior: 'smooth' });
+      }
+    }
+
+    function filterCategoryBySlug(slug, elem) {
+      document.querySelectorAll('#categories-chips-slider .chip-item').forEach(c => c.classList.remove('active'));
+      if (elem) {
+        elem.classList.add('active');
+        try {
+          elem.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } catch (e) {}
+      }
+
+      if (slug === 'all') {
+        const input = document.getElementById('category-search-input');
+        if (input) input.value = '';
+        filterCategories();
+      } else {
+        triggerAdRedirect(event);
+        setTimeout(() => {
+          window.location.href = 'videos.html?category=' + encodeURIComponent(slug);
+        }, 300);
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', loadDynamicCategories);
   </script>
 

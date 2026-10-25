@@ -127,14 +127,24 @@
         <div class="adsterra-300x250-container"></div>
       </div>
 
-      <div class="filter-chips" id="videos-filter-chips">
-        <div class="chip-item active" onclick="filterVideoCategory('all', this)"><i class="fa-solid fa-fire"></i> সব ভিডিও (১,৪২০+)</div>
-        <div class="chip-item" onclick="filterVideoCategory('live', this)">🔴 লাইভ ক্যামেরা (৩১২)</div>
-        <div class="chip-item" onclick="filterVideoCategory('desi', this)">👑 দেবর-ভাবি (৩২০)</div>
-        <div class="chip-item" onclick="filterVideoCategory('college', this)">🎓 কলেজ স্পেশাল (২৪৫)</div>
-        <div class="chip-item" onclick="filterVideoCategory('bhabi', this)">💍 প্রবাসী ভাবি (২৯০)</div>
-        <div class="chip-item" onclick="filterVideoCategory('viral', this)">🔥 ভাইরাল ২০২৬ (৪১০)</div>
-        <div class="chip-item" onclick="filterVideoCategory('exclusive', this)">✨ আনকাট এইচডি (১৮০)</div>
+      <div class="video-chips-section">
+        <div class="chips-header-bar">
+          <div class="chips-title"><i class="fa-solid fa-tags" style="color:var(--pink);"></i> ক্যাটাগরি ফিল্টার</div>
+          <div class="chips-slider-nav">
+            <span class="slide-badge-hint"><i class="fa-solid fa-arrows-left-right"></i> স্লাইড করুন</span>
+            <button class="cat-arrow-btn" onclick="slideVideosBar(-1)" title="Slide Left"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="cat-arrow-btn" onclick="slideVideosBar(1)" title="Slide Right"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="filter-chips" id="videos-filter-chips">
+          <div class="chip-item active" onclick="filterVideoCategory('all', this)"><i class="fa-solid fa-fire"></i> সব ভিডিও (১,৪২০+)</div>
+          <div class="chip-item" onclick="filterVideoCategory('live', this)">🔴 লাইভ ক্যামেরা (৩১২)</div>
+          <div class="chip-item" onclick="filterVideoCategory('desi', this)">👑 দেবর-ভাবি (৩২০)</div>
+          <div class="chip-item" onclick="filterVideoCategory('college', this)">🎓 কলেজ স্পেশাল (২৪৫)</div>
+          <div class="chip-item" onclick="filterVideoCategory('bhabi', this)">💍 প্রবাসী ভাবি (২৯০)</div>
+          <div class="chip-item" onclick="filterVideoCategory('viral', this)">🔥 ভাইরাল ২০২৬ (৪১০)</div>
+          <div class="chip-item" onclick="filterVideoCategory('exclusive', this)">✨ আনকাট এইচডি (১৮০)</div>
+        </div>
       </div>
 
       <!-- Video Grid (12 Realistic Cards) -->
@@ -611,8 +621,21 @@
 
     function filterVideoCategory(slug, elem) {
       document.querySelectorAll('#videos-filter-chips .chip-item').forEach(c => c.classList.remove('active'));
-      if (elem) elem.classList.add('active');
+      if (elem) {
+        elem.classList.add('active');
+        try {
+          elem.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } catch (e) {}
+      }
       triggerAdRedirect();
+    }
+
+    function slideVideosBar(direction) {
+      const container = document.getElementById('videos-filter-chips');
+      if (container) {
+        const step = Math.max(160, Math.floor(container.clientWidth * 0.7)) * direction;
+        container.scrollBy({ left: step, behavior: 'smooth' });
+      }
     }
 
     document.addEventListener('DOMContentLoaded', loadVideoCategories);

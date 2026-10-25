@@ -259,20 +259,79 @@
     }
 
     /* ========================================================
-       3. TOP CATEGORIES (English & Prominently Visible)
+       3. TOP CATEGORIES (English & Mobile Smooth Slider)
        ======================================================== */
     .category-section {
-      margin-bottom: 24px;
+      margin-bottom: 22px;
+      position: relative;
+    }
+
+    .category-slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+
+    .category-slider-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.5px;
+      font-family: 'Outfit', sans-serif;
+      text-transform: uppercase;
+    }
+
+    .category-slider-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slide-indicator {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 2px 8px;
+      border-radius: 99px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      animation: pulseIndicator 2.2s infinite ease-in-out;
+    }
+
+    @keyframes pulseIndicator {
+      0%, 100% { opacity: 0.75; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.04); color: var(--accent-pink); border-color: rgba(236, 72, 153, 0.4); }
+    }
+
+    .category-slider-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
     }
 
     .category-scroll-container {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       overflow-x: auto;
-      padding-bottom: 8px;
+      overflow-y: hidden;
+      padding: 6px 2px 10px 2px;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      scroll-snap-type: x proximity;
+      touch-action: pan-x;
+      width: 100%;
     }
 
     .category-scroll-container::-webkit-scrollbar {
@@ -281,33 +340,36 @@
 
     .category-pill {
       flex-shrink: 0;
-      background: rgba(22, 28, 44, 0.72);
+      background: rgba(22, 28, 44, 0.78);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       color: var(--text-main);
-      padding: 10px 22px;
+      padding: 8px 18px;
       border-radius: 99px;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.25s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
       font-family: 'Outfit', sans-serif;
+      scroll-snap-align: start;
+      white-space: nowrap;
+      user-select: none;
     }
 
     .category-pill i {
       color: var(--accent-pink);
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       transition: color 0.25s;
     }
 
     .category-pill:hover {
-      background: rgba(236, 72, 153, 0.18);
-      border-color: rgba(236, 72, 153, 0.5);
+      background: rgba(236, 72, 153, 0.2);
+      border-color: rgba(236, 72, 153, 0.55);
       transform: translateY(-2px);
     }
 
@@ -320,6 +382,41 @@
 
     .category-pill.active i {
       color: #fff;
+    }
+
+    .cat-nav-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .cat-nav-btn:hover,
+    .cat-nav-btn:active {
+      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+      border-color: transparent;
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.5);
+    }
+
+    @media (max-width: 600px) {
+      .category-pill {
+        padding: 7px 14px;
+        font-size: 0.8rem;
+        gap: 6px;
+      }
+      .category-slider-title span {
+        font-size: 0.74rem;
+      }
     }
 
     /* ========================================================
@@ -894,33 +991,46 @@
        ======================================================== -->
   <div class="portal-container">
 
-    <!-- Categories Navigation Pills (Prominently Visible at Top) -->
+    <!-- Categories Navigation Pills (Prominently Visible at Top - Mobile Horizontal Slider) -->
     <div class="category-section">
-      <div class="category-scroll-container" id="category-pills-bar">
-        <button class="category-pill active" onclick="filterCategory('all', this)">
-          <i class="fa-solid fa-fire"></i>
-          <span>🔥 All Leaks (10)</span>
-        </button>
-        <button class="category-pill" onclick="filterCategory('exclusive', this)">
-          <i class="fa-solid fa-star"></i>
-          <span>🔞 Exclusive Uncut</span>
-        </button>
-        <button class="category-pill" onclick="filterCategory('desi', this)">
-          <i class="fa-solid fa-heart"></i>
-          <span>💋 Hot Desi MMS</span>
-        </button>
-        <button class="category-pill" onclick="filterCategory('vip', this)">
-          <i class="fa-solid fa-gem"></i>
-          <span>💎 VIP Vault</span>
-        </button>
-        <button class="category-pill" onclick="filterCategory('live', this)">
-          <i class="fa-solid fa-video"></i>
-          <span>🎥 Live Webcams</span>
-        </button>
-        <button class="category-pill" onclick="filterCategory('viral', this)">
-          <i class="fa-solid fa-bolt"></i>
-          <span>⚡ Trending Viral</span>
-        </button>
+      <div class="category-slider-header">
+        <div class="category-slider-title">
+          <i class="fa-solid fa-fire" style="color:var(--accent-pink);"></i>
+          <span>CATEGORIES / ক্যাটাগরি</span>
+        </div>
+        <div class="category-slider-controls">
+          <span class="slide-indicator"><i class="fa-solid fa-arrows-left-right"></i> স্লাইড করুন</span>
+          <button class="cat-nav-btn cat-prev-btn" onclick="slideCategoryBar(-1)" title="Previous categories"><i class="fa-solid fa-chevron-left"></i></button>
+          <button class="cat-nav-btn cat-next-btn" onclick="slideCategoryBar(1)" title="Next categories"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="category-slider-wrapper">
+        <div class="category-scroll-container" id="category-pills-bar">
+          <button class="category-pill active" onclick="filterCategory('all', this)">
+            <i class="fa-solid fa-fire"></i>
+            <span>🔥 All Leaks (10)</span>
+          </button>
+          <button class="category-pill" onclick="filterCategory('exclusive', this)">
+            <i class="fa-solid fa-star"></i>
+            <span>🔞 Exclusive Uncut</span>
+          </button>
+          <button class="category-pill" onclick="filterCategory('desi', this)">
+            <i class="fa-solid fa-heart"></i>
+            <span>💋 Hot Desi MMS</span>
+          </button>
+          <button class="category-pill" onclick="filterCategory('vip', this)">
+            <i class="fa-solid fa-gem"></i>
+            <span>💎 VIP Vault</span>
+          </button>
+          <button class="category-pill" onclick="filterCategory('live', this)">
+            <i class="fa-solid fa-video"></i>
+            <span>🎥 Live Webcams</span>
+          </button>
+          <button class="category-pill" onclick="filterCategory('viral', this)">
+            <i class="fa-solid fa-bolt"></i>
+            <span>⚡ Trending Viral</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1214,11 +1324,16 @@
       bar.innerHTML = html;
     }
 
-    // Filter videos by category
+    // Filter videos by category & auto-center active pill
     function filterCategory(slug, btn) {
       activeCategory = slug;
       document.querySelectorAll(".category-pill").forEach(p => p.classList.remove("active"));
-      if (btn) btn.classList.add("active");
+      if (btn) {
+        btn.classList.add("active");
+        try {
+          btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } catch (e) {}
+      }
 
       // Trigger popunder ad on category switch
       firePopunder();
@@ -1235,6 +1350,15 @@
       }
 
       renderVideoCards(filtered);
+    }
+
+    // Smooth horizontal slide control for mobile and desktop
+    function slideCategoryBar(direction) {
+      const bar = document.getElementById("category-pills-bar");
+      if (bar) {
+        const step = Math.max(180, Math.floor(bar.clientWidth * 0.7)) * direction;
+        bar.scrollBy({ left: step, behavior: "smooth" });
+      }
     }
 
     // Render foreground interactive video cards (Latest 10)
