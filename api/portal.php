@@ -218,21 +218,9 @@ if ($pdo) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
 
-        // Check if categories contain Bengali text or are empty
+        // Seed default categories ONLY if table is completely empty
         $cntCat = (int) $pdo->query("SELECT COUNT(*) FROM portal_categories")->fetchColumn();
-        $hasBengaliCat = false;
-        if ($cntCat > 0) {
-            $catNames = $pdo->query("SELECT name FROM portal_categories")->fetchAll(PDO::FETCH_COLUMN);
-            foreach ($catNames as $cn) {
-                if (preg_match('/[\x{0980}-\x{09FF}]/u', $cn)) {
-                    $hasBengaliCat = true;
-                    break;
-                }
-            }
-        }
-
-        if ($cntCat === 0 || $hasBengaliCat) {
-            $pdo->exec("DELETE FROM portal_categories");
+        if ($cntCat === 0) {
             $stmtC = $pdo->prepare("INSERT INTO portal_categories (name, slug, icon, order_num) VALUES (?, ?, ?, ?)");
             foreach ($default_categories as $c) {
                 if ($c['slug'] === 'all') continue;
@@ -240,21 +228,9 @@ if ($pdo) {
             }
         }
 
-        // Check if videos contain Bengali text or are empty
+        // Seed default videos ONLY if table is completely empty
         $cntVid = (int) $pdo->query("SELECT COUNT(*) FROM portal_videos")->fetchColumn();
-        $hasBengaliVid = false;
-        if ($cntVid > 0) {
-            $vidTitles = $pdo->query("SELECT title FROM portal_videos")->fetchAll(PDO::FETCH_COLUMN);
-            foreach ($vidTitles as $vt) {
-                if (preg_match('/[\x{0980}-\x{09FF}]/u', $vt)) {
-                    $hasBengaliVid = true;
-                    break;
-                }
-            }
-        }
-
-        if ($cntVid === 0 || $hasBengaliVid) {
-            $pdo->exec("DELETE FROM portal_videos");
+        if ($cntVid === 0) {
             $stmtV = $pdo->prepare("INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active, order_num, keywords) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)");
             $ord = 1;
             foreach ($default_videos as $v) {
@@ -316,54 +292,19 @@ if ($action === 'get_data') {
     if ($pdo) {
         try {
             // Fetch DB categories
+            // Fetch DB categories
             $db_cats = $pdo->query("SELECT id, name, slug, icon, order_num FROM portal_categories ORDER BY order_num ASC, id ASC")->fetchAll();
             if (!empty($db_cats)) {
-                $cleaned_cats = [];
-                foreach ($db_cats as $c) {
-                    $catName = trim($c['name']);
-                    if (isset($bn_cat_map[$catName])) {
-                        $catName = $bn_cat_map[$catName];
-                    } elseif (preg_match('/[\x{0980}-\x{09FF}]/u', $catName)) {
-                        $slugMap = [
-                            'all' => '🔥 All Leaks',
-                            'exclusive' => '🔞 Exclusive Uncut',
-                            'desi' => '💋 Hot Desi MMS',
-                            'vip' => '💎 VIP Vault',
-                            'live' => '🎥 Live Webcams',
-                            'viral' => '⚡ Trending Viral'
-                        ];
-                        $catName = $slugMap[$c['slug']] ?? '🔥 All Leaks';
-                    }
-                    $c['name'] = $catName;
-                    $cleaned_cats[] = $c;
-                }
-
                 $categories = array_merge(
-                    [['id' => 0, 'name' => '🔥 All Leaks', 'slug' => 'all', 'icon' => 'fa-fire', 'order_num' => 0]],
-                    $cleaned_cats
+                    [['id' => 0, 'name' => '🔥 All', 'slug' => 'all', 'icon' => 'fa-fire', 'order_num' => 0]],
+                    $db_cats
                 );
             }
 
             // Fetch exactly latest 10 active videos with SEO keywords
             $db_vids = $pdo->query("SELECT id, title, category_slug, video_url, thumb_url, duration, views, keywords, created_at FROM portal_videos WHERE is_active=1 ORDER BY id DESC LIMIT 10")->fetchAll();
             if (!empty($db_vids)) {
-                $cleaned_vids = [];
-                $vidx = 0;
-                foreach ($db_vids as $v) {
-                    $vtitle = trim($v['title']);
-                    if (isset($bn_vid_map[$vtitle])) {
-                        $vtitle = $bn_vid_map[$vtitle];
-                    } elseif (preg_match('/[\x{0980}-\x{09FF}]/u', $vtitle)) {
-                        $vtitle = $default_videos[$vidx % count($default_videos)]['title'];
-                    }
-                    $v['title'] = $vtitle;
-                    if (empty($v['keywords'])) {
-                        $v['keywords'] = $default_videos[$vidx % count($default_videos)]['keywords'] ?? ($vtitle . ', viral leak, telegram mms, full uncut 1080p');
-                    }
-                    $cleaned_vids[] = $v;
-                    $vidx++;
-                }
-                $videos = $cleaned_vids;
+                $videos = $db_vids;
             }
 
             // Fetch DB settings

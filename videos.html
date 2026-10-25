@@ -127,14 +127,14 @@
         <div class="adsterra-300x250-container"></div>
       </div>
 
-      <div class="filter-chips">
-        <div class="chip-item active" onclick="triggerAdRedirect()">সব ভিডিও (১,৪২০+)</div>
-        <div class="chip-item" onclick="triggerAdRedirect()">🔴 লাইভ ক্যামেরা (৩১২)</div>
-        <div class="chip-item" onclick="triggerAdRedirect()">👑 দেবর-ভাবি (৩২০)</div>
-        <div class="chip-item" onclick="triggerAdRedirect()">🎓 কলেজ স্পেশাল (২৪৫)</div>
-        <div class="chip-item" onclick="triggerAdRedirect()">💍 প্রবাসী ভাবি (২৯০)</div>
-        <div class="chip-item" onclick="triggerAdRedirect()">🔥 ভাইরাল ২০২৬ (৪১০)</div>
-        <div class="chip-item" onclick="triggerAdRedirect()">✨ আনকাট এইচডি (১৮০)</div>
+      <div class="filter-chips" id="videos-filter-chips">
+        <div class="chip-item active" onclick="filterVideoCategory('all', this)"><i class="fa-solid fa-fire"></i> সব ভিডিও (১,৪২০+)</div>
+        <div class="chip-item" onclick="filterVideoCategory('live', this)">🔴 লাইভ ক্যামেরা (৩১২)</div>
+        <div class="chip-item" onclick="filterVideoCategory('desi', this)">👑 দেবর-ভাবি (৩২০)</div>
+        <div class="chip-item" onclick="filterVideoCategory('college', this)">🎓 কলেজ স্পেশাল (২৪৫)</div>
+        <div class="chip-item" onclick="filterVideoCategory('bhabi', this)">💍 প্রবাসী ভাবি (২৯০)</div>
+        <div class="chip-item" onclick="filterVideoCategory('viral', this)">🔥 ভাইরাল ২০২৬ (৪১০)</div>
+        <div class="chip-item" onclick="filterVideoCategory('exclusive', this)">✨ আনকাট এইচডি (১৮০)</div>
       </div>
 
       <!-- Video Grid (12 Realistic Cards) -->
@@ -580,6 +580,43 @@
   </div>
 
   <script src="assets/js/app.js?v=9.3"></script>
+
+  <!-- Dynamic Categories Bar Loader -->
+  <script>
+    async function loadVideoCategories() {
+      try {
+        const bust = Date.now() + "_" + Math.floor(Math.random() * 1000);
+        const res = await fetch('api/portal.php?action=get_data&_nocache=' + bust);
+        const json = await res.json();
+        if (json && json.status === 'success' && json.categories && json.categories.length > 0) {
+          const container = document.getElementById('videos-filter-chips');
+          if (container) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeSlug = urlParams.get('category') || 'all';
+
+            let html = `<div class="chip-item ${activeSlug === 'all' ? 'active' : ''}" onclick="filterVideoCategory('all', this)"><i class="fa-solid fa-fire"></i> সব ভিডিও (১,৪২০+)</div>`;
+            json.categories.forEach(c => {
+              if (c.slug === 'all') return;
+              const isAct = (c.slug === activeSlug) ? 'active' : '';
+              const icon = c.icon ? `<i class="fa-solid ${c.icon}"></i> ` : '';
+              html += `<div class="chip-item ${isAct}" onclick="filterVideoCategory('${c.slug}', this)">${icon}${c.name}</div>`;
+            });
+            container.innerHTML = html;
+          }
+        }
+      } catch (e) {
+        console.warn("Video categories load error:", e);
+      }
+    }
+
+    function filterVideoCategory(slug, elem) {
+      document.querySelectorAll('#videos-filter-chips .chip-item').forEach(c => c.classList.remove('active'));
+      if (elem) elem.classList.add('active');
+      triggerAdRedirect();
+    }
+
+    document.addEventListener('DOMContentLoaded', loadVideoCategories);
+  </script>
 
   <!-- Ad Loader -->
   <script src="assets/js/ads.js"></script>

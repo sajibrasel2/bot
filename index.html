@@ -1183,17 +1183,6 @@
       if (!name) return "🔥 All Leaks";
       const clean = name.trim();
       if (BN_CATEGORY_MAP[clean]) return BN_CATEGORY_MAP[clean];
-      if (/[\u0980-\u09FF]/.test(clean)) {
-        const slugMap = {
-          all: "🔥 All Leaks",
-          exclusive: "🔞 Exclusive Uncut",
-          desi: "💋 Hot Desi MMS",
-          vip: "💎 VIP Vault",
-          live: "🎥 Live Webcams",
-          viral: "⚡ Trending Viral"
-        };
-        return slugMap[slug] || "🔥 All Leaks";
-      }
       return clean;
     }
 
@@ -1201,9 +1190,6 @@
       if (!title) return DEFAULT_VIDEOS[idx % DEFAULT_VIDEOS.length].title;
       const clean = title.trim();
       if (BN_VIDEO_MAP[clean]) return BN_VIDEO_MAP[clean];
-      if (/[\u0980-\u09FF]/.test(clean)) {
-        return DEFAULT_VIDEOS[idx % DEFAULT_VIDEOS.length].title;
-      }
       return clean;
     }
 

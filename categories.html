@@ -264,6 +264,86 @@
 
   <script src="assets/js/app.js?v=9.3"></script>
 
+  <!-- Dynamic Categories Loader from Database -->
+  <script>
+    async function loadDynamicCategories() {
+      try {
+        const bust = Date.now() + "_" + Math.floor(Math.random() * 1000);
+        const res = await fetch('api/portal.php?action=get_data&_nocache=' + bust);
+        const json = await res.json();
+        if (json && json.status === 'success' && json.categories && json.categories.length > 0) {
+          const grid = document.getElementById('categories-grid');
+          const countPill = document.getElementById('live-online-pill');
+          if (countPill) countPill.textContent = (json.categories.length > 1 ? json.categories.length : 12) + '+ ক্যাটাগরি';
+
+          // Fixed top pinned special cards
+          const pinnedTop = `
+            <a href="kids.html" class="action-card category-card" data-title="বাচ্চাদের কার্টুন ও ভিডিও জোন" style="text-decoration:none; border: 1.5px solid rgba(251, 191, 36, 0.4);">
+              <div class="action-icon" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;"><i class="fa-solid fa-child-reaching"></i></div>
+              <div class="action-info">
+                <span class="action-title" style="color:#fbbf24;">👶 বাচ্চাদের মজার ভিডিও জোন</span>
+                <span class="action-sub">কার্টুন, ছড়া ও রূপকথা দেখুন</span>
+              </div>
+            </a>
+          `;
+
+          const pinnedBottom = `
+            <a href="voice.html" class="action-card category-card" data-title="রোমান্টিক অডিও ও ভয়েস চ্যাট" style="text-decoration:none;">
+              <div class="action-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;"><i class="fa-solid fa-microphone-lines"></i></div>
+              <div class="action-info">
+                <span class="action-title">🎧 রোমান্টিক ভয়েস চ্যাট রুম</span>
+                <span class="action-sub">লাইভ কথা শুনুন • ১৬২ জন একটিভ</span>
+              </div>
+            </a>
+            <a href="wheel.html" class="action-card category-card" data-title="লাকি হুইল স্পিন" style="text-decoration:none;">
+              <div class="action-icon" style="background: rgba(234, 179, 8, 0.15); color: #eab308;"><i class="fa-solid fa-dharmachakra"></i></div>
+              <div class="action-info">
+                <span class="action-title">🎯 লাকি হুইল স্পিন গেম</span>
+                <span class="action-sub">ফ্রি স্পিন করে রিওয়ার্ড জিতুন</span>
+              </div>
+            </a>
+          `;
+
+          const colors = [
+            { bg: 'rgba(255, 42, 133, 0.15)', color: 'var(--pink)' },
+            { bg: 'rgba(0, 210, 255, 0.15)', color: 'var(--blue)' },
+            { bg: 'rgba(16, 185, 129, 0.15)', color: 'var(--green)' },
+            { bg: 'rgba(251, 191, 36, 0.15)', color: 'var(--yellow)' },
+            { bg: 'rgba(139, 92, 246, 0.15)', color: 'var(--purple)' },
+            { bg: 'rgba(239, 68, 68, 0.15)', color: 'var(--red)' },
+            { bg: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e' }
+          ];
+
+          let catsHtml = "";
+          let validCats = json.categories.filter(c => c.slug !== 'all');
+          if (validCats.length > 0) {
+            validCats.forEach((cat, idx) => {
+              const cStyle = colors[idx % colors.length];
+              const icon = cat.icon ? cat.icon : 'fa-fire';
+              const actCount = 70 + ((idx * 29) % 180);
+              const vidCount = 150 + ((idx * 47) % 350);
+              catsHtml += `
+                <div class="action-card category-card" data-title="${cat.name}" onclick="triggerAdRedirect(event); setTimeout(() => { window.location.href='videos.html?category=${encodeURIComponent(cat.slug)}'; }, 300);">
+                  <div class="action-icon" style="background: ${cStyle.bg}; color: ${cStyle.color};"><i class="fa-solid ${icon}"></i></div>
+                  <div class="action-info">
+                    <span class="action-title">${cat.name}</span>
+                    <span class="action-sub"><i class="fa-solid fa-play"></i> ${vidCount}+ ভিডিও • ${actCount} জন একটিভ</span>
+                  </div>
+                </div>
+              `;
+            });
+            if (grid) {
+              grid.innerHTML = pinnedTop + catsHtml + pinnedBottom;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Categories fetch error:", e);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', loadDynamicCategories);
+  </script>
+
   <!-- Ad Loader -->
   <script src="assets/js/ads.js"></script>
 </body>
