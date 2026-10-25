@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block page_title %}ভিডিও ও অ্যাড পোর্টাল ম্যানেজার{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+
+  <!-- Summary Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+      <div>
+        <div class="stat-val">{{ categories|length }}</div>
+        <div class="stat-label">মোট ক্যাটেগরি</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fa-solid fa-video"></i>
+      </div>
+      <div>
+        <div class="stat-val">{{ videos|length }}</div>
+        <div class="stat-label">মোট ভিডিও</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fa-solid fa-play"></i>
+      </div>
+      <div>
+        <div class="stat-val">{{ active_videos_count }}</div>
+        <div class="stat-label">চলমান ভিডিও (অটোপ্লে)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon yellow">
+        <i class="fa-solid fa-bullhorn"></i>
+      </div>
+      <div>
+        <div class="stat-val">{{ 'সক্রিয়' if settings.get('popunder_enabled') == '1' else 'বন্ধ' }}</div>
+        <div class="stat-label">পোপান্ডার ও সোশ্যাল অ্যাড</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap;">
+    <button class="btn btn-secondary tab-btn active" onclick="openPortalTab('tab-videos')" id="btn-tab-videos">
+      <i class="fa-solid fa-film"></i> ভিডিও লিস্ট ও আপলোড ({{ videos|length }})
+    </button>
+    <button class="btn btn-secondary tab-btn" onclick="openPortalTab('tab-categories')" id="btn-tab-categories">
+      <i class="fa-solid fa-tags"></i> ক্যাটেগরি ম্যানেজার ({{ categories|length }})
+    </button>
+    <button class="btn btn-secondary tab-btn" onclick="openPortalTab('tab-ads')" id="btn-tab-ads">
+      <i class="fa-solid fa-rectangle-ad"></i> পোপান্ডার ও সোশ্যাল অ্যাড সেটিংস
+    </button>
+    <a href="../" target="_blank" class="btn btn-primary" style="margin-left: auto;">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> লাইভ পোর্টাল দেখুন
+    </a>
+  </div>
+
+  <!-- TAB 1: VIDEOS -->
+  <div id="tab-videos" class="portal-tab-content">
+    
+    <!-- Upload/Add Video Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-circle-plus"></i> নতুন ভিডিও যোগ / আপলোড করুন
+        </div>
+      </div>
+      
+      <form method="POST" action="{{ url_for('portal_add_video') }}" enctype="multipart/form-data">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+          
+          <div class="form-group">
+            <label class="form-label">ভিডিও টাইটেল *</label>
+            <input type="text" name="title" class="form-control" placeholder="যেমন: হট ডেসী ভাইরাল ক্লিপ" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ক্যাটেগরি নির্বাচন করুন *</label>
+            <select name="category_slug" class="form-control" required>
+              {% for cat in categories %}
+                <option value="{{ cat.slug }}">{{ cat.name }} ({{ cat.slug }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ভিডিও ডিউরেশন</label>
+            <input type="text" name="duration" class="form-control" value="04:20" placeholder="যেমন: 04:20">
+          </div>
+
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px;">
+          
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-cloud-arrow-up"></i> সরাসরি ভিডিও ফাইল আপলোড (.mp4, .webm)
+            </label>
+            <input type="file" name="video_file" class="form-control" accept="video/mp4,video/webm,video/ogg">
+            <div class="form-hint">আপনার ডিভাইস থেকে ছোট বা টিজার ভিডিও আপলোড করুন (সর্বোচ্চ 50MB)।</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fa-solid fa-link"></i> অথবা সরাসরি অনলাইন ভিডিও লিংক (Direct MP4 URL)
+            </label>
+            <input type="url" name="video_url" class="form-control" placeholder="https://example.com/stream.mp4">
+            <div class="form-hint">যেকোনো সরাসরি MP4 / CDN ভিডিও লিংক বসাতে পারেন।</div>
+          </div>
+
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+          <label class="form-label">থাম্বনেইল ইমেজ লিংক (অপশনাল)</label>
+          <input type="url" name="thumb_url" class="form-control" placeholder="https://images.unsplash.com/...">
+          <div class="form-hint">ভিডিও লোড হওয়ার আগে এই পোস্টার বা থাম্বনেইল দেখা যাবে।</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+          <i class="fa-solid fa-plus"></i> ভিডিও সেভ ও যোগ করুন
+        </button>
+      </form>
+    </div>
+
+    <!-- Video List Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-table-list"></i> বর্তমান ভিডিও তালিকা (পেছনের ব্লার গ্রিডে চলমান)
+        </div>
+        <span style="font-size: 12px; color: var(--muted);">মোট: {{ videos|length }} টি ভিডিও</span>
+      </div>
+
+      {% if videos %}
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--muted);">
+                <th style="padding: 12px 10px;">আইডি</th>
+                <th style="padding: 12px 10px;">প্রিভিউ</th>
+                <th style="padding: 12px 10px;">টাইটেল</th>
+                <th style="padding: 12px 10px;">ক্যাটেগরি</th>
+                <th style="padding: 12px 10px;">ডিউরেশন</th>
+                <th style="padding: 12px 10px;">ভিউস</th>
+                <th style="padding: 12px 10px;">স্ট্যাটাস</th>
+                <th style="padding: 12px 10px; text-align: right;">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for v in videos %}
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 12px 10px; font-weight: 600; color: var(--muted);">#{{ v.id }}</td>
+                  <td style="padding: 12px 10px; width: 100px;">
+                    <video src="{{ v.video_url }}" muted playsinline style="width: 90px; height: 50px; object-fit: cover; border-radius: 6px; background: #000;" onmouseover="this.play()" onmouseout="this.pause()"></video>
+                  </td>
+                  <td style="padding: 12px 10px; font-weight: 500;">
+                    <div style="color: var(--text); font-size: 14px;">{{ v.title }}</div>
+                    <div style="font-size: 11px; color: var(--muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      {{ v.video_url }}
+                    </div>
+                  </td>
+                  <td style="padding: 12px 10px;">
+                    <span style="background: rgba(91,141,238,0.15); color: var(--accent); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">
+                      {{ v.category_slug }}
+                    </span>
+                  </td>
+                  <td style="padding: 12px 10px; color: var(--muted);">{{ v.duration }}</td>
+                  <td style="padding: 12px 10px;">{{ "{:,}".format(v.views or 0) }}</td>
+                  <td style="padding: 12px 10px;">
+                    {% if v.is_active == 1 %}
+                      <span style="color: var(--green); font-size: 12px; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> একটিভ</span>
+                    {% else %}
+                      <span style="color: var(--muted); font-size: 12px;"><i class="fa-solid fa-circle-pause"></i> বন্ধ</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding: 12px 10px; text-align: right;">
+                    <a href="{{ url_for('portal_toggle_video', video_id=v.id) }}" class="btn btn-secondary" style="padding: 6px 10px; font-size: 12px;" title="একটিভ/বন্ধ টগল">
+                      <i class="fa-solid fa-power-off"></i>
+                    </a>
+                    <a href="{{ url_for('portal_delete_video', video_id=v.id) }}" class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;" onclick="return confirm('আপনি কি নিশ্চিত যে এই ভিডিওটি মুছে ফেলবেন?')" title="ডিলিট করুন">
+                      <i class="fa-solid fa-trash"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 40px; color: var(--muted);">
+          <i class="fa-solid fa-film" style="font-size: 38px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+          এখনো কোনো ভিডিও যোগ করা হয়নি। উপরের ফর্ম থেকে ভিডিও ফাইল আপলোড করুন অথবা অনলাইন লিংক দিন।
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- TAB 2: CATEGORIES -->
+  <div id="tab-categories" class="portal-tab-content" style="display: none;">
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+      
+      <!-- Add Category Form -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-plus-circle"></i> নতুন ক্যাটেগরি যোগ করুন
+          </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('portal_add_category') }}">
+          <div class="form-group">
+            <label class="form-label">ক্যাটেগরির নাম *</label>
+            <input type="text" name="name" class="form-control" placeholder="যেমন: ভাইরাল ভিডিও" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">স্লাগ (English URL Slug) *</label>
+            <input type="text" name="slug" class="form-control" placeholder="যেমন: viral" required pattern="[a-zA-Z0-9_\-]+">
+            <div class="form-hint">শুধুমাত্র ইংরেজি ছোট হাতের অক্ষর ও হাইফেন (যেমন: viral, desi, exclusive)।</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">FontAwesome আইকন ক্লাস</label>
+            <input type="text" name="icon" class="form-control" value="fa-fire" placeholder="fa-fire, fa-bolt, fa-crown, fa-star">
+            <div class="form-hint">যেমন: fa-fire, fa-star, fa-crown, fa-heart, fa-gem</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ক্রমিক নম্বর (Order)</label>
+            <input type="number" name="order_num" class="form-control" value="1">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+            <i class="fa-solid fa-tag"></i> ক্যাটেগরি সেভ করুন
+          </button>
+        </form>
+      </div>
+
+      <!-- Existing Categories List -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-list-check"></i> বর্তমান ক্যাটেগরি সমূহ
+          </div>
+        </div>
+
+        {% if categories %}
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            {% for cat in categories %}
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--card2); border-radius: 8px; border: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(91,141,238,0.15); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                    <i class="fa-solid {{ cat.icon or 'fa-fire' }}"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight: 600; font-size: 14px;">{{ cat.name }}</div>
+                    <div style="font-size: 11px; color: var(--muted); font-family: monospace;">slug: {{ cat.slug }}</div>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span style="font-size: 12px; color: var(--muted);">{{ cat.video_count or 0 }} টি ভিডিও</span>
+                  <a href="{{ url_for('portal_delete_category', cat_id=cat.id) }}" class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;" onclick="return confirm('এই ক্যাটেগরিটি মুছে ফেলতে চান?')">
+                    <i class="fa-solid fa-trash"></i>
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 30px; color: var(--muted);">
+            কোনো ক্যাটেগরি নেই।
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- TAB 3: ADS & SETTINGS -->
+  <div id="tab-ads" class="portal-tab-content" style="display: none;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <i class="fa-solid fa-sliders"></i> পোপান্ডার অ্যাড, সোশ্যাল অ্যাড ও পোর্টাল সেটিংস
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('portal_save_settings') }}">
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+          
+          <!-- Column 1: Popunder & Direct Links -->
+          <div>
+            <div style="font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-window-restore"></i> পোপান্ডার (Popunder) অ্যাড
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <i class="fa-solid fa-power-off"></i>
+                <div>
+                  <div class="toggle-label">পোপান্ডার অ্যাড চালু রাখুন</div>
+                  <div class="toggle-desc">ইউজার পেইজে ক্লিক করলেই পেছনের নতুন ট্যাবে অ্যাড ওপেন হবে</div>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="popunder_enabled" value="1" {% if settings.get('popunder_enabled') == '1' %}checked{% endif %}>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">পোপান্ডার ডিরেক্ট স্পনসর লিংক (Direct Link URL)</label>
+              <input type="url" name="popunder_url" class="form-control" value="{{ settings.get('popunder_url', '') }}" placeholder="https://adsterra.com/direct/link...">
+              <div class="form-hint">Adsterra, Monetag বা আপনার নিজস্ব স্পনসর/অ্যাডভারটাইজার স্মার্টলিংক বসান।</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">পোপান্ডার এক্সটারনাল স্ক্রিপ্ট কোড (ঐচ্ছিক Script Tag)</label>
+              <textarea name="popunder_script" class="form-control" rows="3" placeholder="<script type='text/javascript' src='//...popunder.js'></script>">{{ settings.get('popunder_script', '') }}</textarea>
+              <div class="form-hint">বিজ্ঞাপন নেটওয়ার্কের সম্পূর্ণ Popunder JS স্ক্রিপ্ট কোড থাকলে এখানে পেস্ট করুন।</div>
+            </div>
+
+            <div class="form-group" style="margin-top: 18px;">
+              <label class="form-label">
+                <i class="fa-brands fa-telegram" style="color: #0088cc;"></i> টেলিগ্রাম গ্রুপ লিংক (ভিডিও আনলক বাটন)
+              </label>
+              <input type="url" name="telegram_group_url" class="form-control" value="{{ settings.get('telegram_group_url', 'https://t.me/darkfantasyloverzone') }}" required>
+              <div class="form-hint">ইউজার টিজার থেকে ফুল ভিডিও দেখতে ক্লিক করলে এই টেলিগ্রাম গ্রুপে নিয়ে যাবে।</div>
+            </div>
+
+          </div>
+
+          <!-- Column 2: Social Bar & Design Settings -->
+          <div>
+            <div style="font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-comment-dots"></i> সোশ্যাল বার (Social Bar) অ্যাড
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <i class="fa-solid fa-bell"></i>
+                <div>
+                  <div class="toggle-label">সোশ্যাল বার অ্যাড চালু রাখুন</div>
+                  <div class="toggle-desc">পেইজের কোণায় আকর্ষণীয় চ্যাট ও পুশ নোটিফিকেশন বার শো করবে</div>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" name="social_ad_enabled" value="1" {% if settings.get('social_ad_enabled') == '1' %}checked{% endif %}>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">সোশ্যাল বার স্ক্রিপ্ট কোড (Adsterra / Monetag Script)</label>
+              <textarea name="social_ad_script" class="form-control" rows="3" placeholder="<script type='text/javascript' src='//...socialbar.js'></script>">{{ settings.get('social_ad_script', '') }}</textarea>
+              <div class="form-hint">অ্যাড এজেন্সির Social Bar / In-Page Push স্ক্রিপ্ট ট্যাগ এখানে পেস্ট করুন।</div>
+            </div>
+
+            <div style="font-size: 15px; font-weight: 600; margin-top: 24px; margin-bottom: 14px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> ব্যাকগ্রাউন্ড ভিডিও ও ব্লার অপশন
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ভিডিও ব্লার লেভেল (Blur Amount)</label>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="range" name="portal_blur" min="5" max="35" value="{{ settings.get('portal_blur', '15') }}" class="form-control" style="flex: 1;" oninput="document.getElementById('blur_val_disp').innerText = this.value + 'px'">
+                <span id="blur_val_disp" style="font-weight: 700; width: 50px; text-align: right;">{{ settings.get('portal_blur', '15') }}px</span>
+              </div>
+              <div class="form-hint">ভিডিওটি কতটুকু ঘোলা থাকবে যাতে ভেতরে চলমান অ্যাকশন বোঝা যায়।</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">পোর্টাল হেডার টাইটেল</label>
+              <input type="text" name="portal_title" class="form-control" value="{{ settings.get('portal_title', 'EXCLUSIVE DESI & VIRAL VAULT') }}">
+            </div>
+
+          </div>
+
+        </div>
+
+        <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 18px; text-align: right;">
+          <button type="submit" class="btn btn-primary" style="padding: 12px 28px; font-size: 15px;">
+            <i class="fa-solid fa-floppy-disk"></i> সমস্ত সেটিংস সেভ করুন
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function openPortalTab(tabId) {
+  // Hide all tabs
+  document.querySelectorAll('.portal-tab-content').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  // Remove active class from buttons
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+    btn.style.background = 'var(--card2)';
+    btn.style.color = 'var(--text)';
+  });
+  // Show target tab
+  const target = document.getElementById(tabId);
+  if (target) target.style.display = 'block';
+  // Highlight clicked button
+  const activeBtn = document.getElementById('btn-' + tabId);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.background = 'linear-gradient(135deg,var(--accent),var(--accent2))';
+    activeBtn.style.color = '#fff';
+  }
+}
+</script>
+{% endblock %}

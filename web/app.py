@@ -163,6 +163,73 @@ def ensure_db_schema():
                         INDEX idx_inviter (chat_id, inviter_id)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """)
+
+                # Portal schema
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS portal_categories (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(100) NOT NULL,
+                        slug VARCHAR(100) NOT NULL UNIQUE,
+                        icon VARCHAR(50) DEFAULT 'fa-fire',
+                        order_num INT DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS portal_videos (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        title VARCHAR(255) NOT NULL,
+                        category_slug VARCHAR(100) NOT NULL,
+                        video_url VARCHAR(500) NOT NULL,
+                        thumb_url VARCHAR(500) DEFAULT '',
+                        duration VARCHAR(50) DEFAULT '04:15',
+                        views INT DEFAULT 1200,
+                        is_active TINYINT(1) DEFAULT 1,
+                        order_num INT DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_cat (category_slug),
+                        INDEX idx_active (is_active)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS portal_settings (
+                        setting_key VARCHAR(100) PRIMARY KEY,
+                        setting_val TEXT
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """)
+
+                # Seed portal default categories if empty
+                cur.execute("SELECT COUNT(*) AS cnt FROM portal_categories")
+                c_row = cur.fetchone()
+                if c_row and (c_row.get("cnt") or 0) == 0:
+                    cur.executemany(
+                        "INSERT IGNORE INTO portal_categories (name, slug, icon, order_num) VALUES (%s, %s, %s, %s)",
+                        [
+                            ("ভাইরাল ভাইরাল", "viral", "fa-fire", 1),
+                            ("দেশি হট", "desi", "fa-heart", 2),
+                            ("এক্সক্লুসিভ", "exclusive", "fa-crown", 3),
+                            ("ভিআইপি লিকস", "vip", "fa-gem", 4),
+                            ("লাইভ ক্যাম", "live", "fa-bolt", 5)
+                        ]
+                    )
+
+                # Seed portal default settings if empty
+                cur.execute("SELECT COUNT(*) AS cnt FROM portal_settings")
+                s_row = cur.fetchone()
+                if s_row and (s_row.get("cnt") or 0) == 0:
+                    cur.executemany(
+                        "INSERT IGNORE INTO portal_settings (setting_key, setting_val) VALUES (%s, %s)",
+                        [
+                            ("portal_title", "EXCLUSIVE DESI & VIRAL VAULT"),
+                            ("portal_blur", "15"),
+                            ("telegram_group_url", "https://t.me/darkfantasyloverzone"),
+                            ("popunder_enabled", "1"),
+                            ("popunder_url", "https://t.me/darkfantasyloverzone"),
+                            ("popunder_script", ""),
+                            ("social_ad_enabled", "1"),
+                            ("social_ad_script", "")
+                        ]
+                    )
         finally:
             conn.close()
     except Exception as e:
@@ -1733,6 +1800,235 @@ def api_member_adder_status():
         "pids": pids,
         "logs": logs
     })
+
+
+
+# ── Portal & Video Management Routes ────────────────
+
+UPLOAD_VIDEO_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads", "videos")
+os.makedirs(UPLOAD_VIDEO_DIR, exist_ok=True)
+ALLOWED_VIDEO_EXT = {"mp4", "webm", "ogg", "mov", "m4v"}
+
+
+def get_portal_settings():
+    try:
+        rows = _query("SELECT setting_key, setting_val FROM portal_settings", fetchall=True)
+        return {r["setting_key"]: r["setting_val"] for r in (rows or [])}
+    except Exception:
+        return {}
+
+
+@app.route("/portal_admin", methods=["GET"])
+@login_required
+def portal_admin():
+    # Load categories with video count
+    try:
+        categories = _query("""
+            SELECT c.*, COUNT(v.id) AS video_count 
+            FROM portal_categories c 
+            LEFT JOIN portal_videos v ON c.slug = v.category_slug 
+            GROUP BY c.id 
+            ORDER BY c.order_num ASC, c.id ASC
+        """, fetchall=True) or []
+    except Exception:
+        categories = []
+
+    # Load videos
+    try:
+        videos = _query("SELECT * FROM portal_videos ORDER BY id DESC", fetchall=True) or []
+    except Exception:
+        videos = []
+
+    settings = get_portal_settings()
+    active_videos_count = sum(1 for v in videos if v.get("is_active") == 1)
+
+    return render_template(
+        "portal_admin.html",
+        active="portal_admin",
+        categories=categories,
+        videos=videos,
+        settings=settings,
+        active_videos_count=active_videos_count
+    )
+
+
+@app.route("/portal/add_category", methods=["POST"])
+@login_required
+def portal_add_category():
+    name = request.form.get("name", "").strip()
+    slug = request.form.get("slug", "").strip().lower()
+    icon = request.form.get("icon", "fa-fire").strip()
+    try:
+        order_num = int(request.form.get("order_num", 0))
+    except (ValueError, TypeError):
+        order_num = 0
+
+    if not name or not slug:
+        flash("❌ ক্যাটেগরির নাম এবং স্লাগ অবশ্যই পূরণ করতে হবে।", "error")
+        return redirect(url_for("portal_admin"))
+
+    # sanitize slug
+    slug = re.sub(r"[^a-z0-9_-]", "", slug)
+
+    try:
+        _execute(
+            "INSERT INTO portal_categories (name, slug, icon, order_num) VALUES (%s, %s, %s, %s)",
+            (name, slug, icon, order_num)
+        )
+        flash(f"✅ ক্যাটেগরি '{name}' সফলভাবে যুক্ত হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ ক্যাটেগরি যোগ করতে সমস্যা হয়েছে: {e}", "error")
+
+    return redirect(url_for("portal_admin"))
+
+
+@app.route("/portal/delete_category/<int:cat_id>", methods=["GET", "POST"])
+@login_required
+def portal_delete_category(cat_id: int):
+    try:
+        _execute("DELETE FROM portal_categories WHERE id=%s", (cat_id,))
+        flash("🗑️ ক্যাটেগরি সফলভাবে মুছে ফেলা হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ ক্যাটেগরি ডিলিট ব্যর্থ: {e}", "error")
+    return redirect(url_for("portal_admin"))
+
+
+@app.route("/portal/add_video", methods=["POST"])
+@login_required
+def portal_add_video():
+    title = request.form.get("title", "").strip()
+    category_slug = request.form.get("category_slug", "").strip()
+    duration = request.form.get("duration", "04:15").strip()
+    direct_url = request.form.get("video_url", "").strip()
+    thumb_url = request.form.get("thumb_url", "").strip()
+
+    if not title or not category_slug:
+        flash("❌ টাইটেল এবং ক্যাটেগরি প্রদান করুন।", "error")
+        return redirect(url_for("portal_admin"))
+
+    video_url = ""
+    # Check if a file was uploaded
+    if "video_file" in request.files:
+        file = request.files["video_file"]
+        if file and file.filename:
+            fname = file.filename
+            ext = fname.rsplit(".", 1)[-1].lower() if "." in fname else ""
+            if ext in ALLOWED_VIDEO_EXT:
+                import time
+                safe_name = f"vid_{int(time.time())}_{re.sub(r'[^a-zA-Z0-9_]', '', fname.rsplit('.', 1)[0])[:20]}.{ext}"
+                dest_path = os.path.join(UPLOAD_VIDEO_DIR, safe_name)
+                file.save(dest_path)
+                video_url = f"uploads/videos/{safe_name}"
+            else:
+                flash("❌ শুধুমাত্র .mp4, .webm, .ogg বা .mov ফাইল সাপোর্টেড।", "error")
+                return redirect(url_for("portal_admin"))
+
+    if not video_url and direct_url:
+        video_url = direct_url
+
+    if not video_url:
+        flash("❌ একটি ভিডিও ফাইল আপলোড করুন অথবা ভিডিওর ডিরেক্ট URL প্রদান করুন।", "error")
+        return redirect(url_for("portal_admin"))
+
+    import random
+    initial_views = random.randint(1200, 9800)
+
+    try:
+        _execute("""
+            INSERT INTO portal_videos (title, category_slug, video_url, thumb_url, duration, views, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, 1)
+        """, (title, category_slug, video_url, thumb_url, duration, initial_views))
+        flash(f"✅ ভিডিও '{title}' সফলভাবে যোগ করা হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ ভিডিও সংরক্ষণে সমস্যা হয়েছে: {e}", "error")
+
+    return redirect(url_for("portal_admin"))
+
+
+@app.route("/portal/toggle_video/<int:video_id>")
+@login_required
+def portal_toggle_video(video_id: int):
+    try:
+        vid = _query("SELECT is_active FROM portal_videos WHERE id=%s", (video_id,), fetchone=True)
+        if vid:
+            new_status = 0 if vid.get("is_active") == 1 else 1
+            _execute("UPDATE portal_videos SET is_active=%s WHERE id=%s", (new_status, video_id))
+            flash(f"🔄 ভিডিও স্ট্যাটাস আপডেট হয়েছে ({'একটিভ' if new_status==1 else 'বন্ধ'})।", "success")
+    except Exception as e:
+        flash(f"❌ স্ট্যাটাস পরিবর্তন ব্যর্থ: {e}", "error")
+    return redirect(url_for("portal_admin"))
+
+
+@app.route("/portal/delete_video/<int:video_id>")
+@login_required
+def portal_delete_video(video_id: int):
+    try:
+        vid = _query("SELECT video_url FROM portal_videos WHERE id=%s", (video_id,), fetchone=True)
+        if vid and vid.get("video_url"):
+            vurl = vid["video_url"]
+            if vurl.startswith("uploads/videos/"):
+                local_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), vurl)
+                if os.path.exists(local_path):
+                    try:
+                        os.remove(local_path)
+                    except Exception:
+                        pass
+        _execute("DELETE FROM portal_videos WHERE id=%s", (video_id,))
+        flash("🗑️ ভিডিও সফলভাবে ডিলিট করা হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ ভিডিও ডিলিট ব্যর্থ: {e}", "error")
+    return redirect(url_for("portal_admin"))
+
+
+@app.route("/portal/save_settings", methods=["POST"])
+@login_required
+def portal_save_settings():
+    settings_to_update = {
+        "portal_title": request.form.get("portal_title", "EXCLUSIVE DESI & VIRAL VAULT").strip(),
+        "portal_blur": request.form.get("portal_blur", "15").strip(),
+        "telegram_group_url": request.form.get("telegram_group_url", "https://t.me/darkfantasyloverzone").strip(),
+        "popunder_enabled": "1" if request.form.get("popunder_enabled") == "1" else "0",
+        "popunder_url": request.form.get("popunder_url", "").strip(),
+        "popunder_script": request.form.get("popunder_script", "").strip(),
+        "social_ad_enabled": "1" if request.form.get("social_ad_enabled") == "1" else "0",
+        "social_ad_script": request.form.get("social_ad_script", "").strip()
+    }
+
+    try:
+        for k, v in settings_to_update.items():
+            _execute("INSERT INTO portal_settings (setting_key, setting_val) VALUES (%s, %s) ON DUPLICATE KEY UPDATE setting_val=%s", (k, v, v))
+        flash("✅ পোর্টাল, পোপান্ডার ও সোশ্যাল অ্যাড সেটিংস সফলভাবে সংরক্ষিত হয়েছে।", "success")
+    except Exception as e:
+        flash(f"❌ সেটিংস সংরক্ষণে সমস্যা হয়েছে: {e}", "error")
+
+    return redirect(url_for("portal_admin"))
+
+
+@app.route("/api/portal-data", methods=["GET"])
+def api_portal_data():
+    try:
+        categories = _query("SELECT name, slug, icon FROM portal_categories ORDER BY order_num ASC, id ASC", fetchall=True) or []
+        videos = _query("SELECT id, title, category_slug, video_url, thumb_url, duration, views FROM portal_videos WHERE is_active=1 ORDER BY order_num ASC, id DESC LIMIT 25", fetchall=True) or []
+        settings = get_portal_settings()
+        return jsonify({
+            "status": "success",
+            "categories": categories,
+            "videos": videos,
+            "settings": settings
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/portal-view", methods=["POST"])
+def api_portal_view():
+    try:
+        vid_id = request.form.get("video_id") or (request.get_json(silent=True) or {}).get("video_id")
+        if vid_id:
+            _execute("UPDATE portal_videos SET views = views + 1 WHERE id=%s", (int(vid_id),))
+        return jsonify({"status": "success"})
+    except Exception:
+        return jsonify({"status": "error"}), 400
 
 
 if __name__ == "__main__":
