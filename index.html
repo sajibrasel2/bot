@@ -23,7 +23,7 @@
   <style>
     :root {
       --bg: #07090e;
-      --card-bg: rgba(18, 22, 34, 0.75);
+      --card-bg: rgba(14, 18, 28, 0.65);
       --card-border: rgba(255, 255, 255, 0.12);
       --accent-pink: #ec4899;
       --accent-purple: #8b5cf6;
@@ -32,7 +32,7 @@
       --accent-gold: #f59e0b;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
-      --blur-val: 10px;
+      --blur-val: 14px;
     }
 
     * {
@@ -69,10 +69,10 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: repeat(3, 1fr);
-      gap: 12px;
+      gap: 10px;
       width: 100%;
       height: 100%;
-      filter: blur(var(--blur-val)) brightness(0.65) saturate(1.3);
+      filter: blur(var(--blur-val)) brightness(0.7) saturate(1.4);
       transform: scale(1.05);
       transition: filter 0.4s ease;
     }
@@ -102,7 +102,8 @@
       border-radius: 8px;
     }
 
-    .video-cell video {
+    .video-cell video,
+    .video-cell img {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -114,7 +115,7 @@
       position: fixed;
       inset: 0;
       z-index: 2;
-      background: radial-gradient(circle at center, rgba(7, 9, 14, 0.45) 0%, rgba(7, 9, 14, 0.85) 100%);
+      background: radial-gradient(circle at center, rgba(7, 9, 14, 0.4) 0%, rgba(7, 9, 14, 0.8) 100%);
       pointer-events: none;
     }
 
@@ -198,12 +199,12 @@
       background: var(--accent-red);
       border-radius: 50%;
       display: inline-block;
-      animation: pulse-dot 1.5s infinite;
+      animation: pulseDot 1.5s infinite;
     }
 
-    @keyframes pulse-dot {
+    @keyframes pulseDot {
       0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 8px var(--accent-red); }
-      50% { opacity: 0.4; transform: scale(0.85); box-shadow: none; }
+      50% { opacity: 0.4; transform: scale(0.85); box-shadow: 0 0 2px var(--accent-red); }
     }
 
     .header-actions {
@@ -215,27 +216,27 @@
     .btn-tg-join {
       background: linear-gradient(135deg, #0088cc, #00b4d8);
       color: #fff;
-      text-decoration: none;
-      padding: 9px 16px;
+      border: none;
+      padding: 9px 18px;
       border-radius: 99px;
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
+      cursor: pointer;
       box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4);
       transition: all 0.25s ease;
-      cursor: pointer;
-      border: none;
+      text-decoration: none;
     }
 
     .btn-tg-join:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 22px rgba(0, 136, 204, 0.6);
+      box-shadow: 0 6px 20px rgba(0, 136, 204, 0.6);
     }
 
     /* ========================================================
-       3. CATEGORIES NAVIGATION BAR (Sticky Pills)
+       3. TOP CATEGORIES NAVIGATION BAR (Prominent & Visible)
        ======================================================== */
     .category-section {
       margin-bottom: 24px;
@@ -246,7 +247,7 @@
       align-items: center;
       gap: 10px;
       overflow-x: auto;
-      padding: 6px 4px 12px;
+      padding-bottom: 8px;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -256,65 +257,69 @@
     }
 
     .category-pill {
-      background: rgba(25, 32, 48, 0.65);
+      flex-shrink: 0;
+      background: rgba(22, 28, 44, 0.7);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 10px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      padding: 10px 20px;
       border-radius: 99px;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.25s ease;
       display: flex;
       align-items: center;
       gap: 8px;
-      text-decoration: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .category-pill i {
+      color: var(--accent-pink);
+      font-size: 0.95rem;
+      transition: color 0.25s;
     }
 
     .category-pill:hover {
-      background: rgba(40, 50, 75, 0.8);
-      color: #fff;
+      background: rgba(236, 72, 153, 0.15);
+      border-color: rgba(236, 72, 153, 0.5);
       transform: translateY(-2px);
-      border-color: rgba(255, 255, 255, 0.25);
     }
 
     .category-pill.active {
       background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      color: #fff;
       border-color: transparent;
-      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.45);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.5);
     }
 
-    .category-pill i {
-      font-size: 0.95rem;
+    .category-pill.active i {
+      color: #fff;
     }
 
     /* ========================================================
-       4. HERO PROMO / UNBLUR TRIGGER CARD
+       4. HERO TEASER & CALL TO ACTION
        ======================================================== */
     .hero-unblur-card {
       background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(139, 92, 246, 0.15));
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      border: 1px solid rgba(236, 72, 153, 0.35);
+      border: 1px solid rgba(236, 72, 153, 0.4);
       border-radius: 20px;
-      padding: 28px 24px;
-      margin-bottom: 30px;
+      padding: 24px;
       text-align: center;
+      margin-bottom: 28px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      transition: transform 0.3s ease, border-color 0.3s ease;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
-      cursor: pointer;
-      transition: all 0.3s ease;
     }
 
     .hero-unblur-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(236, 72, 153, 0.6);
-      box-shadow: 0 25px 55px rgba(236, 72, 153, 0.25);
+      transform: scale(1.01);
+      border-color: var(--accent-pink);
     }
 
     .hero-badge-top {
@@ -322,67 +327,56 @@
       align-items: center;
       gap: 6px;
       background: rgba(239, 68, 68, 0.2);
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      border: 1px solid rgba(239, 68, 68, 0.5);
       color: #fca5a5;
-      padding: 5px 14px;
+      padding: 4px 12px;
       border-radius: 99px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 700;
       margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
     .hero-title {
-      font-size: 1.85rem;
+      font-size: 1.45rem;
       font-weight: 800;
-      color: #fff;
-      line-height: 1.3;
-      margin-bottom: 10px;
-    }
-
-    @media (max-width: 600px) {
-      .hero-title {
-        font-size: 1.4rem;
-      }
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #fff, #fda4af, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: 1rem;
+      font-size: 0.92rem;
       color: var(--text-muted);
       max-width: 650px;
-      margin: 0 auto 20px;
+      margin: 0 auto 18px;
       line-height: 1.5;
     }
 
     .hero-cta-btn {
-      background: linear-gradient(135deg, #ec4899, #f43f5e, #e11d48);
+      background: linear-gradient(135deg, #f43f5e, #ec4899, #8b5cf6);
       color: #fff;
       border: none;
-      padding: 16px 36px;
+      padding: 14px 34px;
       border-radius: 99px;
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 800;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 12px;
-      box-shadow: 0 0 30px rgba(244, 63, 94, 0.6);
-      transition: all 0.3s ease;
-      animation: pulse-glow 2s infinite;
+      gap: 10px;
+      box-shadow: 0 6px 25px rgba(244, 63, 94, 0.5);
+      animation: pulseBtn 2s infinite;
+      transition: all 0.25s ease;
     }
 
-    @keyframes pulse-glow {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(244, 63, 94, 0.6); }
-      50% { transform: scale(1.03); box-shadow: 0 0 40px rgba(244, 63, 94, 0.85); }
-    }
-
-    .hero-cta-btn:hover {
-      transform: scale(1.05);
+    @keyframes pulseBtn {
+      0%, 100% { transform: scale(1); box-shadow: 0 6px 25px rgba(244, 63, 94, 0.5); }
+      50% { transform: scale(1.04); box-shadow: 0 8px 35px rgba(244, 63, 94, 0.7); }
     }
 
     /* ========================================================
-       5. FOREGROUND VIDEO TEASER CARDS (Interactive Grid)
+       5. VIDEO CARDS SHOWCASE (Live Blurred Autoplay Video)
        ======================================================== */
     .section-header {
       display: flex;
@@ -392,12 +386,11 @@
     }
 
     .section-title {
-      font-size: 1.35rem;
-      font-weight: 750;
-      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .section-title i {
@@ -406,89 +399,96 @@
 
     .video-grid-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
     }
 
     @media (max-width: 600px) {
       .video-grid-cards {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 14px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
       }
     }
 
     .video-card {
       background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
       border-radius: 16px;
       overflow: hidden;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       flex-direction: column;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .video-card:hover {
       transform: translateY(-5px);
       border-color: rgba(236, 72, 153, 0.5);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 15px 35px rgba(236, 72, 153, 0.25);
     }
 
     .video-card-thumb-wrap {
       position: relative;
       width: 100%;
-      height: 180px;
+      height: 170px;
       overflow: hidden;
       background: #0f121d;
     }
 
-    .video-card-thumb-wrap video,
-    .video-card-thumb-wrap img {
+    @media (max-width: 600px) {
+      .video-card-thumb-wrap {
+        height: 140px;
+      }
+    }
+
+    .video-card-thumb-wrap video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
-      transition: transform 0.4s ease;
+      filter: blur(8px) saturate(1.35) brightness(0.9);
+      transform: scale(1.08);
+      transition: transform 0.4s ease, filter 0.4s ease;
     }
 
-    .video-card:hover .video-card-thumb-wrap video,
-    .video-card:hover .video-card-thumb-wrap img {
-      transform: scale(1.08);
+    .video-card:hover .video-card-thumb-wrap video {
+      transform: scale(1.12);
+      filter: blur(5px) saturate(1.4) brightness(0.95);
     }
 
     /* Blurred teaser overlay on thumb */
     .thumb-blur-layer {
       position: absolute;
       inset: 0;
-      background: rgba(10, 14, 25, 0.35);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: rgba(10, 14, 25, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease;
+      pointer-events: none;
     }
 
     .play-btn-circle {
-      width: 54px;
-      height: 54px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-size: 20px;
+      font-size: 18px;
       box-shadow: 0 0 20px rgba(236, 72, 153, 0.7);
       transition: all 0.3s ease;
+      animation: pulsePlay 2s infinite;
     }
 
-    .video-card:hover .play-btn-circle {
-      transform: scale(1.15);
-      box-shadow: 0 0 30px rgba(236, 72, 153, 0.95);
+    @keyframes pulsePlay {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(236, 72, 153, 0.6); }
+      50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(236, 72, 153, 0.9); }
     }
 
     .badge-duration {
@@ -498,9 +498,9 @@
       background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
       color: #fff;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 6px;
       font-family: 'Outfit', sans-serif;
     }
@@ -512,14 +512,14 @@
       background: rgba(236, 72, 153, 0.85);
       backdrop-filter: blur(4px);
       color: #fff;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      padding: 3px 10px;
+      padding: 3px 9px;
       border-radius: 99px;
     }
 
     .video-card-body {
-      padding: 14px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -527,10 +527,10 @@
     }
 
     .video-card-title {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 700;
       color: #fff;
-      line-height: 1.4;
+      line-height: 1.35;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -541,16 +541,16 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
       margin-top: auto;
-      padding-top: 6px;
+      padding-top: 4px;
     }
 
     .video-card-meta span {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     /* ========================================================
@@ -601,62 +601,57 @@
       position: absolute;
       top: 16px;
       right: 16px;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
       color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
+      transition: background 0.2s;
     }
 
     .modal-close-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.25);
     }
 
-    .modal-icon-wrap {
+    .modal-icon {
       width: 72px;
       height: 72px;
       border-radius: 20px;
       background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+      margin: 0 auto 18px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 32px;
       color: #fff;
-      margin: 0 auto 18px;
-      box-shadow: 0 0 30px rgba(236, 72, 153, 0.6);
+      box-shadow: 0 0 35px rgba(236, 72, 153, 0.6);
     }
 
     .modal-title {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       font-weight: 800;
-      color: #fff;
       margin-bottom: 8px;
+      color: #fff;
     }
 
     .modal-desc {
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       color: var(--text-muted);
       line-height: 1.5;
       margin-bottom: 24px;
     }
 
-    .modal-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
     .modal-btn-unlock {
+      width: 100%;
       background: linear-gradient(135deg, #0088cc, #00b4d8);
       color: #fff;
       border: none;
-      padding: 16px;
+      padding: 14px 20px;
       border-radius: 14px;
       font-size: 1.05rem;
       font-weight: 800;
@@ -665,9 +660,9 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
+      margin-bottom: 12px;
       box-shadow: 0 8px 25px rgba(0, 136, 204, 0.5);
-      transition: all 0.25s;
-      text-decoration: none;
+      transition: all 0.25s ease;
     }
 
     .modal-btn-unlock:hover {
@@ -676,24 +671,28 @@
     }
 
     .modal-btn-direct {
-      background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
-      color: #fff;
-      border: none;
-      padding: 14px;
+      width: 100%;
+      background: rgba(236, 72, 153, 0.15);
+      border: 1px solid rgba(236, 72, 153, 0.5);
+      color: #f472b6;
+      padding: 12px 20px;
       border-radius: 14px;
       font-size: 0.95rem;
-      font-weight: 750;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      transition: all 0.25s;
-      text-decoration: none;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+
+    .modal-btn-direct:hover {
+      background: rgba(236, 72, 153, 0.25);
     }
 
     /* ========================================================
-       7. SOCIAL BAR NOTIFICATION (High CTR Floating Widget)
+       7. SOCIAL BAR IN-PAGE PUSH WIDGET
        ======================================================== */
     .social-bar-widget {
       position: fixed;
@@ -781,7 +780,7 @@
        ======================================================== -->
   <div class="video-backdrop-wrapper">
     <div class="video-backdrop-grid" id="backdrop-video-grid">
-      <!-- 10-15 Video elements populated dynamically by JS -->
+      <!-- 12-15 Video elements populated dynamically by JS -->
     </div>
   </div>
   <div class="backdrop-tint-overlay"></div>
@@ -815,14 +814,33 @@
        ======================================================== -->
   <div class="portal-container">
 
-    <!-- Categories Navigation Pills -->
+    <!-- Categories Navigation Pills (Prominently Visible at Top) -->
     <div class="category-section">
       <div class="category-scroll-container" id="category-pills-bar">
         <button class="category-pill active" onclick="filterCategory('all', this)">
           <i class="fa-solid fa-fire"></i>
-          <span>সব ভিডিও (All)</span>
+          <span>🔥 সব ভিডিও</span>
         </button>
-        <!-- Additional categories loaded dynamically from MySQL database -->
+        <button class="category-pill" onclick="filterCategory('exclusive', this)">
+          <i class="fa-solid fa-star"></i>
+          <span>🔞 এক্সক্লুসিভ</span>
+        </button>
+        <button class="category-pill" onclick="filterCategory('desi', this)">
+          <i class="fa-solid fa-heart"></i>
+          <span>🇧🇩 দেশি হট</span>
+        </button>
+        <button class="category-pill" onclick="filterCategory('vip', this)">
+          <i class="fa-solid fa-gem"></i>
+          <span>💎 ভিআইপি লিকস</span>
+        </button>
+        <button class="category-pill" onclick="filterCategory('live', this)">
+          <i class="fa-solid fa-video"></i>
+          <span>🎥 লাইভ শো</span>
+        </button>
+        <button class="category-pill" onclick="filterCategory('viral', this)">
+          <i class="fa-solid fa-bolt"></i>
+          <span>⚡ ভাইরাল কালেকশন</span>
+        </button>
       </div>
     </div>
 
@@ -833,10 +851,10 @@
         <span>১৮+ এক্সক্লুসিভ ফুল এইচডি</span>
       </div>
       <h2 class="hero-title" id="hero-title-text">
-        🔞 এক্সক্লুসিভ লাইভ ভিডিও ও প্রাইভেট চ্যাট রুম
+        🔞 এক্সক্লুসিভ ফুল এইচডি ভিডিও পোর্টাল
       </h2>
       <p class="hero-subtitle" id="hero-desc-text">
-        পেছনের সব ভিডিও স্পষ্ট ও আনকাট দেখতে এবং দেশি মেয়েদের লাইভ ক্যামেরা চ্যাটে অংশ নিতে এখনই প্রবেশ করুন।
+        ভিডিও স্পষ্ট দেখতে ও লাইভ চ্যাট রুমে প্রবেশ করতে নিচের বাটনে চাপ দিন।
       </p>
       <button class="hero-cta-btn" id="hero-cta-btn-text">
         <i class="fa-solid fa-play"></i>
@@ -857,7 +875,7 @@
 
     <!-- Foreground Video Cards -->
     <div class="video-grid-cards" id="video-cards-container">
-      <!-- Populated dynamically from MySQL via API -->
+      <!-- Populated dynamically by JS -->
     </div>
 
   </div>
@@ -870,32 +888,30 @@
       <button class="modal-close-btn" onclick="closePortalModal()">
         <i class="fa-solid fa-xmark"></i>
       </button>
-
-      <div class="modal-icon-wrap">
-        <i class="fa-solid fa-lock-open"></i>
+      
+      <div class="modal-icon">
+        <i class="fa-solid fa-lock"></i>
       </div>
 
-      <h3 class="modal-title" id="modal-video-title">ভিডিওটি আনলক করুন</h3>
+      <h3 class="modal-title" id="modal-video-title">ভিডিও আনলক করুন</h3>
       <p class="modal-desc">
-        সম্পূর্ণ ফুল এইচডি (1080p) ভিডিওটি স্পষ্ট দেখতে এবং ১-অন-১ লাইভ চ্যাট রুমে প্রবেশ করতে নিচের বাটনে চাপ দিন।
+        এই এক্সক্লুসিভ ভিডিওটি সম্পূর্ণ আনকাট ও আনব্লার কোয়ালিটিতে দেখতে আমাদের অফিসিয়াল টেলিগ্রাম গ্রুপে এখনই যুক্ত হোন।
       </p>
 
-      <div class="modal-actions">
-        <button class="modal-btn-unlock" onclick="handleModalUnlock('telegram')">
-          <i class="fa-brands fa-telegram" style="font-size: 1.25rem;"></i>
-          <span>টেলিগ্রাম গ্রুপে সম্পূর্ণ ভিডিও দেখুন</span>
-        </button>
+      <button class="modal-btn-unlock" onclick="handleModalUnlock('telegram')">
+        <i class="fa-brands fa-telegram"></i>
+        <span>টেলিগ্রামে সম্পূর্ণ ভিডিও দেখুন</span>
+      </button>
 
-        <button class="modal-btn-direct" onclick="handleModalUnlock('direct')">
-          <i class="fa-solid fa-bolt"></i>
-          <span>১-ক্লিকে ইনস্ট্যান্ট প্লে করুন (Direct Player)</span>
-        </button>
-      </div>
+      <button class="modal-btn-direct" onclick="handleModalUnlock('direct')">
+        <i class="fa-solid fa-bolt"></i>
+        <span>অনলাইন ডিরেক্ট আনলক প্লেয়ার</span>
+      </button>
     </div>
   </div>
 
   <!-- ========================================================
-       5. SOCIAL BAR AD NOTIFICATION (High CTR Engagement)
+       5. SOCIAL BAR IN-PAGE NOTIFICATION WIDGET
        ======================================================== -->
   <div class="social-bar-widget" id="social-bar-widget" onclick="triggerPortalAction('social_bar')">
     <img src="assets/img/mitu.jpg" class="social-bar-avatar" id="social-avatar" alt="Live Girl" />
@@ -914,7 +930,7 @@
   </div>
 
   <!-- ========================================================
-       6. CORE JAVASCRIPT LOGIC: Popunder, Social Bar, Data Loading
+       6. CORE JAVASCRIPT LOGIC
        ======================================================== -->
   <script>
     // Global portal state
@@ -925,10 +941,10 @@
         popunder_enabled: "1",
         popunder_url: "https://t.me/darkfantasyloverzone",
         popunder_script: "",
-        social_bar_enabled: "1",
-        social_bar_script: "",
-        telegram_target_url: "https://t.me/darkfantasyloverzone",
-        blur_level: "10"
+        social_ad_enabled: "1",
+        social_ad_script: "",
+        telegram_group_url: "https://t.me/darkfantasyloverzone",
+        portal_blur: "14"
       }
     };
 
@@ -936,27 +952,49 @@
     let popunderCooldown = false;
     let selectedVideo = null;
 
-    // Default 14 CDN Video Clips fallback in case API takes a moment
+    // Guaranteed working fast video streams and high-resolution posters
     const DEFAULT_VIDEOS = [
-      { id: 1, title: "হোটেল রুমের এক্সক্লুসিভ ভাইরাল পার্ট ১", category_slug: "viral", category_name: "ভাইরাল", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnail_url: "assets/img/video1.jpg", views: 18450, duration: "04:12" },
-      { id: 2, title: "ঢাকা কাপল প্রাইভেট ফোন চ্যাট রেকর্ড", category_slug: "desi", category_name: "দেশি", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnail_url: "assets/img/video2.jpg", views: 25300, duration: "07:45" },
-      { id: 3, title: "ভিআইপি রুম আনকাট লিকস ক্লিপ", category_slug: "vip", category_name: "ভিআইপি", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", thumbnail_url: "assets/img/video3.jpg", views: 31200, duration: "05:20" },
-      { id: 4, title: "মাঝরাতের স্পেশাল লাইভ ওয়েবক্যাম শো", category_slug: "live", category_name: "লাইভ শো", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4", thumbnail_url: "assets/img/mitu.jpg", views: 42100, duration: "12:15" },
-      { id: 5, title: "হোস্টেল রুমের গোপন ভিডিও ফাঁস", category_slug: "exclusive", category_name: "এক্সক্লুসিভ", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", thumbnail_url: "assets/img/riya.jpg", views: 19800, duration: "03:50" },
-      { id: 6, title: "চট্টগ্রাম কলেজ ফ্রেন্ডস নাইট পার্টি", category_slug: "desi", category_name: "দেশি", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", thumbnail_url: "assets/img/sadia.jpg", views: 28900, duration: "08:35" },
-      { id: 7, title: "ভিআইপি প্রাইভেট ক্যাবিন ভিডিও লিক", category_slug: "vip", category_name: "ভিআইপি", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4", thumbnail_url: "assets/img/nusrat.jpg", views: 35600, duration: "06:18" },
-      { id: 8, title: "টপ ট্রেন্ডিং ভাইরাল ক্লিপ এইচডি", category_slug: "viral", category_name: "ভাইরাল", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", thumbnail_url: "assets/img/mim.jpg", views: 52100, duration: "09:40" },
-      { id: 9, title: "লাইভ ক্যামেরা প্রাইভেট শো ২", category_slug: "live", category_name: "লাইভ শো", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4", thumbnail_url: "assets/img/tania.jpg", views: 23700, duration: "14:22" },
-      { id: 10, title: "১-অন-১ সিক্রেট চ্যাট পার্টনার শো", category_slug: "exclusive", category_name: "এক্সক্লুসিভ", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4", thumbnail_url: "assets/img/video1.jpg", views: 41800, duration: "11:05" },
-      { id: 11, title: "অফিস ট্যুরের গোপন রেকর্ড ভাইরাল", category_slug: "desi", category_name: "দেশি", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", thumbnail_url: "assets/img/video2.jpg", views: 16900, duration: "04:55" },
-      { id: 12, title: "ভিআইপি মেম্বার্স অনলি আনকাট লিক", category_slug: "vip", category_name: "ভিআইপি", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", thumbnail_url: "assets/img/video3.jpg", views: 64500, duration: "15:30" },
-      { id: 13, title: "মধ্যরাতের হট চ্যাট ভাইরাল ক্লিপ", category_slug: "viral", category_name: "ভাইরাল", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnail_url: "assets/img/mitu.jpg", views: 37800, duration: "06:40" },
-      { id: 14, title: "আনলকড ফুল এইচডি এক্সক্লুসিভ শো", category_slug: "exclusive", category_name: "এক্সক্লুসিভ", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnail_url: "assets/img/riya.jpg", views: 49200, duration: "08:15" }
+      { id: 1, title: "হোটেল রুমের এক্সক্লুসিভ ভাইরাল পার্ট ১", category_slug: "viral", category_name: "ভাইরাল", video_url: "https://www.w3schools.com/html/mov_bbb.mp4", thumb_url: "assets/img/video1.jpg", views: 28450, duration: "04:12" },
+      { id: 2, title: "ঢাকা কাপল প্রাইভেট ফোন চ্যাট রেকর্ড", category_slug: "desi", category_name: "দেশি", video_url: "https://www.w3schools.com/html/movie.mp4", thumb_url: "assets/img/video2.jpg", views: 35300, duration: "07:45" },
+      { id: 3, title: "ভিআইপি রুম আনকাট লিকস ক্লিপ", category_slug: "vip", category_name: "ভিআইপি", video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", thumb_url: "assets/img/video3.jpg", views: 41200, duration: "05:20" },
+      { id: 4, title: "মাঝরাতের স্পেশাল লাইভ ওয়েবক্যাম শো", category_slug: "live", category_name: "লাইভ শো", video_url: "https://www.w3schools.com/html/mov_bbb.mp4", thumb_url: "assets/img/mitu.jpg", views: 52100, duration: "12:15" },
+      { id: 5, title: "হোস্টেল রুমের গোপন ভিডিও ফাঁস", category_slug: "exclusive", category_name: "এক্সক্লুসিভ", video_url: "https://www.w3schools.com/html/movie.mp4", thumb_url: "assets/img/riya.jpg", views: 39800, duration: "03:50" },
+      { id: 6, title: "চট্টগ্রাম কলেজ ফ্রেন্ডস নাইট পার্টি", category_slug: "desi", category_name: "দেশি", video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", thumb_url: "assets/img/sadia.jpg", views: 48900, duration: "08:35" },
+      { id: 7, title: "ভিআইপি প্রাইভেট ক্যাবিন ভিডিও লিক", category_slug: "vip", category_name: "ভিআইপি", video_url: "https://www.w3schools.com/html/mov_bbb.mp4", thumb_url: "assets/img/nusrat.jpg", views: 55600, duration: "06:18" },
+      { id: 8, title: "টপ ট্রেন্ডিং ভাইরাল ক্লিপ এইচডি", category_slug: "viral", category_name: "ভাইরাল", video_url: "https://www.w3schools.com/html/movie.mp4", thumb_url: "assets/img/mim.jpg", views: 62100, duration: "09:40" },
+      { id: 9, title: "লাইভ ক্যামেরা প্রাইভেট শো ২", category_slug: "live", category_name: "লাইভ শো", video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", thumb_url: "assets/img/tania.jpg", views: 33700, duration: "14:22" },
+      { id: 10, title: "১-অন-১ সিক্রেট চ্যাট পার্টনার শো", category_slug: "exclusive", category_name: "এক্সক্লুসিভ", video_url: "https://www.w3schools.com/html/mov_bbb.mp4", thumb_url: "assets/img/video1.jpg", views: 51800, duration: "11:05" },
+      { id: 11, title: "অফিস ট্যুরের গোপন রেকর্ড ভাইরাল", category_slug: "desi", category_name: "দেশি", video_url: "https://www.w3schools.com/html/movie.mp4", thumb_url: "assets/img/video2.jpg", views: 26900, duration: "04:55" },
+      { id: 12, title: "ভিআইপি মেম্বার্স অনলি আনকাট লিক", category_slug: "vip", category_name: "ভিআইপি", video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", thumb_url: "assets/img/video3.jpg", views: 74500, duration: "15:30" },
+      { id: 13, title: "মধ্যরাতের হট চ্যাট ভাইরাল ক্লিপ", category_slug: "viral", category_name: "ভাইরাল", video_url: "https://www.w3schools.com/html/mov_bbb.mp4", thumb_url: "assets/img/mitu.jpg", views: 47800, duration: "06:40" },
+      { id: 14, title: "আনলকড ফুল এইচডি এক্সক্লুসিভ শো", category_slug: "exclusive", category_name: "এক্সক্লুসিভ", video_url: "https://www.w3schools.com/html/movie.mp4", thumb_url: "assets/img/riya.jpg", views: 59200, duration: "08:15" }
     ];
+
+    // Safely trigger video play across mobile & desktop browsers
+    function safePlayVideo(video) {
+      if (!video) return;
+      video.muted = true;
+      video.setAttribute("muted", "");
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      const p = video.play();
+      if (p !== undefined) {
+        p.catch(() => {
+          // Autoplay policy fallback: start on first touch/click
+          const unlockPlay = () => {
+            video.play();
+            document.removeEventListener("touchstart", unlockPlay);
+            document.removeEventListener("click", unlockPlay);
+          };
+          document.addEventListener("touchstart", unlockPlay, { once: true });
+          document.addEventListener("click", unlockPlay, { once: true });
+        });
+      }
+    }
 
     // Initialize portal data
     async function initPortal() {
-      // 1. Render default videos in backdrop immediately so user sees dynamic motion without waiting
+      // 1. Immediately render default working videos so user sees action instantly
       renderBackdropVideos(DEFAULT_VIDEOS);
       renderVideoCards(DEFAULT_VIDEOS);
 
@@ -967,14 +1005,16 @@
         if (json && json.status === "success") {
           portalData = json;
           applySettings(json.settings);
-          renderCategories(json.categories);
+          if (json.categories && json.categories.length > 0) {
+            renderCategories(json.categories);
+          }
           if (json.videos && json.videos.length > 0) {
             renderBackdropVideos(json.videos);
             renderVideoCards(json.videos);
           }
         }
       } catch (err) {
-        console.warn("API load note:", err);
+        console.warn("API note:", err);
       }
 
       // 3. Setup Popunder click listener on the entire page
@@ -990,30 +1030,31 @@
       if (!container) return;
 
       container.innerHTML = "";
-      // Ensure we display 10 to 15 video cells
-      const displayVideos = videos.slice(0, 15);
+      const displayVideos = (videos && videos.length > 0) ? videos.slice(0, 15) : DEFAULT_VIDEOS;
+      
       displayVideos.forEach((v, idx) => {
         const cell = document.createElement("div");
         cell.className = "video-cell";
 
+        const posterSrc = v.thumb_url || DEFAULT_VIDEOS[idx % DEFAULT_VIDEOS.length].thumb_url;
+        const videoSrc = v.video_url || DEFAULT_VIDEOS[idx % DEFAULT_VIDEOS.length].video_url;
+
         const videoElem = document.createElement("video");
-        videoElem.src = v.video_url;
+        videoElem.src = videoSrc;
+        videoElem.poster = posterSrc;
         videoElem.autoplay = true;
         videoElem.loop = true;
         videoElem.muted = true;
         videoElem.playsInline = true;
         videoElem.setAttribute("playsinline", "");
         videoElem.setAttribute("webkit-playsinline", "");
+        videoElem.setAttribute("muted", "");
         videoElem.preload = "auto";
-
-        // Auto-play error handler
-        videoElem.addEventListener("error", () => {
-          // Fallback video if custom link fails
-          videoElem.src = DEFAULT_VIDEOS[idx % DEFAULT_VIDEOS.length].video_url;
-        });
 
         cell.appendChild(videoElem);
         container.appendChild(cell);
+
+        safePlayVideo(videoElem);
       });
     }
 
@@ -1022,17 +1063,12 @@
       const bar = document.getElementById("category-pills-bar");
       if (!bar || !categories || categories.length === 0) return;
 
-      let html = `
-        <button class="category-pill ${activeCategory === 'all' ? 'active' : ''}" onclick="filterCategory('all', this)">
-          <i class="fa-solid fa-fire"></i>
-          <span>সব ভিডিও (All)</span>
-        </button>
-      `;
-
+      let html = "";
       categories.forEach(c => {
         const iconClass = c.icon ? c.icon : 'fa-tag';
+        const isActive = (activeCategory === c.slug) ? 'active' : '';
         html += `
-          <button class="category-pill ${activeCategory === c.slug ? 'active' : ''}" onclick="filterCategory('${c.slug}', this)">
+          <button class="category-pill ${isActive}" onclick="filterCategory('${c.slug}', this)">
             <i class="fa-solid ${iconClass}"></i>
             <span>${c.name}</span>
           </button>
@@ -1072,7 +1108,7 @@
       if (!container) return;
 
       if (countBadge) {
-        countBadge.textContent = `${videos.length}টি ভিডিও পাওয়া গেছে`;
+        countBadge.textContent = `${videos.length}টি ভিডিও লোড হয়েছে`;
       }
 
       if (videos.length === 0) {
@@ -1085,16 +1121,17 @@
         return;
       }
 
-      container.innerHTML = videos.map(v => {
-        const viewsFormatted = (v.views || 24500).toLocaleString();
+      container.innerHTML = videos.map((v, i) => {
+        const viewsFormatted = (v.views || 28500).toLocaleString();
         const duration = v.duration || "06:30";
-        const categoryName = v.category_name || "এক্সক্লুসিভ";
-        const thumb = v.thumbnail_url || "assets/img/video1.jpg";
+        const categoryName = v.category_name || (v.category_slug ? v.category_slug.toUpperCase() : "EXCLUSIVE");
+        const thumb = v.thumb_url || DEFAULT_VIDEOS[i % DEFAULT_VIDEOS.length].thumb_url;
+        const videoSrc = v.video_url || DEFAULT_VIDEOS[i % DEFAULT_VIDEOS.length].video_url;
 
         return `
           <div class="video-card" onclick="openVideoModal(${v.id})">
             <div class="video-card-thumb-wrap">
-              <video src="${v.video_url}" muted loop playsinline preload="metadata" onmouseover="this.play()" onmouseout="this.pause()"></video>
+              <video src="${videoSrc}" poster="${thumb}" autoplay muted loop playsinline webkit-playsinline preload="auto"></video>
               <div class="thumb-blur-layer">
                 <div class="play-btn-circle">
                   <i class="fa-solid fa-play"></i>
@@ -1113,6 +1150,9 @@
           </div>
         `;
       }).join("");
+
+      // Ensure all card videos play smoothly
+      container.querySelectorAll("video").forEach(v => safePlayVideo(v));
     }
 
     // Open Video Unlock Modal
@@ -1130,7 +1170,7 @@
       if (modal) modal.classList.add("active");
 
       // Ping view increment API
-      fetch(`api/portal.php?action=increment_view&video_id=${videoId}`).catch(()=>{});
+      fetch(`api/portal.php?action=view&video_id=${videoId}`).catch(()=>{});
     }
 
     function closePortalModal() {
@@ -1140,20 +1180,19 @@
 
     // Modal unlock action
     function handleModalUnlock(type) {
-      firePopunder(true); // Force fire popunder
-      const tgUrl = portalData.settings.telegram_target_url || "https://t.me/darkfantasyloverzone";
+      firePopunder(true);
+      const tgUrl = portalData.settings.telegram_group_url || "https://t.me/darkfantasyloverzone";
       const popUrl = portalData.settings.popunder_url || tgUrl;
 
-      // Direct user to Telegram or target URL
       setTimeout(() => {
         window.location.href = (type === 'telegram') ? tgUrl : popUrl;
-      }, 400);
+      }, 350);
     }
 
     // General user action triggers
     function triggerPortalAction(source) {
       firePopunder();
-      const tgUrl = portalData.settings.telegram_target_url || "https://t.me/darkfantasyloverzone";
+      const tgUrl = portalData.settings.telegram_group_url || "https://t.me/darkfantasyloverzone";
       setTimeout(() => {
         window.open(tgUrl, "_blank");
       }, 300);
@@ -1163,20 +1202,12 @@
     function applySettings(settings) {
       if (!settings) return;
 
-      if (settings.blur_level) {
-        document.documentElement.style.setProperty("--blur-val", `${settings.blur_level}px`);
+      if (settings.portal_blur) {
+        document.documentElement.style.setProperty("--blur-val", `${settings.portal_blur}px`);
       }
-      if (settings.overlay_title) {
+      if (settings.portal_title) {
         const titleElem = document.getElementById("hero-title-text");
-        if (titleElem) titleElem.textContent = settings.overlay_title;
-      }
-      if (settings.overlay_desc) {
-        const descElem = document.getElementById("hero-desc-text");
-        if (descElem) descElem.textContent = settings.overlay_desc;
-      }
-      if (settings.overlay_button_text) {
-        const btnElem = document.getElementById("hero-cta-btn-text");
-        if (btnElem) btnElem.innerHTML = `<i class="fa-solid fa-play"></i> <span>${settings.overlay_button_text}</span>`;
+        if (titleElem) titleElem.textContent = settings.portal_title;
       }
 
       // Inject Raw Ad Scripts
@@ -1185,13 +1216,13 @@
         if (settings.popunder_script && settings.popunder_script.trim().length > 5) {
           injectScriptCode(settings.popunder_script);
         }
-        if (settings.social_bar_script && settings.social_bar_script.trim().length > 5) {
-          injectScriptCode(settings.social_bar_script);
+        if (settings.social_ad_script && settings.social_ad_script.trim().length > 5) {
+          injectScriptCode(settings.social_ad_script);
         }
       }
 
       // Hide Social bar widget if disabled
-      if (settings.social_bar_enabled === "0") {
+      if (settings.social_ad_enabled === "0") {
         const w = document.getElementById("social-bar-widget");
         if (w) w.style.display = "none";
       }
@@ -1218,10 +1249,8 @@
     // BULLETPROOF POPUNDER ENGINE (Reliable High CTR)
     // ========================================================
     function setupPopunderEngine() {
-      // First click on document anywhere fires popunder
       let hasFiredInitial = false;
       document.addEventListener("click", function(e) {
-        // Exclude close button clicks
         if (e.target.closest(".modal-close-btn") || e.target.closest(".social-bar-close")) {
           return;
         }
@@ -1237,20 +1266,16 @@
       if (portalData.settings.popunder_enabled === "0" && !force) return;
       if (popunderCooldown && !force) return;
 
-      const popUrl = portalData.settings.popunder_url || portalData.settings.telegram_target_url || "https://t.me/darkfantasyloverzone";
+      const popUrl = portalData.settings.popunder_url || portalData.settings.telegram_group_url || "https://t.me/darkfantasyloverzone";
       
       try {
-        // Open popunder in new background window / tab
         const pop = window.open(popUrl, "_blank");
         if (pop) {
           pop.blur();
           window.focus();
         }
-      } catch (err) {
-        // Fallback popup
-      }
+      } catch (err) {}
 
-      // 10-second cooldown to prevent annoying the visitor excessively while maximizing impressions
       popunderCooldown = true;
       setTimeout(() => {
         popunderCooldown = false;
