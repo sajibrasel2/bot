@@ -38,11 +38,19 @@
 
 <!-- Group List -->
 <div class="card">
-  <div class="card-header">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
     <div class="card-title">
-      <i class="fa-solid fa-layer-group"></i> পরিচালিত গ্রুপসমূহ
+      <i class="fa-solid fa-layer-group"></i> পরিচালিত গ্রুপ ও চ্যানেলসমূহ
     </div>
-    <span class="badge badge-blue">{{ chats|length }} টি গ্রুপ</span>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <a href="{{ url_for('chats_sync_all') }}" class="btn btn-sm" style="background:rgba(59, 130, 246, 0.2);color:#93c5fd;border:1px solid rgba(59, 130, 246, 0.4);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;" title="টেলিগ্রাম থেকে সমস্ত গ্রুপ ও চ্যানেলের রিয়েল-টাইম সদস্য সংখ্যা ও নাম রিফ্রেশ করুন">
+        <i class="fa-solid fa-arrows-rotate"></i> সব মেম্বার সিঙ্ক করুন
+      </a>
+      <button onclick="document.getElementById('addChannelModal').style.display='flex'" class="btn btn-sm" style="background:rgba(16, 185, 129, 0.2);color:#6ee7b7;border:1px solid rgba(16, 185, 129, 0.4);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <i class="fa-solid fa-plus"></i> চ্যানেল/গ্রুপ যোগ
+      </button>
+      <span class="badge badge-blue">{{ chats|length }} টি গ্রুপ</span>
+    </div>
   </div>
 
   {% if chats %}
@@ -50,26 +58,41 @@
     {% set cid = chat.chat_id if (chat is mapping and chat.chat_id is defined) else chat %}
     {% set ctitle = chat.title if (chat is mapping and chat.title) else ('গ্রুপ #' ~ loop.index) %}
     {% set mcount = chat.member_count if (chat is mapping and chat.member_count) else 0 %}
-    <div class="group-item">
+    <div class="group-item" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
       <div style="display:flex;align-items:center;gap:14px;">
         <div class="group-avatar">👥</div>
         <div class="group-info">
-          <div style="font-weight:600;font-size:15px;color:#f8fafc;">{{ ctitle }}</div>
-          <div class="group-id" style="display:flex;gap:10px;align-items:center;margin-top:2px;">
+          <div style="font-weight:600;font-size:15px;color:#f8fafc;display:flex;align-items:center;gap:8px;">
+            <span>{{ ctitle }}</span>
+            {% if cid|string == '-2074342232814' %}
+            <span class="badge" style="background:rgba(239, 68, 68, 0.2);color:#fca5a5;font-size:10px;padding:2px 8px;border-radius:10px;">পুরাতন/মাইগ্রেটেড</span>
+            {% endif %}
+          </div>
+          <div class="group-id" style="display:flex;gap:10px;align-items:center;margin-top:2px;flex-wrap:wrap;">
             <span>ID: <code>{{ cid }}</code></span>
             {% if mcount and mcount > 0 %}
             <span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-users"></i> {{ mcount }} জন সদস্য</span>
+            {% else %}
+            <span style="color:#94a3b8;font-size:12px;"><i class="fa-solid fa-users"></i> ০ জন সদস্য</span>
             {% endif %}
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <a href="{{ url_for('group_sync_info', chat_id=cid) }}" class="btn btn-sm" style="background:rgba(59, 130, 246, 0.15);color:#93c5fd;border:1px solid rgba(59, 130, 246, 0.3);" title="এই গ্রুপের সদস্য সংখ্যা ও নাম লাইভ সিঙ্ক করুন">
+          <i class="fa-solid fa-arrows-rotate"></i> সিঙ্ক
+        </a>
         <a href="{{ url_for('group_moderation', chat_id=cid) }}" class="btn btn-sm" style="background:rgba(239, 68, 68, 0.15);color:#f87171;border:1px solid rgba(239, 68, 68, 0.3);" title="এক ক্লিকে ভিডিও মুছুন">
           <i class="fa-solid fa-film"></i> ভিডিও মুছুন
         </a>
         <a href="{{ url_for('group_overview', chat_id=cid) }}" class="btn btn-primary btn-sm">
           <i class="fa-solid fa-sliders"></i> ম্যানেজ
         </a>
+        <form method="POST" action="{{ url_for('group_delete_record', chat_id=cid) }}" style="display:inline;margin:0;" onsubmit="return confirm('আপনি কি নিশ্চিত যে ড্যাশবোর্ড থেকে এই গ্রুপ/চ্যানেল রেকর্ডটি সরাতে চান?');">
+          <button type="submit" class="btn btn-sm" style="background:rgba(100, 116, 139, 0.15);color:#94a3b8;border:1px solid rgba(100, 116, 139, 0.3);padding:6px 10px;" title="ড্যাশবোর্ড থেকে রেকর্ডটি সরান">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </form>
       </div>
     </div>
     {% endfor %}
@@ -80,6 +103,29 @@
       <div style="font-size:13px;margin-top:6px;">বটকে কোনো গ্রুপে যোগ করুন এবং একটি মেসেজ পাঠান</div>
     </div>
   {% endif %}
+</div>
+
+<!-- Modal: Add Channel / Group -->
+<div id="addChannelModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div class="card" style="width:100%;max-width:480px;background:#151b28;border:1px solid #2e3a52;box-shadow:0 10px 35px rgba(0,0,0,0.5);margin:20px;border-radius:12px;">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="card-title"><i class="fa-solid fa-plus-circle" style="color:#10b981;"></i> নতুন চ্যানেল বা গ্রুপ যুক্ত করুন</div>
+      <button onclick="document.getElementById('addChannelModal').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_channel_or_group') }}" style="padding:16px;">
+      <div class="form-group">
+        <label class="form-label" style="font-size:13px;color:#cbd5e1;display:block;margin-bottom:8px;">চ্যানেল/গ্রুপ আইডি অথবা ইউজারনেম:</label>
+        <input type="text" name="channel_identifier" class="form-control" placeholder="যেমন: @mychannel অথবা -1004481003068" required style="background:#0f172a;color:#f8fafc;border:1px solid #334155;padding:10px 14px;border-radius:8px;width:100%;">
+        <div style="font-size:12px;color:#94a3b8;margin-top:8px;line-height:1.5;">
+          💡 <b>টিপস:</b> বটটিকে প্রথমে আপনার চ্যানেল/গ্রুপে অ্যাডমিন হিসেবে যুক্ত করে নিন। এরপর এখানে চ্যানেলের ইউজারনেম বা আইডি দিয়ে সাবমিট করলেই রিয়েল-টাইম মেম্বার সংখ্যা ও ডাটা প্যানেলে যুক্ত হয়ে যাবে।
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button type="button" onclick="document.getElementById('addChannelModal').style.display='none'" class="btn btn-sm" style="background:#1e293b;color:#cbd5e1;border:1px solid #334155;">বাতিল</button>
+        <button type="submit" class="btn btn-sm btn-primary" style="background:#10b981;border-color:#10b981;font-weight:600;">যুক্ত ও সিঙ্ক করুন</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Quick Guide -->

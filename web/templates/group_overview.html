@@ -9,7 +9,12 @@
   <span><b>{{ s.chat_title or 'গ্রুপ' }}</b> <code style="background:#1e2535;padding:2px 6px;border-radius:4px;font-size:12px;color:#94a3b8;">{{ chat_id }}</code></span>
   {% if s.member_count and s.member_count > 0 %}
   <span class="badge badge-green" style="margin-left:4px;"><i class="fa-solid fa-users"></i> {{ s.member_count }} জন সদস্য</span>
+  {% else %}
+  <span class="badge" style="background:rgba(148, 163, 184, 0.2);color:#94a3b8;margin-left:4px;"><i class="fa-solid fa-users"></i> ০ জন সদস্য</span>
   {% endif %}
+  <a href="{{ url_for('group_sync_info', chat_id=chat_id) }}" class="btn btn-sm" style="background:rgba(59, 130, 246, 0.2);color:#93c5fd;border:1px solid rgba(59, 130, 246, 0.4);border-radius:20px;padding:4px 10px;font-size:11px;margin-left:6px;display:inline-flex;align-items:center;gap:4px;" title="টেলিগ্রাম থেকে রিয়েল-টাইম মেম্বার সংখ্যা ও নাম রিফ্রেশ করুন">
+    <i class="fa-solid fa-arrows-rotate"></i> সিঙ্ক করুন
+  </a>
 </div>
 
 <!-- Tab Navigation -->
@@ -77,5 +82,17 @@
   </a>
   {% endfor %}
 
+</div>
+
+<div style="margin-top:24px;padding:16px;background:#151b28;border:1px solid rgba(239, 68, 68, 0.2);border-radius:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+  <div>
+    <div style="font-size:14px;font-weight:600;color:#f87171;"><i class="fa-solid fa-triangle-exclamation"></i> ড্যাশবোর্ড রেকর্ড ম্যানেজমেন্ট</div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:2px;">যদি এই গ্রুপটি টেলিগ্রামে আর না থাকে বা এটি একটি পুরাতন মাইগ্রেটেড গ্রুপ হয়, তবে ড্যাশবোর্ড থেকে এটি মুছে ফেলতে পারেন।</div>
+  </div>
+  <form method="POST" action="{{ url_for('group_delete_record', chat_id=chat_id) }}" onsubmit="return confirm('আপনি কি নিশ্চিত যে ড্যাশবোর্ড থেকে এই গ্রুপ/চ্যানেল রেকর্ডটি স্থায়ীভাবে মুছে ফেলতে চান?');" style="margin:0;">
+    <button type="submit" class="btn btn-sm" style="background:rgba(239, 68, 68, 0.15);color:#f87171;border:1px solid rgba(239, 68, 68, 0.3);padding:8px 16px;cursor:pointer;">
+      <i class="fa-solid fa-trash-can"></i> রেকর্ড ডিলিট করুন
+    </button>
+  </form>
 </div>
 {% endblock %}

@@ -571,9 +571,9 @@ async def cmd_name_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 async def handle_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Detects when the bot itself is added as member or promoted to administrator in any group."""
+    """Detects when the bot itself is added as member or promoted to administrator in any group or channel."""
     chat = update.effective_chat
-    if not chat or chat.type not in ("group", "supergroup"):
+    if not chat or chat.type not in ("group", "supergroup", "channel"):
         return
     my_member = update.my_chat_member
     if not my_member:
@@ -586,7 +586,28 @@ async def handle_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TY
             count = 0
         from database import update_chat_info
         await update_chat_info(chat.id, title=chat.title or "", member_count=count)
-        logger.info(f"🎉 Bot was added to group {chat.id} ({chat.title}) as {status}! Recorded in DB.")
+        logger.info(f"🎉 Bot was added to {chat.type} {chat.id} ({chat.title}) as {status}! Recorded in DB.")
+
+
+async def handle_chat_migration(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles Telegram group migration to supergroup, merging settings and removing old ID."""
+    msg = update.effective_message
+    if not msg:
+        return
+    old_id = update.effective_chat.id if update.effective_chat else None
+    new_id = getattr(msg, "migrate_to_chat_id", None)
+    if old_id and new_id:
+        try:
+            from database import _get_pool
+            pool = await _get_pool()
+            async with pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute("UPDATE IGNORE chat_settings SET chat_id=%s WHERE chat_id=%s", (new_id, old_id))
+                    await cur.execute("DELETE FROM chat_settings WHERE chat_id=%s", (old_id,))
+                    await cur.execute("UPDATE IGNORE group_video_messages SET chat_id=%s WHERE chat_id=%s", (new_id, old_id))
+            logger.info(f"🔄 Group migrated: {old_id} -> {new_id}. DB updated successfully.")
+        except Exception as e:
+            logger.error(f"Error handling group migration {old_id} -> {new_id}: {e}")
 
 
 @admin_only
@@ -619,6 +640,7 @@ async def cmd_test_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 def register(app) -> None:
     app.add_handler(ChatMemberHandler(handle_my_chat_member, ChatMemberHandler.MY_CHAT_MEMBER))
     app.add_handler(ChatMemberHandler(handle_chat_member, ChatMemberHandler.CHAT_MEMBER))
+    app.add_handler(MessageHandler(filters.StatusUpdate.MIGRATE, handle_chat_migration))
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handle_new_chat_members))
     # app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER,  handle_left_member))
     app.add_handler(CommandHandler("setwelcome",  set_welcome))

@@ -272,6 +272,53 @@ except Exception:
     pass
 
 
+def _tg_api_call(method: str, payload: dict, timeout: int = 10) -> dict:
+    """Helper for Telegram Bot API using Python standard library urllib (zero external requests dependency)."""
+    import urllib.request
+    import urllib.error
+    import json
+    from config import BOT_TOKEN
+    token = os.environ.get("BOT_TOKEN") or BOT_TOKEN
+    url = f"https://api.telegram.org/bot{token}/{method}"
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read().decode("utf-8"))
+        except Exception:
+            return {"ok": False, "description": str(e)}
+    except Exception as e:
+        return {"ok": False, "description": str(e)}
+
+
+def sync_chat_info_from_tg(chat_id: int):
+    """Syncs title and member_count for a chat directly from Telegram API."""
+    try:
+        cid = int(chat_id)
+        chat_data = _tg_api_call("getChat", {"chat_id": cid})
+        if chat_data.get("ok"):
+            res = chat_data.get("result", {})
+            title = res.get("title") or res.get("username") or ""
+            cnt_data = _tg_api_call("getChatMemberCount", {"chat_id": cid})
+            count = cnt_data.get("result", 0) if cnt_data.get("ok") else 0
+            _execute(
+                "UPDATE chat_settings SET chat_title=%s, member_count=%s WHERE chat_id=%s",
+                (title, count, cid)
+            )
+            return True, title, count
+        else:
+            return False, None, chat_data.get("description", "Chat not found")
+    except Exception as e:
+        return False, None, str(e)
+
+
 def get_all_chats():
     try:
         rows = _query("SELECT * FROM chat_settings ORDER BY chat_id", fetchall=True)
@@ -553,18 +600,16 @@ def group_moderation(chat_id):
 def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
     """
     Cleans video messages from a Telegram group using:
-    1. Telegram Bot API deleteMessages on tracked message IDs from DB
-    2. Telethon MTProto search (InputMessagesFilterVideo) and batch delete if session exists
+    1. Telegram Bot API deleteMessages on tracked message IDs from DB (via standard urllib, zero requests dependency)
+    2. Telethon MTProto userbot batch delete for tracked and historical videos if session exists
     """
-    import requests
     import time
-    from config import BOT_TOKEN
-    token = os.environ.get("BOT_TOKEN") or BOT_TOKEN
     chat_id = int(chat_id)
 
     deleted_bot_api = 0
     deleted_telethon = 0
     errors = []
+    actually_deleted_ids = set()
 
     # 1. Fetch tracked video messages from DB
     db_ids = []
@@ -580,49 +625,36 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
     except Exception as e:
         errors.append(f"DB query error: {e}")
 
-    # Batch delete tracked videos via Telegram Bot API
-    if db_ids and token:
+    # Batch delete tracked videos via Telegram Bot API using urllib
+    if db_ids:
         for i in range(0, len(db_ids), 100):
             chunk = db_ids[i:i + 100]
             try:
-                url = f"https://api.telegram.org/bot{token}/deleteMessages"
-                resp = requests.post(url, json={"chat_id": chat_id, "message_ids": chunk}, timeout=10)
-                res_data = resp.json() if resp.status_code == 200 else {}
+                res_data = _tg_api_call("deleteMessages", {"chat_id": chat_id, "message_ids": chunk}, timeout=10)
                 if res_data.get("ok"):
                     deleted_bot_api += len(chunk)
+                    actually_deleted_ids.update(chunk)
                 else:
-                    # Fallback to single message deletion
+                    # Fallback to single message deletion via Bot API
                     for mid in chunk:
                         try:
-                            s_url = f"https://api.telegram.org/bot{token}/deleteMessage"
-                            s_resp = requests.post(s_url, json={"chat_id": chat_id, "message_id": mid}, timeout=5)
-                            if s_resp.status_code == 200 and s_resp.json().get("ok"):
+                            s_resp = _tg_api_call("deleteMessage", {"chat_id": chat_id, "message_id": mid}, timeout=5)
+                            if s_resp.get("ok"):
                                 deleted_bot_api += 1
+                                actually_deleted_ids.add(mid)
                         except Exception:
                             pass
             except Exception as e:
                 errors.append(f"Bot API batch delete error: {e}")
-                for mid in chunk:
-                    try:
-                        s_url = f"https://api.telegram.org/bot{token}/deleteMessage"
-                        s_resp = requests.post(s_url, json={"chat_id": chat_id, "message_id": mid}, timeout=5)
-                        if s_resp.status_code == 200 and s_resp.json().get("ok"):
-                            deleted_bot_api += 1
-                    except Exception:
-                        pass
-            time.sleep(0.1)
+            time.sleep(0.05)
 
-        # Remove deleted records from DB
-        try:
-            if db_ids:
-                format_strings = ','.join(['%s'] * len(db_ids))
-                _execute(f"DELETE FROM group_video_messages WHERE chat_id=%s AND message_id IN ({format_strings})", [chat_id] + db_ids)
-        except Exception as e:
-            errors.append(f"DB cleanup error: {e}")
+    # 2. Telethon MTProto userbot scan & purge
+    # Any message IDs that Bot API couldn't delete (e.g. older than 48h or bot permission limits)
+    # can be deleted with 100% success by Telethon userbot!
+    remaining_db_ids = [mid for mid in db_ids if mid not in actually_deleted_ids]
+    telethon_limit = (limit - len(actually_deleted_ids)) if (limit and limit > 0) else 500
 
-    # 2. Telethon MTProto userbot scan & purge (for untracked or older historical videos)
-    telethon_limit = (limit - deleted_bot_api) if (limit and limit > 0) else 500
-    if telethon_limit > 0:
+    if remaining_db_ids or telethon_limit > 0:
         try:
             project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             sess_candidates = []
@@ -655,21 +687,37 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
                             except Exception:
                                 continue
 
-                            t_ids = []
-                            async for m in t_client.iter_messages(chat_id, filter=InputMessagesFilterVideo, limit=telethon_limit):
-                                if m and m.id and m.id not in db_ids:
-                                    t_ids.append(m.id)
-
-                            if t_ids:
-                                for i in range(0, len(t_ids), 100):
-                                    c_chunk = t_ids[i:i + 100]
+                            # First: delete the tracked DB IDs that Bot API couldn't delete
+                            if remaining_db_ids:
+                                for i in range(0, len(remaining_db_ids), 100):
+                                    c_chunk = remaining_db_ids[i:i + 100]
                                     try:
                                         await t_client.delete_messages(chat_id, c_chunk)
                                         t_del += len(c_chunk)
+                                        actually_deleted_ids.update(c_chunk)
                                     except Exception:
                                         pass
-                                    await asyncio.sleep(0.2)
-                            if t_del > 0 or t_ids:
+                                    await asyncio.sleep(0.1)
+
+                            # Second: if we still want to clean historical videos
+                            if telethon_limit > 0:
+                                t_ids = []
+                                async for m in t_client.iter_messages(chat_id, filter=InputMessagesFilterVideo, limit=telethon_limit):
+                                    if m and m.id and m.id not in actually_deleted_ids:
+                                        t_ids.append(m.id)
+
+                                if t_ids:
+                                    for i in range(0, len(t_ids), 100):
+                                        c_chunk = t_ids[i:i + 100]
+                                        try:
+                                            await t_client.delete_messages(chat_id, c_chunk)
+                                            t_del += len(c_chunk)
+                                            actually_deleted_ids.update(c_chunk)
+                                        except Exception:
+                                            pass
+                                        await asyncio.sleep(0.1)
+
+                            if t_del > 0:
                                 break
                         except Exception:
                             pass
@@ -685,7 +733,21 @@ def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
         except Exception as e:
             errors.append(f"Telethon purge error: {e}")
 
+    # Remove deleted records from DB
+    try:
+        del_list = list(actually_deleted_ids)
+        if del_list:
+            for i in range(0, len(del_list), 500):
+                c_del = del_list[i:i + 500]
+                format_strings = ','.join(['%s'] * len(c_del))
+                _execute(f"DELETE FROM group_video_messages WHERE chat_id=%s AND message_id IN ({format_strings})", [chat_id] + c_del)
+    except Exception as e:
+        errors.append(f"DB cleanup error: {e}")
+
     total_deleted = deleted_bot_api + deleted_telethon
+    if len(actually_deleted_ids) > total_deleted:
+        total_deleted = len(actually_deleted_ids)
+
     return {
         "success": True,
         "deleted": total_deleted,
@@ -831,6 +893,85 @@ def api_group_clean_videos(chat_id):
     except Exception as e:
         res = {"success": False, "deleted": 0, "error": str(e)}
     return jsonify(res)
+
+
+@app.route("/chats/sync-all")
+@login_required
+def chats_sync_all():
+    chats = get_all_chats()
+    synced = 0
+    errors = []
+    for c in chats:
+        cid = c.get("chat_id")
+        if not cid:
+            continue
+        ok, title, res = sync_chat_info_from_tg(cid)
+        if ok:
+            synced += 1
+        else:
+            errors.append(f"{cid}: {res}")
+    
+    if synced > 0:
+        flash(f"🔄 মোট {synced}টি গ্রুপ/চ্যানেলের মেম্বার কাউন্ট ও তথ্য টেলিগ্রামের সাথে সিঙ্ক করা হয়েছে!", "success")
+    else:
+        flash(f"⚠️ কোনো গ্রুপ সিঙ্ক করা যায়নি বা বটের কোনো গ্রুপে এক্সেস নেই।", "info")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/group/<string:chat_id>/sync-info")
+@login_required
+def group_sync_info(chat_id):
+    try:
+        cid = int(chat_id)
+        ok, title, res = sync_chat_info_from_tg(cid)
+        if ok:
+            flash(f"🔄 '{title}' এর তথ্য সফলভাবে সিঙ্ক হয়েছে! বর্তমান মেম্বার: {res} জন।", "success")
+        else:
+            flash(f"⚠️ সিঙ্ক ব্যর্থ: {res}", "error")
+    except Exception as e:
+        flash(f"⚠️ ত্রুটি: {e}", "error")
+    return redirect(url_for("group_overview", chat_id=chat_id))
+
+
+@app.route("/group/<string:chat_id>/delete-record", methods=["POST"])
+@login_required
+def group_delete_record(chat_id):
+    try:
+        cid = int(chat_id)
+        _execute("DELETE FROM chat_settings WHERE chat_id=%s", (cid,))
+        _execute("DELETE FROM group_video_messages WHERE chat_id=%s", (cid,))
+        flash(f"🗑️ গ্রুপ/চ্যানেল রেকর্ড ({cid}) সফলভাবে ড্যাশবোর্ড থেকে মুছে ফেলা হয়েছে।", "success")
+    except Exception as e:
+        flash(f"⚠️ মুছতে ত্রুটি: {e}", "error")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/chats/add-channel", methods=["POST"])
+@login_required
+def add_channel_or_group():
+    raw_id = request.form.get("channel_identifier", "").strip()
+    if not raw_id:
+        flash("অনুগ্রহ করে চ্যানেল/গ্রুপ আইডি বা ইউজারনেম দিন (যেমন @mychannel বা -100...)", "error")
+        return redirect(url_for("dashboard"))
+    
+    chat_data = _tg_api_call("getChat", {"chat_id": raw_id})
+    if not chat_data.get("ok"):
+        flash(f"⚠️ টেলিগ্রাম থেকে চ্যানেল/গ্রুপ পাওয়া যায়নি: {chat_data.get('description', 'ভুল আইডি বা বট এডমিন নেই')}", "error")
+        return redirect(url_for("dashboard"))
+
+    res = chat_data.get("result", {})
+    cid = res.get("id")
+    title = res.get("title") or res.get("username") or str(cid)
+    cnt_data = _tg_api_call("getChatMemberCount", {"chat_id": cid})
+    count = cnt_data.get("result", 0) if cnt_data.get("ok") else 0
+
+    _execute(
+        "INSERT INTO chat_settings (chat_id, chat_title, member_count) VALUES (%s, %s, %s) "
+        "ON DUPLICATE KEY UPDATE chat_title=%s, member_count=%s",
+        (cid, title, count, title, count)
+    )
+    flash(f"🎉 '{title}' সফলভাবে যুক্ত হয়েছে! বর্তমান মেম্বার সংখ্যা: {count} জন।", "success")
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/group/<string:chat_id>/notes", methods=["GET", "POST"])
