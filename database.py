@@ -154,6 +154,17 @@ async def init_db() -> None:
                     INDEX idx_chat_inviter (chat_id, inviter_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
+            await cur.execute("""
+                CREATE TABLE IF NOT EXISTS group_video_messages (
+                    id         INT AUTO_INCREMENT PRIMARY KEY,
+                    chat_id    BIGINT NOT NULL,
+                    message_id INT NOT NULL,
+                    sender_id  BIGINT DEFAULT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_chat (chat_id),
+                    UNIQUE KEY uniq_chat_msg (chat_id, message_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
             await cur.execute(
                 "INSERT INTO bot_admins (user_id, username, first_name) VALUES (%s, %s, %s) "
                 "ON DUPLICATE KEY UPDATE username=VALUES(username), first_name=VALUES(first_name)",
@@ -835,4 +846,79 @@ async def lock_user_forceadd(chat_id: int, user_id: int) -> None:
                 "DELETE FROM forceadd_unlocked_users WHERE chat_id=%s AND user_id=%s",
                 (chat_id, user_id)
             )
+
+
+# ── Group Video Tracking & Bulk Purge Helpers ──────────────────────────
+
+async def record_group_video(chat_id: int, message_id: int, sender_id: int = None) -> None:
+    """Record an incoming video message in a group for tracking and bulk deletion."""
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT IGNORE INTO group_video_messages (chat_id, message_id, sender_id) VALUES (%s, %s, %s)",
+                    (chat_id, message_id, sender_id)
+                )
+    except Exception:
+        pass
+
+
+async def get_group_videos_count(chat_id: int) -> int:
+    """Get total tracked video messages in a group."""
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(
+                    "SELECT COUNT(*) AS cnt FROM group_video_messages WHERE chat_id=%s",
+                    (chat_id,)
+                )
+                row = await cur.fetchone()
+                return int(row["cnt"]) if row and row.get("cnt") else 0
+    except Exception:
+        return 0
+
+
+async def get_group_video_ids(chat_id: int, limit: int = None) -> list:
+    """Get tracked video message IDs for a group."""
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                if limit and limit > 0:
+                    await cur.execute(
+                        "SELECT message_id FROM group_video_messages WHERE chat_id=%s ORDER BY message_id DESC LIMIT %s",
+                        (chat_id, limit)
+                    )
+                else:
+                    await cur.execute(
+                        "SELECT message_id FROM group_video_messages WHERE chat_id=%s ORDER BY message_id DESC",
+                        (chat_id,)
+                    )
+                rows = await cur.fetchall()
+                return [int(r["message_id"]) for r in rows if r.get("message_id")]
+    except Exception:
+        return []
+
+
+async def remove_group_video_records(chat_id: int, message_ids: list = None) -> None:
+    """Remove video records from database after deletion."""
+    try:
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                if message_ids:
+                    format_strings = ','.join(['%s'] * len(message_ids))
+                    await cur.execute(
+                        f"DELETE FROM group_video_messages WHERE chat_id=%s AND message_id IN ({format_strings})",
+                        [chat_id] + message_ids
+                    )
+                else:
+                    await cur.execute(
+                        "DELETE FROM group_video_messages WHERE chat_id=%s",
+                        (chat_id,)
+                    )
+    except Exception:
+        pass
 

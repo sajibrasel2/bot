@@ -84,6 +84,7 @@ async def post_init(app: Application) -> None:
         BotCommand("mute",              "মিউট করুন"),
         BotCommand("unmute",            "আনমিউট করুন"),
         BotCommand("clean",             "মেসেজ মুছুন (/purge)"),
+        BotCommand("cleanvideos",       "গ্রুপের সব ভিডিও মুছুন (/delvideos)"),
         BotCommand("lock",              "চ্যাট লক করুন"),
         BotCommand("unlock",            "চ্যাট আনলক করুন"),
         BotCommand("pin",               "মেসেজ পিন করুন"),

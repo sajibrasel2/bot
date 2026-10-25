@@ -518,6 +518,134 @@ async def moderation_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
         await query.answer(f"ভুল হয়েছে: {e}", show_alert=True)
 
 
+# ── 1-Click Group Video Cleaner ─────────────────────
+
+@admin_only
+async def cmd_cleanvideos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Trigger 1-click video cleaner with confirmation."""
+    chat = update.effective_chat
+    if not chat or chat.type not in ("group", "supergroup"):
+        await update.message.reply_text("⛔ এই কমান্ডটি শুধুমাত্র টেলিগ্রাম গ্রুপে ব্যবহারযোগ্য।")
+        return
+
+    from database import get_group_videos_count
+    count = await get_group_videos_count(chat.id)
+
+    kb = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("🗑️ হ্যাঁ, সব ভিডিও মুছুন", callback_data=f"cleanvid_yes_{chat.id}"),
+            InlineKeyboardButton("❌ বাতিল", callback_data=f"cleanvid_no_{chat.id}")
+        ]
+    ])
+    msg = await update.message.reply_html(
+        f"⚠️ <b>গ্রুপের ভিডিও ক্লিনআপ সতর্কতা / Group Video Cleaner</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📊 <b>ট্র্যাকড ভিডিও:</b> {count} টি\n\n"
+        f"আপনি কি নিশ্চিত যে আপনি এই গ্রুপের <b>সমস্ত ভিডিও মেসেজ এক ক্লিকে মুছে ফেলতে চান</b>?\n"
+        f"<i>(নোট: ডিলিট করার পর ভিডিওগুলো পুনরুদ্ধার করা সম্ভব হবে না)</i>",
+        reply_markup=kb
+    )
+    async def _auto_del_prompt(m):
+        await asyncio.sleep(30)
+        try:
+            await m.delete()
+        except Exception:
+            pass
+    asyncio.create_task(_auto_del_prompt(msg))
+
+
+async def callback_cleanvideos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    if not query:
+        return
+    await query.answer()
+
+    data = query.data or ""
+    if not await _is_admin_user(query.message.chat, query.from_user.id):
+        await query.answer("⛔ এই অ্যাকশনটি শুধুমাত্র গ্রুপ অ্যাডমিনদের জন্য!", show_alert=True)
+        return
+
+    if data.startswith("cleanvid_no_"):
+        await query.message.edit_text("❌ ভিডিও ক্লিনআপ বাতিল করা হয়েছে।")
+        await asyncio.sleep(3)
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
+        return
+
+    if data.startswith("cleanvid_yes_"):
+        chat_id = query.message.chat.id
+        await query.message.edit_text("⏳ গ্রুপের ভিডিও মুছে ফেলা হচ্ছে... দয়া করে অপেক্ষা করুন...")
+        
+        import os
+        from database import get_group_video_ids, remove_group_video_records
+        db_ids = await get_group_video_ids(chat_id)
+        deleted_count = 0
+
+        # Delete database tracked videos in chunks of 100 via Bot API delete_messages
+        for i in range(0, len(db_ids), 100):
+            chunk = db_ids[i:i+100]
+            try:
+                if hasattr(context.bot, "delete_messages"):
+                    await context.bot.delete_messages(chat_id, chunk)
+                else:
+                    for mid in chunk:
+                        try:
+                            await context.bot.delete_message(chat_id, mid)
+                        except Exception:
+                            pass
+                deleted_count += len(chunk)
+            except Exception:
+                for mid in chunk:
+                    try:
+                        await context.bot.delete_message(chat_id, mid)
+                        deleted_count += 1
+                    except Exception:
+                        pass
+            await asyncio.sleep(0.3)
+
+        await remove_group_video_records(chat_id)
+
+        # Also search & purge via Telethon userbot if session exists
+        try:
+            project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            sess_path = os.path.join(project_dir, "video_collector", "collector_userbot")
+            if os.path.exists(sess_path + ".session"):
+                from video_collector.config import TG_API_ID, TG_API_HASH
+                from telethon import TelegramClient
+                from telethon.tl.types import InputMessagesFilterVideo
+                t_client = TelegramClient(sess_path, TG_API_ID, TG_API_HASH)
+                await t_client.connect()
+                if await t_client.is_user_authorized():
+                    t_ids = []
+                    async for m in t_client.iter_messages(chat_id, filter=InputMessagesFilterVideo, limit=500):
+                        if m and m.id and m.id not in db_ids:
+                            t_ids.append(m.id)
+                    for i in range(0, len(t_ids), 100):
+                        chunk = t_ids[i:i+100]
+                        try:
+                            await t_client.delete_messages(chat_id, chunk)
+                            deleted_count += len(chunk)
+                        except Exception:
+                            pass
+                        await asyncio.sleep(0.3)
+                await t_client.disconnect()
+        except Exception:
+            pass
+
+        await query.message.edit_text(
+            f"✅ <b>গ্রুপ ক্লিনআপ সম্পন্ন!</b>\n\n"
+            f"মোট <b>{deleted_count}টি ভিডিও মেসেজ</b> সফলভাবে মুছে ফেলা হয়েছে।",
+            parse_mode="HTML"
+        )
+        await asyncio.sleep(10)
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
+
+
 def register(app) -> None:
     app.add_handler(CommandHandler("warn",      cmd_warn))
     app.add_handler(CommandHandler("unwarn",    cmd_unwarn))
@@ -532,4 +660,6 @@ def register(app) -> None:
     app.add_handler(CommandHandler("tmute",     cmd_tmute))
     app.add_handler(CommandHandler("panel",     cmd_panel))
     app.add_handler(CommandHandler("control",   cmd_panel))
+    app.add_handler(CommandHandler(["cleanvideos", "delvideos", "purgevideos", "cleanvideo", "delvideo"], cmd_cleanvideos))
+    app.add_handler(CallbackQueryHandler(callback_cleanvideos, pattern=r"^cleanvid_"))
     app.add_handler(CallbackQueryHandler(moderation_callback, pattern=r"^mod_"))

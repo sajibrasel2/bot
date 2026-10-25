@@ -288,6 +288,14 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not chat:
         return
 
+    # Track video messages for 1-click group video cleaner
+    if getattr(msg, "video", None) or getattr(msg, "video_note", None):
+        try:
+            from database import record_group_video
+            asyncio.create_task(record_group_video(chat.id, msg.message_id, update.effective_user.id if update.effective_user else None))
+        except Exception:
+            pass
+
     # অ্যাডমিনরা সম্পূর্ণ বাদ (মুক্ত)
     if await is_admin(update):
         return
@@ -874,7 +882,7 @@ VALID_COMMANDS = {
     "pin", "pinsilent", "unpin", "unpinall", "lock", "unlock",
     "setrules", "setwarnaction", "setwarnlimit",
     "promote", "addadmin", "setadmin", "makeadmin", "demote", "removeadmin", "deladmin", "unadmin",
-    "del", "delete", "purge", "setgrouptitle", "setdesc",
+    "del", "delete", "purge", "cleanvideos", "delvideos", "purgevideos", "cleanvideo", "delvideo", "setgrouptitle", "setdesc",
     "setwelcome", "setgoodbye", "welcome", "goodbye", "resetwelcome", "setwelcomesticker", "delwelcomesticker", "setwelcomebtn", "delwelcomebtn", "welcometest", "testwelcome",
     "promo", "sendpromo", "setpromosticker", "delpromosticker",
     "servicealert", "sendalert", "girlnotice",

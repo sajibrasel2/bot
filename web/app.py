@@ -123,6 +123,20 @@ def _execute(sql: str, args=()):
         conn.close()
 
 
+def run_async(coro):
+    """Run an async coroutine synchronously inside Flask request thread."""
+    import asyncio
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        try:
+            loop.close()
+        except Exception:
+            pass
+
+
 def ensure_db_schema():
     """Ensure all required columns and tables exist in MySQL."""
     try:
@@ -161,6 +175,18 @@ def ensure_db_schema():
                         timestamp BIGINT NOT NULL,
                         UNIQUE KEY uniq_invite (chat_id, joined_user_id),
                         INDEX idx_inviter (chat_id, inviter_id)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """)
+
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS group_video_messages (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        chat_id BIGINT NOT NULL,
+                        message_id INT NOT NULL,
+                        sender_id BIGINT DEFAULT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_chat (chat_id),
+                        UNIQUE KEY uniq_chat_msg (chat_id, message_id)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """)
 
@@ -514,11 +540,178 @@ def group_moderation(chat_id):
     s     = get_settings(chat_id)
     warns = get_warns_for_chat(chat_id)
     top_inviters = get_top_inviters_for_chat(chat_id, limit=10)
+    row_vc = _query("SELECT COUNT(*) AS cnt FROM group_video_messages WHERE chat_id=%s", (chat_id,), fetchone=True)
+    tracked_videos_count = row_vc["cnt"] if row_vc and "cnt" in row_vc else 0
     return render_template("group_moderation.html",
                            s=s, chat_id=chat_id,
                            warns=list(enumerate(warns)),
                            top_inviters=list(enumerate(top_inviters)),
+                           tracked_videos_count=tracked_videos_count,
                            active="groups")
+
+
+def clean_group_videos_sync(chat_id: int, limit: int = None) -> dict:
+    """
+    Cleans video messages from a Telegram group using:
+    1. Telegram Bot API deleteMessages on tracked message IDs from DB
+    2. Telethon MTProto search (InputMessagesFilterVideo) and batch delete if session exists
+    """
+    import requests
+    import time
+    from config import BOT_TOKEN
+    token = os.environ.get("BOT_TOKEN") or BOT_TOKEN
+    chat_id = int(chat_id)
+
+    deleted_bot_api = 0
+    deleted_telethon = 0
+    errors = []
+
+    # 1. Fetch tracked video messages from DB
+    sql = "SELECT message_id FROM group_video_messages WHERE chat_id=%s ORDER BY message_id DESC"
+    args = [chat_id]
+    if limit and limit > 0:
+        sql += " LIMIT %s"
+        args.append(limit)
+
+    rows = _query(sql, args, fetchall=True)
+    db_ids = [int(r["message_id"]) for r in rows if r.get("message_id")] if rows else []
+
+    # Batch delete tracked videos via Telegram Bot API
+    if db_ids and token:
+        for i in range(0, len(db_ids), 100):
+            chunk = db_ids[i:i + 100]
+            try:
+                url = f"https://api.telegram.org/bot{token}/deleteMessages"
+                resp = requests.post(url, json={"chat_id": chat_id, "message_ids": chunk}, timeout=10)
+                res_data = resp.json() if resp.status_code == 200 else {}
+                if res_data.get("ok"):
+                    deleted_bot_api += len(chunk)
+                else:
+                    # Fallback to single message deletion
+                    for mid in chunk:
+                        try:
+                            s_url = f"https://api.telegram.org/bot{token}/deleteMessage"
+                            s_resp = requests.post(s_url, json={"chat_id": chat_id, "message_id": mid}, timeout=5)
+                            if s_resp.status_code == 200 and s_resp.json().get("ok"):
+                                deleted_bot_api += 1
+                        except Exception:
+                            pass
+            except Exception as e:
+                errors.append(f"Bot API batch delete error: {e}")
+                for mid in chunk:
+                    try:
+                        s_url = f"https://api.telegram.org/bot{token}/deleteMessage"
+                        s_resp = requests.post(s_url, json={"chat_id": chat_id, "message_id": mid}, timeout=5)
+                        if s_resp.status_code == 200 and s_resp.json().get("ok"):
+                            deleted_bot_api += 1
+                    except Exception:
+                        pass
+            time.sleep(0.1)
+
+        # Remove deleted records from DB
+        try:
+            if db_ids:
+                format_strings = ','.join(['%s'] * len(db_ids))
+                _execute(f"DELETE FROM group_video_messages WHERE chat_id=%s AND message_id IN ({format_strings})", [chat_id] + db_ids)
+        except Exception as e:
+            errors.append(f"DB cleanup error: {e}")
+
+    # 2. Telethon MTProto userbot scan & purge (for untracked or older historical videos)
+    telethon_limit = (limit - deleted_bot_api) if (limit and limit > 0) else 500
+    if telethon_limit > 0:
+        try:
+            project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            sess_candidates = [
+                os.path.join(project_dir, "video_collector", "collector_userbot"),
+            ]
+            sessions_dir = os.path.join(project_dir, "sessions")
+            if os.path.isdir(sessions_dir):
+                for f in os.listdir(sessions_dir):
+                    if f.endswith(".session"):
+                        sess_candidates.append(os.path.join(sessions_dir, f[:-8]))
+
+            valid_sess = None
+            for sc in sess_candidates:
+                if os.path.exists(sc + ".session"):
+                    valid_sess = sc
+                    break
+
+            if valid_sess:
+                from video_collector.config import TG_API_ID, TG_API_HASH
+                from telethon import TelegramClient
+                from telethon.tl.types import InputMessagesFilterVideo
+                import asyncio
+
+                async def _telethon_clean():
+                    t_del = 0
+                    t_client = TelegramClient(valid_sess, TG_API_ID, TG_API_HASH)
+                    await t_client.connect()
+                    try:
+                        if await t_client.is_user_authorized():
+                            t_ids = []
+                            async for m in t_client.iter_messages(chat_id, filter=InputMessagesFilterVideo, limit=telethon_limit):
+                                if m and m.id and m.id not in db_ids:
+                                    t_ids.append(m.id)
+                            for i in range(0, len(t_ids), 100):
+                                c_chunk = t_ids[i:i + 100]
+                                try:
+                                    await t_client.delete_messages(chat_id, c_chunk)
+                                    t_del += len(c_chunk)
+                                except Exception:
+                                    pass
+                                await asyncio.sleep(0.2)
+                    finally:
+                        await t_client.disconnect()
+                    return t_del
+
+                deleted_telethon = run_async(_telethon_clean()) or 0
+        except Exception as e:
+            errors.append(f"Telethon purge error: {e}")
+
+    total_deleted = deleted_bot_api + deleted_telethon
+    return {
+        "success": True,
+        "deleted": total_deleted,
+        "deleted_bot_api": deleted_bot_api,
+        "deleted_telethon": deleted_telethon,
+        "errors": errors
+    }
+
+
+@app.route("/group/<string:chat_id>/clean-videos", methods=["POST"])
+@login_required
+def group_clean_videos(chat_id):
+    chat_id = int(chat_id)
+    try:
+        raw_limit = request.form.get("limit", "0")
+        limit = int(raw_limit) if raw_limit and raw_limit.isdigit() else 0
+        limit = limit if limit > 0 else None
+    except Exception:
+        limit = None
+
+    res = clean_group_videos_sync(chat_id, limit=limit)
+    deleted = res.get("deleted", 0)
+    if deleted > 0:
+        flash(f"🎬 সফলভাবে গ্রুপের মোট {deleted}টি ভিডিও মুছে ফেলা হয়েছে!", "success")
+    else:
+        flash("ℹ️ কোনো ভিডিও মেসেজ পাওয়া যায়নি বা ইতিমধ্যে সব ভিডিও মুছে ফেলা হয়েছে।", "info")
+
+    return redirect(url_for("group_moderation", chat_id=chat_id))
+
+
+@app.route("/api/group/<string:chat_id>/clean-videos", methods=["POST"])
+@login_required
+def api_group_clean_videos(chat_id):
+    chat_id = int(chat_id)
+    data = request.get_json(silent=True) or {}
+    raw_limit = data.get("limit") or request.form.get("limit", 0)
+    try:
+        limit = int(raw_limit) if raw_limit and int(raw_limit) > 0 else None
+    except Exception:
+        limit = None
+
+    res = clean_group_videos_sync(chat_id, limit=limit)
+    return jsonify(res)
 
 
 @app.route("/group/<string:chat_id>/notes", methods=["GET", "POST"])

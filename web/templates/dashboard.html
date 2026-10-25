@@ -63,7 +63,10 @@
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <a href="{{ url_for('group_moderation', chat_id=cid) }}" class="btn btn-sm" style="background:rgba(239, 68, 68, 0.15);color:#f87171;border:1px solid rgba(239, 68, 68, 0.3);" title="এক ক্লিকে ভিডিও মুছুন">
+          <i class="fa-solid fa-film"></i> ভিডিও মুছুন
+        </a>
         <a href="{{ url_for('group_overview', chat_id=cid) }}" class="btn btn-primary btn-sm">
           <i class="fa-solid fa-sliders"></i> ম্যানেজ
         </a>

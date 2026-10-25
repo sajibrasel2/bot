@@ -44,7 +44,8 @@ HELP_SECTIONS = {
             "• <code>/tban &lt;সময়&gt; [Reply]</code> — নির্দিষ্ট সময়ের জন্য ব্যান\n"
             "• <code>/unban &lt;User ID&gt;</code> — ব্যান তুলে নিন\n"
             "• <code>/del [Reply]</code> — টার্গেট মেসেজ মুছে দিন\n"
-            "• <code>/purge &lt;সংখ্যা&gt;</code> — শেষ N টি মেসেজ একসাথে ডিলিট করুন"
+            "• <code>/purge &lt;সংখ্যা&gt;</code> — শেষ N টি মেসেজ একসাথে ডিলিট করুন\n"
+            "• <code>/cleanvideos</code> (বা <code>/delvideos</code>) — এক ক্লিকে গ্রুপের সব ভিডিও মুছুন"
         ),
     },
     "spam": {
@@ -137,7 +138,8 @@ HELP_SECTIONS = {
             "• <code>/warn</code> / <code>/unwarn</code> / <code>/warns</code> — ওয়ার্ন সিস্টেম\n"
             "• <code>/mute</code> / <code>/tmute 1h</code> / <code>/unmute</code> — মিউট\n"
             "• <code>/kick</code> / <code>/ban</code> / <code>/tban 1d</code> / <code>/unban</code> — ব্যান\n"
-            "• <code>/del</code> / <code>/purge 10</code> — মেসেজ ডিলিট\n\n"
+            "• <code>/del</code> / <code>/purge 10</code> — মেসেজ ডিলিট\n"
+            "• <code>/cleanvideos</code> — গ্রুপের সব ভিডিও মুছুন\n\n"
             "⚙️ <b>ম্যানেজমেন্ট ও ব্রডকাস্ট:</b>\n"
             "• <code>/settings</code> — সেটিংস ড্যাশবোর্ড\n"
             "• <code>/tagall &lt;বার্তা&gt;</code> — সবাইকে ১০০ জনের ব্যাচে মেনশন\n"

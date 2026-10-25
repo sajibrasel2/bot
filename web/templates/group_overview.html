@@ -47,6 +47,8 @@
       [("Anti-flood", s.antiflood_enabled), ("Anti-link", s.antilink_enabled), ("Bio-Link", s.antibiolink_enabled), ("Bad words", s.badwords_enabled)]),
     (url_for('group_moderation', chat_id=chat_id), "fa-gavel",         "মডারেশন ও ফোর্স অ্যাড", "ওয়ার্ন সিস্টেম ও ফোর্স অ্যাড",     "yellow",
       [("ফোর্স অ্যাড", s.force_add_enabled), ("Max warns: " ~ (s.max_warns or 3), 1)]),
+    (url_for('group_moderation', chat_id=chat_id), "fa-film",          "ভিডিও রিমুভার",       "এক ক্লিকে গ্রুপের সব ভিডিও মুছুন",   "red",
+      [("ভিডিও ক্লিনার", 1)]),
     (url_for('group_rules',      chat_id=chat_id), "fa-scale-balanced","নিয়মাবলী",            "গ্রুপের নিয়মকানুন সেট করুন",           "purple",
       [("নিয়ম সেট", 1 if s.rules_text else 0)]),
   ] %}
