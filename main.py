@@ -47,7 +47,6 @@ async def post_init(app: Application) -> None:
         BotCommand("rules",         "গ্রুপের নিয়ম দেখুন"),
         BotCommand("restart",       "বট রিস্টার্ট করুন"),
     ]
-    await app.bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
 
     # 2. Commands for general members in groups (গ্রুপের সাধারণ সদস্যদের জন্য মেনু)
     group_member_commands = [
@@ -56,7 +55,6 @@ async def post_init(app: Application) -> None:
         BotCommand("myinvites", "আপনার ইনভাইট অগ্রগতি"),
         BotCommand("top",       "সেরা ইনভাইটার লিডারবোর্ড"),
     ]
-    await app.bot.set_my_commands(group_member_commands, scope=BotCommandScopeAllGroupChats())
 
     # 3. Commands for group administrators (শুধুমাত্র অ্যাডমিনদের জন্য সম্পূর্ণ কন্ট্রোল মেনু)
     admin_commands = [
@@ -104,10 +102,15 @@ async def post_init(app: Application) -> None:
         BotCommand("nightpromo",        "রাত ১০টার গ্রুপ লিংক ব্রডকাস্ট"),
         BotCommand("restart",           "বট রিস্টার্ট করুন"),
     ]
-    await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
-    # 4. Default fallback scope
-    await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeDefault())
-    logger.info("✅ Bot commands registered with private, group member, admin, and default scopes.")
+
+    try:
+        await app.bot.set_my_commands(private_commands, scope=BotCommandScopeAllPrivateChats())
+        await app.bot.set_my_commands(group_member_commands, scope=BotCommandScopeAllGroupChats())
+        await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
+        await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeDefault())
+        logger.info("✅ Bot commands registered with private, group member, admin, and default scopes.")
+    except Exception as e_cmd:
+        logger.warning(f"⚠️ Could not set bot menu commands (Telegram API restricted setMyCommands: {e_cmd}). Bot will continue running normally!")
 
     # Start the promo loop task when event loop is active
     from modules import promo
