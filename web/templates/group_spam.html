@@ -231,8 +231,7 @@
       </div>
 
       <!-- Whitelisted Admins Badge Preview -->
-      {% set admin_wl = (s.admin_link_whitelist or '').split(',') %}
-      {% set clean_admin_wl = admin_wl | map('trim') | select | list %}
+      {% set clean_admin_wl = (s.admin_link_whitelist or '').replace(',', ' ').split() %}
       {% if clean_admin_wl %}
       <div style="background:#1e2535;border-radius:8px;padding:12px;border:1px solid #2e3a52;margin-top:14px;">
         <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;">অনুমোদিত বিশ্বস্ত অ্যাডমিন ({{ clean_admin_wl|length }}জন):</div>

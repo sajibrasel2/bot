@@ -542,7 +542,7 @@ def group_spam(chat_id):
             "antibiolink_enabled":          1 if request.form.get("antibiolink_enabled") else 0,
             "antibiolink_whitelist":        request.form.get("antibiolink_whitelist", "").strip()[:2000],
             "admin_antilink_enabled":       1 if request.form.get("admin_antilink_enabled") else 0,
-            "admin_link_whitelist":         request.form.get("admin_link_whitelist", "").strip()[:3000],
+            "admin_link_whitelist":         ", ".join([t.strip() for t in re.split(r"[\s,;]+", request.form.get("admin_link_whitelist", "").strip()) if t.strip()])[:3000],
         })
         flash("✅ স্প্যাম ও অ্যাডমিন লিংক সেটিংস সেভ হয়েছে!", "success")
         return redirect(url_for("group_spam", chat_id=chat_id))
