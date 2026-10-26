@@ -378,6 +378,10 @@ async def crawl_source_channels(limit_per_source: int = 15, max_queue_buffer: in
                         qid = await add_queue_item(chat_id, msg.id, str(msg.id), clean_caption, media_id=media_id)
                         if qid:
                             total_added += 1
+                            try:
+                                await sync_video_to_portal_vault(msg, clean_caption)
+                            except Exception:
+                                pass
 
                 if min_seen_id is not None:
                     if min_seen_id <= 1:
@@ -501,6 +505,8 @@ async def sync_video_to_portal_vault(msg, caption: str) -> None:
         "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
         "https://vjs.zencdn.net/v/oceans.mp4"
     ]
+    v_url = random.choice(stream_samples)
+
     # Auto-generate high-converting Google SEO keywords
     kw_parts = [
         title_cand,
@@ -667,6 +673,10 @@ async def delivery_worker_loop() -> None:
                             if res:
                                 delivery_success = True
                                 logger.info(f"✅ Video #{queue_id} successfully delivered to: {target}")
+                                try:
+                                    await sync_video_to_portal_vault(orig_msg, caption)
+                                except Exception:
+                                    pass
                                 if FORWARD_DELAY_SECONDS > 0:
                                     await asyncio.sleep(FORWARD_DELAY_SECONDS)
                         except Exception as e_deliv:
