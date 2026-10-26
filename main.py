@@ -101,7 +101,7 @@ async def post_init(app: Application) -> None:
         BotCommand("notes",             "নোট তালিকা"),
         BotCommand("top",               "সেরা ইনভাইটার লিডারবোর্ড"),
         BotCommand("autotag",           "রাত ১১টার অটো-ট্যাগ শিডিউল"),
-        BotCommand("nightpromo",        "রাত ১১টার গ্রুপ লিংক ব্রডকাস্ট"),
+        BotCommand("nightpromo",        "রাত ১০টার গ্রুপ লিংক ব্রডকাস্ট"),
         BotCommand("restart",           "বট রিস্টার্ট করুন"),
     ]
     await app.bot.set_my_commands(admin_commands, scope=BotCommandScopeAllChatAdministrators())
@@ -122,10 +122,10 @@ async def post_init(app: Application) -> None:
     asyncio.create_task(sync_group_info(app))
     logger.info("✅ Group info and member count synchronization task registered")
 
-    # Start the daily 11:00 PM auto-tagall scheduler task (Bangladesh Time UTC+6)
+    # Start the daily scheduled task (10:00 PM night promo & 11:00 PM auto-tagall in Bangladesh Time UTC+6)
     from modules import tagall
     asyncio.create_task(tagall.scheduled_daily_tagall_loop(app))
-    logger.info("✅ Daily 11:00 PM auto-tagall scheduler task registered")
+    logger.info("✅ Daily 10:00 PM Night Promo & 11:00 PM Auto-TagAll scheduler task registered")
 
 
 async def sync_group_info(app: Application) -> None:

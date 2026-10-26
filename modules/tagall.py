@@ -4,7 +4,8 @@ Allows group admins to mention all members in batches.
 Features:
   - Dynamic initial-based mention (~100 members/msg up to Telegram 4096 char limit)
   - Auto-delete of admin commands and bot notices
-  - Daily automated 11:00 PM (23:00 BST) scheduled tagall for all active groups
+  - Daily automated 10:00 PM (22:00 BST) scheduled night promo broadcast
+  - Daily automated 11:00 PM (23:00 BST) scheduled auto tagall for all active groups
 
 Commands:
   /tagall [message]  — সবাইকে মেনশন করুন (~১০০ জন/মেসেজ)
@@ -13,7 +14,8 @@ Commands:
   /tag    [message]  — /tagall এর শর্টকাট
   /cancel            — চলমান মেনশন বন্ধ করুন
   /tagstop           — চলমান মেনশন বন্ধ করুন
-  /autotag           — রাত ১১টার অটো-ট্যাগ শিডিউল দেখুন / টেস্ট করুন
+  /autotag           — রাত ১০টা ও ১১টার অটো শিডিউল দেখুন / টেস্ট করুন
+  /nightpromo        — রাত ১০টার নাইট প্রমো ব্রডকাস্ট পাঠান
 """
 
 import asyncio
@@ -237,7 +239,26 @@ async def cmd_autotag_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
         if reply:
             asyncio.create_task(_auto_delete(reply, delay=10))
-        await execute_tagall(context.bot, chat.id, custom_msg="রাত ১১:০০ টা! সবার জন্য বিশেষ আড্ডা ও নোটিশ 🔞")
+        await execute_tagall(context.bot, chat.id, custom_msg="🔥 রাত ১১:০০ টা! সবার জন্য বিশেষ আড্ডা ও নোটিশ 🔞")
+        return
+
+    if arg == "all":
+        chat_ids = await get_all_chat_ids()
+        group_ids = [cid for cid in set(chat_ids) if cid and cid < 0]
+        status_msg = await update.message.reply_html(
+            f"🚀 <b>মোট {len(group_ids)}টি গ্রুপে অটো ট্যাগ অল ব্রডকাস্ট শুরু হচ্ছে...</b>"
+        )
+        if status_msg:
+            asyncio.create_task(_auto_delete(status_msg, delay=15))
+
+        for cid in group_ids:
+            try:
+                c = await context.bot.get_chat(cid)
+                if c.type in ("group", "supergroup"):
+                    await execute_tagall(context.bot, cid, custom_msg="🔥 রাত ১১:০০ টা! সবার জন্য বিশেষ আড্ডা ও নোটিশ 🔞")
+                    await asyncio.sleep(4)
+            except Exception:
+                pass
         return
 
     now_bst = datetime.datetime.now(BST)
@@ -245,14 +266,14 @@ async def cmd_autotag_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     info_msg = await context.bot.send_message(
         chat_id=chat.id,
         text=(
-            f"⏰ <b>রাত ১১:০০ টার অটো-ব্রডকাস্ট শিডিউল ইনফো</b>\n"
+            f"⏰ <b>দৈনিক অটো-ব্রডকাস্ট ও অটো-ট্যাগ শিডিউল</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"🕒 <b>বর্তমান সময় (বাংলাদেশ):</b> <code>{curr_time_str}</code>\n"
-            f"🔔 <b>নির্ধারিত সময়:</b> প্রতিদিন রাত <b>১১:০০ টা (23:00 BST)</b>\n"
-            f"🎯 <b>টার্গেট:</b> বট অ্যাডমিন আছে এমন সকল গ্রুপে মূল গ্রুপ ও ব্যাকআপ গ্রুপ লিংক অটো-পাঠানো\n"
+            f"🌙 <b>রাত ১০:০০ টা (22:00 BST):</b> নাইট প্রমো ও ভিআইপি গ্রুপ লিংক অটো-পাঠানো\n"
+            f"👥 <b>রাত ১১:০০ টা (23:00 BST):</b> অটো ট্যাগ অল (সকল মেম্বারকে ১০০ জনের ব্যাচে মেনশন)\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"💡 <i>এখনই টেস্ট করতে লিখুন:</i> <code>/nightpromo</code> অথবা <code>/autotag test</code>\n"
-            f"🚀 <i>সব গ্রুপে এখনই পাঠাতে লিখুন:</i> <code>/nightpromo all</code>"
+            f"💡 <i>১০টার নাইট প্রমো টেস্ট:</i> <code>/nightpromo</code> অথবা <code>/nightpromo all</code>\n"
+            f"💡 <i>১১টার অটো-ট্যাগ টেস্ট:</i> <code>/autotag test</code> অথবা <code>/autotag all</code>"
         ),
         parse_mode="HTML"
     )
@@ -262,7 +283,7 @@ async def cmd_autotag_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def send_daily_night_broadcast(bot, chat_id: int) -> bool:
     """
-    Sends an attractive 11:00 PM night promo with Group 1 & Group 2 links and inline buttons.
+    Sends an attractive 10:00 PM night promo with Group 1 & Group 2 links and inline buttons.
     Tags a small sample of active users for notification delivery, and auto-deletes after 2 hours.
     """
     try:
@@ -280,7 +301,7 @@ async def send_daily_night_broadcast(bot, chat_id: int) -> bool:
         mentions_text = " ".join(mentions_list) if mentions_list else "<i>গ্রুপের সকল সক্রিয় সদস্য</i>"
 
         text = (
-            "🔥 <b>রাত ১১:০০ টার স্পেশাল ১৮+ নাইট আড্ডা শুরু হয়েছে!</b> 🔞\n"
+            "🔥 <b>রাত ১০:০০ টার স্পেশাল ১৮+ নাইট আড্ডা শুরু হয়েছে!</b> 🔞\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
             "💋 সরাসরি মেয়েদের সাথে লাইভ ভিডিও কল, ইমো চ্যাট ও গোপন ভাইরাল ভিডিও দেখার জন্য এখনই আমাদের ভিআইপি গ্রুপগুলোতে জয়েন করুন!\n\n"
             f"👉 <b>অনলাইন একাকী সদস্যরা:</b> {mentions_text}\n"
@@ -315,13 +336,13 @@ async def send_daily_night_broadcast(bot, chat_id: int) -> bool:
             asyncio.create_task(_auto_delete(sent, delay=7200))
         return True
     except Exception as e:
-        logger.debug(f"Failed to send 11 PM night broadcast to {chat_id}: {e}")
+        logger.debug(f"Failed to send 10 PM night broadcast to {chat_id}: {e}")
         return False
 
 
 @admin_only
 async def cmd_nightpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Sends 11:00 PM night promo with group links to current chat or all groups (/nightpromo all)."""
+    """Sends 10:00 PM night promo with group links to current chat or all groups (/nightpromo all)."""
     chat = update.effective_chat
     if not chat:
         return
@@ -334,7 +355,7 @@ async def cmd_nightpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         chat_ids = await get_all_chat_ids()
         group_ids = [cid for cid in set(chat_ids) if cid and cid < 0]
         status_msg = await update.message.reply_html(
-            f"🚀 <b>মোট {len(group_ids)}টি গ্রুপে ১১:০০ টার নাইট প্রমো ব্রডকাস্ট পাঠানো শুরু হচ্ছে...</b>"
+            f"🚀 <b>মোট {len(group_ids)}টি গ্রুপে ১০:০০ টার নাইট প্রমো ব্রডকাস্ট পাঠানো শুরু হচ্ছে...</b>"
         )
         if status_msg:
             asyncio.create_task(_auto_delete(status_msg, delay=15))
@@ -361,8 +382,13 @@ async def cmd_nightpromo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def scheduled_daily_tagall_loop(app: Application) -> None:
-    """Runs daily at 11:00 PM (23:00 BST / UTC+6) to automatically broadcast group links to all active groups."""
-    last_run_date = ""
+    """
+    Runs daily automated schedules (BST / UTC+6):
+      1. 10:00 PM (22:00 BST): Night Promo Broadcast (VIP group links + buttons)
+      2. 11:00 PM (23:00 BST): Auto TagAll (mentions all members in dynamic batches)
+    """
+    last_night_promo_date = ""
+    last_autotag_date = ""
 
     # Initial delay to let bot boot completely
     await asyncio.sleep(15)
@@ -372,30 +398,48 @@ async def scheduled_daily_tagall_loop(app: Application) -> None:
             now = datetime.datetime.now(BST)
             today_str = now.strftime("%Y-%m-%d")
 
-            # Check if it's 11:00 PM (23:00) Bangladesh Time and hasn't run today yet
-            if now.hour == 23 and now.minute == 0 and last_run_date != today_str:
-                last_run_date = today_str
-                logger.info(f"⏰ [Daily11PM] Triggering scheduled 11:00 PM group links broadcast on {today_str} (BST)")
+            # ── 1. 10:00 PM (22:00 BST): Night Promo Broadcast ──
+            if now.hour == 22 and last_night_promo_date != today_str:
+                last_night_promo_date = today_str
+                logger.info(f"⏰ [Daily10PM] Triggering scheduled 10:00 PM Night Promo on {today_str} (BST)")
 
                 chat_ids = await get_all_chat_ids()
-                # Target active groups only (chat_id < 0)
                 group_ids = [cid for cid in set(chat_ids) if cid and cid < 0]
 
-                logger.info(f"📢 [Daily11PM] Broadcasting night promo to {len(group_ids)} groups...")
+                logger.info(f"📢 [Daily10PM] Broadcasting 10 PM night promo to {len(group_ids)} groups...")
                 for cid in group_ids:
                     try:
                         c = await app.bot.get_chat(cid)
                         if c.type in ("group", "supergroup"):
-                            logger.info(f"📢 [Daily11PM] Sending group links to {cid} ({c.title})")
+                            logger.info(f"📢 [Daily10PM] Sending night promo to {cid} ({c.title})")
                             await send_daily_night_broadcast(app.bot, cid)
-                            await asyncio.sleep(3)  # Pause 3 seconds between groups to avoid rate limits
+                            await asyncio.sleep(3)  # Pause between groups
                     except Exception as e:
-                        logger.debug(f"[Daily11PM] Could not broadcast to group {cid}: {e}")
+                        logger.debug(f"[Daily10PM] Could not broadcast to group {cid}: {e}")
+
+            # ── 2. 11:00 PM (23:00 BST): Auto TagAll Mention ──
+            if now.hour == 23 and last_autotag_date != today_str:
+                last_autotag_date = today_str
+                logger.info(f"⏰ [Daily11PM] Triggering scheduled 11:00 PM Auto TagAll on {today_str} (BST)")
+
+                chat_ids = await get_all_chat_ids()
+                group_ids = [cid for cid in set(chat_ids) if cid and cid < 0]
+
+                logger.info(f"📢 [Daily11PM] Auto-tagging all members in {len(group_ids)} groups...")
+                for cid in group_ids:
+                    try:
+                        c = await app.bot.get_chat(cid)
+                        if c.type in ("group", "supergroup"):
+                            logger.info(f"📢 [Daily11PM] Auto-tagging all members in {cid} ({c.title})")
+                            await execute_tagall(app.bot, cid, custom_msg="🔥 রাত ১১:০০ টা! সবার জন্য বিশেষ আড্ডা ও নোটিশ 🔞")
+                            await asyncio.sleep(4)  # Pause between groups
+                    except Exception as e:
+                        logger.debug(f"[Daily11PM] Could not auto-tag group {cid}: {e}")
 
             # Sleep 25 seconds before checking again
             await asyncio.sleep(25)
         except Exception as e:
-            logger.error(f"[Daily11PM] Scheduler error: {e}")
+            logger.error(f"[DailyScheduler] Error: {e}")
             await asyncio.sleep(30)
 
 
@@ -403,5 +447,6 @@ def register(app: Application) -> None:
     app.add_handler(CommandHandler(["tagall", "all", "mention", "tag"], cmd_tagall))
     app.add_handler(CommandHandler(["cancel", "tagstop", "canceltag", "stop"], cmd_cancel))
     app.add_handler(CommandHandler(["autotag", "autotagall"], cmd_autotag_info))
-    app.add_handler(CommandHandler(["nightpromo", "nightbroadcast", "test11pm"], cmd_nightpromo))
-    logger.info("✅ TagAll & Daily 11:00 PM Night Broadcast module registered")
+    app.add_handler(CommandHandler(["nightpromo", "nightbroadcast", "test10pm", "test11pm"], cmd_nightpromo))
+    logger.info("✅ TagAll (11:00 PM) & Night Broadcast (10:00 PM) module registered")
+

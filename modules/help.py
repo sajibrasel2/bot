@@ -62,7 +62,9 @@ HELP_SECTIONS = {
             "• <code>/badwords on|off</code> — নিষিদ্ধ শব্দ ফিল্টার চালু/বন্ধ\n"
             "• <code>/addbadword &lt;word&gt;</code> — নতুন নিষিদ্ধ শব্দ যোগ করুন\n"
             "• <code>/delbadword &lt;word&gt;</code> — নিষিদ্ধ শব্দ মুছে দিন\n"
-            "• <code>/badwordlist</code> — গ্রুপের নিষিদ্ধ শব্দের তালিকা দেখুন"
+            "• <code>/badwordlist</code> — গ্রুপের নিষিদ্ধ শব্দের তালিকা দেখুন\n"
+            "• <code>/adminlink on|off</code> — সাধারণ অ্যাডমিনদের লিংক প্রমোশন ব্লক\n"
+            "• <code>/allowlink &lt;@username&gt;</code> — নির্দিষ্ট অ্যাডমিনকে লিংকের অনুমতি দিন"
         ),
     },
     "admin": {
@@ -72,7 +74,7 @@ HELP_SECTIONS = {
             "• <code>/settings</code> — গ্রুপ সেটিংস কন্ট্রোল প্যানেল\n"
             "• <code>/tagall &lt;বার্তা&gt;</code> বা <code>/all</code> — সবাইকে ১০০ জনের ব্যাচে আকর্ষণীয় মেনশন\n"
             "• <code>/cancel</code> বা <code>/tagstop</code> — চলমান মেনশন তাৎক্ষণিক বন্ধ\n"
-            "• <code>/nightpromo</code> — রাত ১১টার ১৮+ গ্রুপ লিংক ব্রডকাস্ট পাঠানো\n"
+            "• <code>/nightpromo</code> — রাত ১০টার ১৮+ গ্রুপ লিংক ব্রডকাস্ট পাঠানো\n"
             "• <code>/autotag test</code> — রাত ১১টার অটো-ট্যাগ শিডিউল টেস্ট\n"
             "• <code>/promo</code> বা <code>/sendpromo</code> — ইনস্ট্যান্ট লাইভ পার্টনার বিজ্ঞাপন\n"
             "• <code>/servicealert</code> বা <code>/girlnotice</code> — সার্ভিস গার্ল নোটিশ পাঠানো\n"
@@ -145,7 +147,7 @@ HELP_SECTIONS = {
             "• <code>/settings</code> — সেটিংস ড্যাশবোর্ড\n"
             "• <code>/tagall &lt;বার্তা&gt;</code> — সবাইকে ১০০ জনের ব্যাচে মেনশন\n"
             "• <code>/cancel</code> — মেনশন থামান\n"
-            "• <code>/nightpromo</code> — রাত ১১টার ১৮+ গ্রুপ লিংক পাঠান\n"
+            "• <code>/nightpromo</code> — রাত ১০টার ১৮+ গ্রুপ লিংক পাঠান\n"
             "• <code>/promo</code> — লাইভ পার্টনার বিজ্ঞাপন\n"
             "• <code>/servicealert</code> — সার্ভিস গার্ল নোটিশ\n"
             "• <code>/lock</code> / <code>/unlock</code> — চ্যাট লক/আনলক\n"
