@@ -159,6 +159,43 @@ URL_PATTERN = re.compile(
 )
 
 
+async def is_whitelisted_link_admin(chat, user_id: int, username: str, whitelist_raw: str) -> bool:
+    """Checks if an admin is whitelisted/permitted to post links in the group."""
+    if not user_id:
+        return False
+
+    # 1. Bot owner / super admin IDs from config
+    from config import OWNER_ID
+    if user_id in (OWNER_ID, 8904339611, 5888198325):
+        return True
+
+    # 2. Database bot admins
+    try:
+        from database import is_bot_admin
+        if await is_bot_admin(user_id):
+            return True
+    except Exception:
+        pass
+
+    # 3. Check chat creator / owner
+    try:
+        member = await chat.get_member(user_id)
+        if member and member.status in (ChatMember.OWNER, "creator"):
+            return True
+    except Exception:
+        pass
+
+    # 4. Check whitelist string (User IDs or Usernames)
+    if whitelist_raw:
+        tokens = [t.strip().lower().lstrip("@") for t in re.split(r"[\s,;]+", str(whitelist_raw)) if t.strip()]
+        if str(user_id) in tokens:
+            return True
+        if username and username.lower().lstrip("@") in tokens:
+            return True
+
+    return False
+
+
 def _clean_flood(timestamps: list, now: float) -> list:
     return [t for t in timestamps if now - t < FLOOD_WINDOW_SECONDS]
 
@@ -296,11 +333,63 @@ async def spam_filter(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         except Exception:
             pass
 
-    # অ্যাডমিনরা সম্পূর্ণ বাদ (মুক্ত)
-    if await is_admin(update):
-        return
-
     settings = await get_chat_settings(chat.id)
+    user = msg.from_user or update.effective_user
+
+    # ── 0. Admin Anti-Link & Anti-Promo Protection (মনোনীত অ্যাডমিন ছাড়া অন্য অ্যাডমিনদের লিংক ব্লক) ────
+    user_is_admin = await is_admin(update)
+    if user_is_admin:
+        if settings.get("admin_antilink_enabled", 1):
+            user_id = user.id if user else 0
+            username = user.username or ""
+            wl_raw = settings.get("admin_link_whitelist") or ""
+
+            is_whitelisted = await is_whitelisted_link_admin(chat, user_id, username, wl_raw)
+            if not is_whitelisted:
+                content_text = (msg.text or msg.caption or "").strip()
+                has_admin_link = False
+
+                # 1. Regex check on text or caption
+                if content_text and URL_PATTERN.search(content_text):
+                    has_admin_link = True
+
+                # 2. Telegram entities (url, text_link)
+                if not has_admin_link:
+                    entities = list(msg.entities or []) + list(msg.caption_entities or [])
+                    for ent in entities:
+                        if ent.type in ("url", "text_link"):
+                            has_admin_link = True
+                            break
+
+                # 3. Inline keyboard buttons with URLs
+                if not has_admin_link and msg.reply_markup and msg.reply_markup.inline_keyboard:
+                    for row in msg.reply_markup.inline_keyboard:
+                        for btn in row:
+                            if getattr(btn, "url", None):
+                                has_admin_link = True
+                                break
+
+                # 4. Forwarded channel posts / promotions
+                if not has_admin_link:
+                    is_fwd, fwd_reason = is_forward_or_channel_post(msg, chat)
+                    if is_fwd and (fwd_reason == "channel_forward" or getattr(msg, "forward_from_chat", None)):
+                        has_admin_link = True
+
+                # 5. External channel sender
+                if not has_admin_link and msg.sender_chat and msg.sender_chat.id != chat.id:
+                    has_admin_link = True
+
+                if has_admin_link:
+                    # SILENT DELETION: Deleted immediately without any bot reply / warning!
+                    try:
+                        await msg.delete()
+                        logger.info(f"🚫 Silently deleted unauthorized link/promo from admin {user_id} (@{username}) in chat {chat.id}")
+                    except Exception as e:
+                        logger.debug(f"Could not delete admin link: {e}")
+                    return
+
+        # Whitelisted admins or normal non-link admin messages are exempt from member limits
+        return
 
     # ── 1. Anti-forward & Anti-Channel Protection (কঠোর ফরোয়ার্ড ও চ্যানেল ব্লক) ────
     forward_blocked = bool(
@@ -741,6 +830,112 @@ async def cmd_antilink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 @admin_only
+async def cmd_adminlink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Toggle Admin Anti-Link protection on or off."""
+    args = context.args
+    if not args or args[0].lower() not in ("on", "off"):
+        await update.message.reply_text(
+            "📖 <b>ব্যবহার:</b> <code>/adminlink on</code> অথবা <code>/adminlink off</code>\n\n"
+            "🛡️ <b>অ্যাডমিন লিংক প্রটেকশন:</b> চালু থাকলে মনোনীত/অনুমোদিত অ্যাডমিন ছাড়া অন্য কোনো অ্যাডমিন গ্রুপে লিংক দিলে তা কোনো রিপ্লাই ছাড়াই স্বয়ংক্রিয়ভাবে মুছে ফেলা হবে।",
+            parse_mode="HTML"
+        )
+        return
+    val = 1 if args[0].lower() == "on" else 0
+    await update_chat_setting(update.effective_chat.id, "admin_antilink_enabled", val)
+    await update.message.reply_text(
+        f"🛡️ অ্যাডমিন লিংক প্রমোশন প্রটেকশন {'<b>চালু ✅</b> (মনোনীত ছাড়া অন্য এডমিনদের লিংক সরাসরি ডিলিট হবে)' if val else '<b>বন্ধ ❌</b>'}",
+        parse_mode="HTML"
+    )
+
+
+@admin_only
+async def cmd_allowlink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Add an admin to the allowed link whitelist."""
+    args = context.args
+    if not args:
+        await update.message.reply_text(
+            "📖 <b>ব্যবহার:</b> <code>/allowlink @username</code> অথবা <code>/allowlink user_id</code>\n"
+            "💡 <i>যেকোনো নির্দিষ্ট অ্যাডমিনকে গ্রুপে লিংক দেওয়ার অনুমতি দিতে এই কমান্ডটি দিন।</i>",
+            parse_mode="HTML"
+        )
+        return
+    target = args[0].strip()
+    chat_id = update.effective_chat.id
+    settings = await get_chat_settings(chat_id)
+    current_wl = settings.get("admin_link_whitelist") or ""
+    tokens = [t.strip() for t in re.split(r"[\s,;]+", current_wl) if t.strip()]
+    if target.lower() not in [t.lower() for t in tokens]:
+        tokens.append(target)
+        new_wl = ", ".join(tokens)
+        await update_chat_setting(chat_id, "admin_link_whitelist", new_wl)
+        await update.message.reply_text(
+            f"✅ অ্যাডমিন <b>{target}</b> সফলভাবে লিংক হোয়াইটলিস্টে যুক্ত হয়েছেন!\n"
+            f"এখন থেকে তিনি গ্রুপে লিংক শেয়ার করতে পারবেন।",
+            parse_mode="HTML"
+        )
+    else:
+        await update.message.reply_text(
+            f"ℹ️ অ্যাডমিন <b>{target}</b> ইতিমধ্যে লিংক হোয়াইটলিস্টে আছেন।",
+            parse_mode="HTML"
+        )
+
+
+@admin_only
+async def cmd_disallowlink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Remove an admin from the allowed link whitelist."""
+    args = context.args
+    if not args:
+        await update.message.reply_text(
+            "📖 <b>ব্যবহার:</b> <code>/disallowlink @username</code> অথবা <code>/disallowlink user_id</code>\n"
+            "💡 <i>কোনো অ্যাডমিনের লিংক শেয়ারের অনুমতি বাতিল করতে এই কমান্ডটি দিন।</i>",
+            parse_mode="HTML"
+        )
+        return
+    target = args[0].strip().lower().lstrip("@")
+    chat_id = update.effective_chat.id
+    settings = await get_chat_settings(chat_id)
+    current_wl = settings.get("admin_link_whitelist") or ""
+    tokens = [t.strip() for t in re.split(r"[\s,;]+", current_wl) if t.strip()]
+    new_tokens = [t for t in tokens if t.strip().lower().lstrip("@") != target]
+    new_wl = ", ".join(new_tokens)
+    await update_chat_setting(chat_id, "admin_link_whitelist", new_wl)
+    await update.message.reply_text(
+        f"🚫 অ্যাডমিন <b>{args[0]}</b> এর লিংক শেয়ারের অনুমতি প্রত্যাহার করা হয়েছে।",
+        parse_mode="HTML"
+    )
+
+
+@admin_only
+async def cmd_linkadmins(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show list of whitelisted link admins."""
+    chat_id = update.effective_chat.id
+    settings = await get_chat_settings(chat_id)
+    enabled = settings.get("admin_antilink_enabled", 1)
+    wl_raw = settings.get("admin_link_whitelist") or ""
+    tokens = [t.strip() for t in re.split(r"[\s,;]+", wl_raw) if t.strip()]
+
+    text = (
+        f"🛡️ <b>অ্যাডমিন লিংক প্রমোশন স্ট্যাটাস</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"⚙️ <b>অবস্থা:</b> {'সক্রিয় (ACTIVE) ✅' if enabled else 'নিষ্ক্রিয় (OFF) ❌'}\n"
+        f"👑 <b>গ্রুপ ওনার:</b> সর্বদা অনুমোদিত (Always Permitted)\n"
+    )
+    if tokens:
+        text += f"\n👥 <b>মনোনীত অনুমোদিত অ্যাডমিনবৃন্দ ({len(tokens)}জন):</b>\n"
+        for idx, t in enumerate(tokens, 1):
+            text += f"  {idx}. <code>{t}</code>\n"
+    else:
+        text += "\nℹ️ <i>গ্রুপ ওনার ছাড়া অন্য কোনো অ্যাডমিন বর্তমানে লিংক দেওয়ার জন্য অনুমোদিত নয়।</i>\n"
+
+    text += (
+        f"\n━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"💡 নতুন অ্যাডমিনকে অনুমতি দিতে: <code>/allowlink @username</code>\n"
+        f"💡 অনুমতি বাতিল করতে: <code>/disallowlink @username</code>"
+    )
+    await update.message.reply_text(text, parse_mode="HTML")
+
+
+@admin_only
 async def cmd_antiforward(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     args = context.args
     if not args or args[0].lower() not in ("on", "off"):
@@ -887,6 +1082,7 @@ VALID_COMMANDS = {
     "promo", "sendpromo", "setpromosticker", "delpromosticker",
     "servicealert", "sendalert", "girlnotice",
     "antiflood", "antilink", "antiforward", "antibiolink", "charlimit", "setcharlimit", "badwords", "addbadword", "delbadword", "badwordlist",
+    "adminlink", "allowlink", "disallowlink", "linkadmins",
     "notes", "save", "get", "clear"
 }
 
@@ -935,6 +1131,10 @@ def register(app) -> None:
     ))
     app.add_handler(CommandHandler("antiflood",   cmd_antiflood))
     app.add_handler(CommandHandler("antilink",    cmd_antilink))
+    app.add_handler(CommandHandler("adminlink",   cmd_adminlink))
+    app.add_handler(CommandHandler("allowlink",   cmd_allowlink))
+    app.add_handler(CommandHandler("disallowlink",cmd_disallowlink))
+    app.add_handler(CommandHandler("linkadmins",  cmd_linkadmins))
     app.add_handler(CommandHandler("antiforward", cmd_antiforward))
     app.add_handler(CommandHandler("antibiolink", cmd_antibiolink))
     app.add_handler(CommandHandler(["charlimit", "setcharlimit"], cmd_charlimit))

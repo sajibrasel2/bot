@@ -198,6 +198,59 @@
     {% endif %}
   </div>
 
+  <!-- ── Admin Anti-Link & Anti-Promo Protection ── -->
+  <div class="card" style="grid-column: 1 / -1; margin-top: 10px; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 4px 20px rgba(239, 68, 68, 0.1);">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+        <i class="fa-solid fa-user-lock" style="color:#ef4444;font-size:20px;"></i>
+        <div>
+          <span style="color:#f87171;font-weight:700;">অ্যাডমিনদের লিংক প্রমোশন প্রতিরোধ (Admin Anti-Link & Anti-Promo)</span>
+          <div style="font-size:12px;color:#94a3b8;font-weight:normal;margin-top:2px;">মনোনীত অ্যাডমিন ছাড়া অন্য যেকোনো অ্যাডমিন লিংক দিলে কোনো রিপ্লাই ছাড়াই মেসেজ মুছে যাবে</div>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" name="admin_antilink_enabled" {% if s.admin_antilink_enabled is not defined or s.admin_antilink_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div style="padding-top:10px;">
+      <div style="background:rgba(239, 68, 68, 0.08);border-left:4px solid #ef4444;padding:12px 14px;border-radius:6px;margin-bottom:14px;font-size:13px;color:#cbd5e1;line-height:1.6;">
+        <b style="color:#fca5a5;">⚡ কীভাবে কাজ করে:</b> গ্রুপ বড় করার জন্য নিয়োগ দেওয়া অননুমোদিত অ্যাডমিনরা কোনো লিংক, চ্যানেল ইনভাইট বা প্রমোশনাল পোস্ট দিলে বট তা <b>নীরবে (Silent Delete) সাথে সাথে মুছে ফেলবে</b> এবং চ্যাটে কোনো রিপ্লাই বা সতর্কবার্তা দিয়ে স্প্যাম করবে না। গ্রুপ ওনার/ক্রিয়েটর স্বয়ংক্রিয়ভাবে অনুমোদিত।
+      </div>
+
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" style="font-weight:600;color:#f1f5f9;margin-bottom:6px;display:block;">
+          মনোনীত অনুমোদিত অ্যাডমিন তালিকা (Whitelisted Link Admins):
+        </label>
+        <textarea class="form-control" name="admin_link_whitelist" rows="3"
+          placeholder="যেমন: @username1, @username2, 8904339611 (কমা বা স্পেস দিয়ে আলাদা করুন)">{{ s.admin_link_whitelist or '' }}</textarea>
+        <div class="form-hint" style="margin-top:8px;line-height:1.5;">
+          💡 <b>টিপস:</b> ওনার ছাড়া আপনার যেসব নির্দিষ্ট বিশ্বস্ত অ্যাডমিনকে লিংক দেওয়ার অনুমতি দিতে চান, তাদের টেলিগ্রাম <code>@username</code> অথবা <code>User ID</code> কমা দিয়ে লিখুন। বাকি কোনো অ্যাডমিন গ্রুপে লিংক পাঠাতে পারবে না।
+        </div>
+      </div>
+
+      <!-- Whitelisted Admins Badge Preview -->
+      {% set admin_wl = (s.admin_link_whitelist or '').split(',') %}
+      {% set clean_admin_wl = admin_wl | map('trim') | select | list %}
+      {% if clean_admin_wl %}
+      <div style="background:#1e2535;border-radius:8px;padding:12px;border:1px solid #2e3a52;margin-top:14px;">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;">অনুমোদিত বিশ্বস্ত অ্যাডমিন ({{ clean_admin_wl|length }}জন):</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span style="background:rgba(16, 185, 129, 0.2);border:1px solid rgba(16, 185, 129, 0.4);border-radius:20px;padding:4px 12px;font-size:12px;color:#6ee7b7;font-weight:600;">
+            <i class="fa-solid fa-crown"></i> গ্রুপ ওনার (স্বয়ংক্রিয় অনুমোদিত)
+          </span>
+          {% for a in clean_admin_wl %}
+          <span style="background:#3b82f6;border-radius:20px;padding:4px 12px;font-size:12px;color:#ffffff;font-weight:500;">
+            <i class="fa-solid fa-user-check"></i> {{ a }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
   <!-- ── Anti-Bio-Link Whitelist ── -->
   <div class="card" style="grid-column: 1 / -1; margin-top: 10px;">
     <div class="card-header">

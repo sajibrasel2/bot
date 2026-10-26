@@ -51,6 +51,7 @@ _SAFE_KEYS = {
     "force_add_enabled", "force_add_count",
     "antilink_required_invites", "antiforward_required_invites",
     "antibiolink_enabled", "antibiolink_whitelist",
+    "admin_antilink_enabled", "admin_link_whitelist", "admin_antilink_silent",
 }
 
 # ── Jinja2 filters ────────────────────────────────
@@ -159,12 +160,24 @@ def ensure_db_schema():
                     ("antilink_required_invites", "INT DEFAULT 10"),
                     ("antiforward_required_invites", "INT DEFAULT 10"),
                     ("antibiolink_enabled", "TINYINT DEFAULT 1"),
-                    ("antibiolink_whitelist", "TEXT")
+                    ("antibiolink_whitelist", "TEXT"),
+                    ("admin_antilink_enabled", "TINYINT DEFAULT 1"),
+                    ("admin_link_whitelist", "TEXT"),
+                    ("admin_antilink_silent", "TINYINT DEFAULT 1")
                 ]
                 for col_name, col_type in columns_to_add:
                     cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
                     if not cur.fetchone():
                         cur.execute(f"ALTER TABLE chat_settings ADD COLUMN `{col_name}` {col_type}")
+
+                # Auto-fix: Migrate old dead ID -2074342232814 to real channel ID -1004342232814 (@darkromance4u)
+                try:
+                    cur.execute("SELECT chat_id FROM chat_settings WHERE chat_id = -2074342232814")
+                    if cur.fetchone():
+                        cur.execute("UPDATE IGNORE chat_settings SET chat_id = -1004342232814, chat_title = 'Dark Romance (১৮+) আড্ডা', member_count = 1886 WHERE chat_id = -2074342232814")
+                        cur.execute("DELETE FROM chat_settings WHERE chat_id = -2074342232814")
+                except Exception:
+                    pass
                 
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS user_invites (
@@ -528,8 +541,10 @@ def group_spam(chat_id):
             "badword_mute_duration":        max(60, int(request.form.get("badword_mute_duration", 60) or 60)),
             "antibiolink_enabled":          1 if request.form.get("antibiolink_enabled") else 0,
             "antibiolink_whitelist":        request.form.get("antibiolink_whitelist", "").strip()[:2000],
+            "admin_antilink_enabled":       1 if request.form.get("admin_antilink_enabled") else 0,
+            "admin_link_whitelist":         request.form.get("admin_link_whitelist", "").strip()[:3000],
         })
-        flash("✅ স্প্যাম সেটিংস সেভ হয়েছে!", "success")
+        flash("✅ স্প্যাম ও অ্যাডমিন লিংক সেটিংস সেভ হয়েছে!", "success")
         return redirect(url_for("group_spam", chat_id=chat_id))
     s = get_settings(chat_id)
     return render_template("group_spam.html", s=s, chat_id=chat_id, active="groups")

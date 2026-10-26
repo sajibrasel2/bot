@@ -95,13 +95,25 @@ async def init_db() -> None:
                 ("antiforward_required_invites", "INT DEFAULT 10"),
                 ("antibiolink_enabled", "TINYINT DEFAULT 1"),
                 ("antibiolink_whitelist", "TEXT"),
-                ("max_message_chars", "INT DEFAULT 100")
+                ("max_message_chars", "INT DEFAULT 100"),
+                ("admin_antilink_enabled", "TINYINT DEFAULT 1"),
+                ("admin_link_whitelist", "TEXT"),
+                ("admin_antilink_silent", "TINYINT DEFAULT 1")
             ]
             for col_name, col_type in columns_to_add:
                 await cur.execute(f"SHOW COLUMNS FROM chat_settings LIKE '{col_name}'")
                 col_exists = await cur.fetchone()
                 if not col_exists:
                     await cur.execute(f"ALTER TABLE chat_settings ADD COLUMN `{col_name}` {col_type}")
+
+            # Auto-fix: Migrate old dead ID -2074342232814 to real channel ID -1004342232814 (@darkromance4u)
+            try:
+                await cur.execute("SELECT chat_id FROM chat_settings WHERE chat_id = -2074342232814")
+                if await cur.fetchone():
+                    await cur.execute("UPDATE IGNORE chat_settings SET chat_id = -1004342232814, chat_title = 'Dark Romance (১৮+) আড্ডা', member_count = 1886 WHERE chat_id = -2074342232814")
+                    await cur.execute("DELETE FROM chat_settings WHERE chat_id = -2074342232814")
+            except Exception:
+                pass
             await cur.execute("""
                 CREATE TABLE IF NOT EXISTS notes (
                     id      INT AUTO_INCREMENT PRIMARY KEY,
@@ -341,6 +353,7 @@ _VALID_SETTINGS_KEYS = {
     "force_add_enabled", "force_add_count",
     "antilink_required_invites", "antiforward_required_invites",
     "antibiolink_enabled", "antibiolink_whitelist",
+    "admin_antilink_enabled", "admin_link_whitelist", "admin_antilink_silent",
 }
 
 

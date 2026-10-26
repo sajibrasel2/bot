@@ -70,6 +70,8 @@ async def post_init(app: Application) -> None:
         BotCommand("welcome",           "ওয়েলকাম মেসেজ অন/অফ"),
         BotCommand("resetwelcome",      "ওয়েলকাম মেসেজ রিসেট"),
         BotCommand("antilink",          "অ্যান্টি-লিংক অন/অফ"),
+        BotCommand("adminlink",         "এডমিনদের লিংক ব্লক সেটিংস"),
+        BotCommand("linkadmins",        "অনুমোদিত এডমিন তালিকা"),
         BotCommand("antiforward",       "অ্যান্টি-ফরোয়ার্ড অন/অফ"),
         BotCommand("badwords",          "খারাপ শব্দ ফিল্টার সেটিংস"),
         BotCommand("forceadd",          "ফোর্স অ্যাড সেটিংস"),
