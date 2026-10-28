@@ -1,5 +1,5 @@
 """
-One-click manual trigger to deliver 2 collected videos from queue or source channels directly to @darkromanceadda
+One-click manual trigger to deliver collected videos from queue or directly from source channels to @darkromanceadda
 Run: python deliver_now.py [count]
 """
 
@@ -15,7 +15,7 @@ from video_collector.config import TG_API_ID, TG_API_HASH, SESSION_NAME, VC_BOT_
 from video_collector.database import (
     init_db, get_next_queue_item, delete_queue_item, mark_message_processed,
     increment_forwarded_count, get_delivery_channel_targets, get_source_channel_targets,
-    add_queue_item, get_setting, get_pool
+    add_queue_item, get_setting, get_pool, is_media_processed, is_message_processed
 )
 from video_collector.main import (
     clean_source_caption, deliver_video_message, sync_video_to_portal_vault,
@@ -39,7 +39,7 @@ async def run_deliver_now(count: int = 2):
     await client.connect()
 
     if not await client.is_user_authorized():
-        # Check sessions/ folder for any authorized member adder session
+        # Check sessions/ folder for any authorized session
         project_root = os.path.dirname(os.path.abspath(__file__))
         sessions_dir = os.path.join(project_root, "sessions")
         found_sess = None
@@ -78,16 +78,6 @@ async def run_deliver_now(count: int = 2):
     account_type = f"বট একাউন্ট (@{me.username})" if is_bot else f"ইউজার একাউন্ট ({me.first_name} @{me.username or me.phone or me.id})"
     print(f"👤 বর্তমানে সংযুক্ত: {account_type}")
 
-    if is_bot:
-        print("\n" + "!" * 65)
-        print("⚠️ অত্যন্ত গুরুত্বপূর্ণ নোটিশ:")
-        print(f"   আপনি টেলিগ্রাম বট (@{me.username}) হিসেবে কানেক্টেড আছেন।")
-        print("   টেলিগ্রামের নিয়মে বট কখনো অন্যের চ্যানেল থেকে ভিডিও রিড/কালেক্ট করতে পারে না।")
-        print("   সোর্স চ্যানেল থেকে সরাসরি রিয়েল ভিডিও এনে ডেলিভারি করতে")
-        print("   আপনার ফোন নাম্বার দিয়ে মাত্র একবার নিচের কমান্ড দিয়ে লগইন করুন:")
-        print("   ➜ python video_collector/login.py")
-        print("!" * 65 + "\n")
-
     deliveries = await get_delivery_channel_targets()
     print(f"🎯 ডেলিভারি চ্যানেল তালিকা: {deliveries}")
     if not deliveries:
@@ -95,7 +85,6 @@ async def run_deliver_now(count: int = 2):
         await client.disconnect()
         return
 
-    # Check queue count in MySQL
     pool = await get_pool()
     queue_cnt = 0
     async with pool.acquire() as conn:
@@ -105,124 +94,154 @@ async def run_deliver_now(count: int = 2):
 
     print(f"⏳ ডাটাবেজ কিউতে অপেক্ষমান ভিডিও সংখ্যা: {queue_cnt} টি")
 
-    # Helper function to crawl source channels if needed
-    async def crawl_fresh_videos(target_count: int = 5) -> int:
-        print("\n🔍 সোর্স চ্যানেলগুলো থেকে নতুন ভিডিও সংগ্রহ করার চেষ্টা করা হচ্ছে...")
-        if is_bot:
-            print("❌ আপনি বট হিসেবে আছেন। বট অন্যের চ্যানেল থেকে ভিডিও সংগ্রহ করতে পারে না!")
-            print("👉 অনুগ্রহ করে 'python video_collector/login.py' দিয়ে আপনার একাউন্টে লগইন করুন।\n")
-            return 0
-
-        sources_data = await get_source_channel_targets()
-        rows = sources_data.get("rows", [])
-        print(f"📥 মোট সোর্স চ্যানেল: {len(rows)} টি")
-        new_found = 0
-        for r in rows:
-            target = r.get("channel_username") or r.get("channel_id")
-            if not target:
-                continue
-            try:
-                print(f"   ➜ সোর্স চ্যানেল চেক করা হচ্ছে: {target}...")
-                entity = await client.get_entity(target)
-                async for msg in client.iter_messages(entity, limit=30):
-                    if _is_video_message(msg):
-                        media_id = get_media_unique_id(msg)
-                        clean_caption = clean_source_caption(msg.text or "")
-                        chat_id = getattr(entity, "id", 0)
-                        qid = await add_queue_item(chat_id, msg.id, str(msg.id), clean_caption, media_id=media_id)
-                        if qid:
-                            new_found += 1
-                            print(f"      ✅ নতুন ভিডিও কিউতে যুক্ত হয়েছে! ID: #{qid}")
-                            if new_found >= target_count:
-                                break
-                if new_found >= target_count:
-                    break
-            except Exception as e_crawl:
-                print(f"      ❌ {target} থেকে রিড করতে সমস্যা: {e_crawl}")
-        print(f"🎉 সংগ্রহ সমাপ্ত: মোট {new_found} টি নতুন ভিডিও কিউতে যুক্ত হয়েছে।\n")
-        return new_found
-
-    # If queue is empty, attempt to crawl sources now
-    if queue_cnt == 0:
-        await crawl_fresh_videos(target_count=count * 2)
-
-    # Now deliver requested number of videos
     delivered = 0
-    print(f"\n📤 এখন {count}টি ভিডিও ডেলিভারি করা হচ্ছে...")
-    attempts = 0
-    max_attempts = max(15, count * 5)
 
-    while delivered < count and attempts < max_attempts:
-        attempts += 1
-        item = await get_next_queue_item()
-        if not item:
-            if not is_bot and delivered < count:
-                print("ℹ️ কিউ খালি হয়ে গেছে। সোর্স চ্যানেল থেকে নতুন ভিডিও আনা হচ্ছে...")
-                added = await crawl_fresh_videos(target_count=count - delivered)
-                if added > 0:
-                    continue
-            print(f"ℹ️ কিউতে আর কোনো ভিডিও নেই। (মোট ডেলিভারি সম্পন্ন: {delivered} টি)")
-            break
+    # ── Phase 1: Try delivering from existing queue ─────────────────
+    if queue_cnt > 0:
+        print(f"\n📦 কিউ থেকে ভিডিও পাঠানোর চেষ্টা করা হচ্ছে...")
+        attempts = 0
+        max_attempts = max(10, count * 3)
 
-        queue_id = item["id"]
-        source_chat = item["source_chat_id"]
-        msg_id = item["source_message_id"]
-
-        print(f"👉 কিউ আইটেম #{queue_id} প্রসেস করা হচ্ছে (সোর্স চ্যাট: {source_chat}, মেসেজ ID: {msg_id})...")
-
-        try:
-            orig_msg = await client.get_messages(source_chat, ids=msg_id)
-        except Exception as e_fetch:
-            print(f"   ⚠️ সোর্স মেসেজ অ্যাক্সেস করতে সমস্যা: {e_fetch}")
-            orig_msg = None
-
-        if not orig_msg or not orig_msg.media:
-            if is_bot:
-                print(f"   ⚠️ বট একাউন্ট দিয়ে সোর্স চ্যাট {source_chat} এর ভিডিও দেখা সম্ভব নয়।")
-                print("   💡 এই ভিডিওটি কিউতে রেখে দেওয়া হলো যাতে ইউজারবট লগইন করার পর পাঠানো যায়।")
+        while delivered < count and attempts < max_attempts:
+            attempts += 1
+            item = await get_next_queue_item()
+            if not item:
                 break
-            else:
-                print(f"   🗑️ সোর্স চ্যাটে ভিডিওটি পাওয়া যায়নি বা মুছে ফেলা হয়েছে। কিউ থেকে #{queue_id} সরানো হলো।")
+
+            queue_id = item["id"]
+            source_chat = item["source_chat_id"]
+            msg_id = item["source_message_id"]
+
+            print(f"👉 কিউ আইটেম #{queue_id} চেক করা হচ্ছে (সোর্স চ্যাট: {source_chat}, মেসেজ ID: {msg_id})...")
+
+            try:
+                orig_msg = await client.get_messages(source_chat, ids=msg_id)
+            except Exception as e_fetch:
+                err_text = str(e_fetch).lower()
+                if "input entity" in err_text or "could not find" in err_text:
+                    print(f"   ⚠️ সোর্স চ্যাট ID ({source_chat}) টেলিগ্রামে পাওয়া যাচ্ছে না (পুরনো বা অচল)।")
+                    print(f"   🧹 এই অচল চ্যাটের বাকি সব পুরনো কিউ আইটেম ডাটাবেজ থেকে মুছে ফেলা হচ্ছে...")
+                    async with pool.acquire() as conn:
+                        async with conn.cursor() as cur:
+                            await cur.execute("DELETE FROM vc_queue WHERE source_chat_id = %s", (source_chat,))
+                    break
+                else:
+                    print(f"   ⚠️ মেসেজ অ্যাক্সেস এরর: {e_fetch}")
+                    orig_msg = None
+
+            if not orig_msg or not orig_msg.media:
                 await delete_queue_item(queue_id)
                 continue
 
-        custom_caption = await get_setting("custom_caption", "")
-        caption = custom_caption.strip() if custom_caption else clean_source_caption(orig_msg.text or item.get("caption") or "")
+            custom_caption = await get_setting("custom_caption", "")
+            caption = custom_caption.strip() if custom_caption else clean_source_caption(orig_msg.text or item.get("caption") or "")
 
-        success = False
-        for target in deliveries:
-            print(f"🚀 ভিডিও #{queue_id} পাঠানো হচ্ছে -> {target}...")
-            try:
-                target_ent = await client.get_entity(target)
-            except Exception:
-                target_ent = target
-            ok = await deliver_video_message(orig_msg, target_ent, caption, client_instance=client)
-            if ok:
-                success = True
-                print(f"   ✅ সফলভাবে চ্যানেলে পোস্ট হয়েছে: {target}")
+            success = False
+            for target in deliveries:
+                print(f"🚀 ভিডিও #{queue_id} পাঠানো হচ্ছে -> {target}...")
                 try:
-                    await sync_video_to_portal_vault(orig_msg, caption)
+                    target_ent = await client.get_entity(target)
                 except Exception:
-                    pass
+                    target_ent = target
+                ok = await deliver_video_message(orig_msg, target_ent, caption, client_instance=client)
+                if ok:
+                    success = True
+                    print(f"   ✅ সফলভাবে চ্যানেলে পোস্ট হয়েছে: {target}")
+                    try:
+                        await sync_video_to_portal_vault(orig_msg, caption)
+                    except Exception:
+                        pass
 
-        await delete_queue_item(queue_id)
-        await mark_message_processed(source_chat, msg_id)
+            await delete_queue_item(queue_id)
+            await mark_message_processed(source_chat, msg_id)
 
-        if success:
-            delivered += 1
-            await increment_forwarded_count()
-            print(f"   🎉 সফল ডেলিভারি: [{delivered}/{count}]")
-            await asyncio.sleep(2)
-        else:
-            print(f"   ❌ ভিডিও #{queue_id} পাঠানো ব্যর্থ হয়েছে।")
+            if success:
+                delivered += 1
+                await increment_forwarded_count()
+                print(f"   🎉 সফল ডেলিভারি: [{delivered}/{count}]")
+                await asyncio.sleep(2)
+
+    # ── Phase 2: Direct Crawl & Deliver from Source Channels ────────
+    if delivered < count:
+        needed = count - delivered
+        print(f"\n🔍 কিউতে আর কোনো সচল ভিডিও নেই। এখন সরাসরি সোর্স চ্যানেলগুলো থেকে {needed}টি নতুন ভিডিও সংগ্রহ করে পাঠানো হচ্ছে...")
+
+        cand_sources = []
+        sources_data = await get_source_channel_targets()
+        for r in sources_data.get("rows", []):
+            t = r.get("channel_username") or r.get("channel_id")
+            if t and t not in cand_sources:
+                cand_sources.append(t)
+
+        # Also inspect user's joined channels from dialogs
+        try:
+            async for d in client.iter_dialogs(limit=30):
+                if d.is_channel or d.is_group:
+                    ent = d.entity
+                    uname = (getattr(ent, "username", "") or "").lower()
+                    title = (getattr(ent, "title", "") or "").lower()
+                    if "darkromanceadda" not in uname and "dark romance" not in title:
+                        cand = uname if uname else d.id
+                        if cand not in cand_sources:
+                            cand_sources.append(cand)
+        except Exception:
+            pass
+
+        # Fallback public active source channels
+        for df in ["ayssorbonas420", "pfff_boom", "adult_desi30"]:
+            if df not in cand_sources:
+                cand_sources.append(df)
+
+        print(f"📥 মোট স্ক্যানযোগ্য সোর্স চ্যানেল: {len(cand_sources)} টি")
+
+        for src in cand_sources:
+            if delivered >= count:
+                break
+            try:
+                print(f"   ➜ সোর্স চ্যানেল চেক করা হচ্ছে: {src}...")
+                entity = await client.get_entity(src)
+                async for msg in client.iter_messages(entity, limit=35):
+                    if delivered >= count:
+                        break
+                    if _is_video_message(msg, min_duration=5):
+                        media_id = get_media_unique_id(msg)
+                        chat_id = getattr(entity, "id", 0)
+
+                        if media_id and await is_media_processed(media_id):
+                            continue
+                        if await is_message_processed(chat_id, msg.id, media_id):
+                            continue
+
+                        custom_caption = await get_setting("custom_caption", "")
+                        clean_caption = custom_caption.strip() if custom_caption else clean_source_caption(msg.text or "")
+
+                        success = False
+                        for target in deliveries:
+                            print(f"🚀 নতুন ভিডিও (Msg ID: #{msg.id}) পাঠানো হচ্ছে -> {target}...")
+                            try:
+                                target_ent = await client.get_entity(target)
+                            except Exception:
+                                target_ent = target
+                            ok = await deliver_video_message(msg, target_ent, clean_caption, client_instance=client)
+                            if ok:
+                                success = True
+                                print(f"   ✅ সফলভাবে চ্যানেলে পোস্ট হয়েছে: {target}")
+                                try:
+                                    await sync_video_to_portal_vault(msg, clean_caption)
+                                except Exception:
+                                    pass
+
+                        if success:
+                            delivered += 1
+                            await mark_message_processed(chat_id, msg.id, media_id)
+                            await increment_forwarded_count()
+                            print(f"   🎉 সফল ডেলিভারি: [{delivered}/{count}]")
+                            await asyncio.sleep(2)
+            except Exception as e_crawl:
+                print(f"      ❌ {src} থেকে সংগ্রহ করতে সমস্যা: {e_crawl}")
 
     print("\n" + "=" * 65)
     print(f"🏁 কাজ সম্পন্ন! মোট সফল ডেলিভারি: {delivered} টি ভিডিও।")
-    if is_bot and delivered == 0:
-        print("\n💡 সমাধান:")
-        print("টেলিগ্রামের নিরাপত্তা বিধিমালার কারণে বট দিয়ে অন্যের চ্যানেল স্ক্র্যাপ করা যায় না।")
-        print("সরাসরি সোর্স চ্যানেল থেকে ভিডিও অটো-পোস্ট করতে একবার নিচের কমান্ডটি রান করুন:")
-        print("➜ python video_collector/login.py")
     print("=" * 65 + "\n")
 
     try:

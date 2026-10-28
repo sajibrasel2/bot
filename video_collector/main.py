@@ -729,8 +729,20 @@ async def delivery_worker_loop() -> None:
 
                 except Exception as e_proc:
                     logger.error(f"❌ Error retrieving video for queue #{queue_id}: {e_proc}")
-                    await delete_queue_item(queue_id)
-                    await mark_message_processed(source_chat, msg_id, stored_media_id)
+                    err_txt = str(e_proc).lower()
+                    if "input entity" in err_txt or "could not find" in err_txt:
+                        logger.warning(f"🧹 Source chat {source_chat} is invalid/inaccessible. Purging all queue items for this chat...")
+                        try:
+                            from video_collector.database import get_pool
+                            pool = await get_pool()
+                            async with pool.acquire() as conn:
+                                async with conn.cursor() as cur:
+                                    await cur.execute("DELETE FROM vc_queue WHERE source_chat_id = %s", (source_chat,))
+                        except Exception:
+                            pass
+                    else:
+                        await delete_queue_item(queue_id)
+                        await mark_message_processed(source_chat, msg_id, stored_media_id)
                     continue
 
                 # IMMEDIATELY DELETE FROM MYSQL QUEUE TABLE
