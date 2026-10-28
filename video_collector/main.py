@@ -530,11 +530,12 @@ async def sync_video_to_portal_vault(msg, caption: str) -> None:
 
 
 
-async def deliver_video_message(orig_msg, target: Any, caption: str) -> bool:
+async def deliver_video_message(orig_msg, target: Any, caption: str, client_instance=None) -> bool:
     """Deliver a video to target channel, automatically bypassing protected chat restrictions if needed."""
+    c = client_instance or client
     try:
         # Fast path: direct media reference
-        await client.send_file(
+        await c.send_file(
             target,
             file=orig_msg.media,
             caption=caption,
@@ -547,11 +548,11 @@ async def deliver_video_message(orig_msg, target: Any, caption: str) -> bool:
             logger.info("🛡️ Protected content detected! Downloading video locally to bypass forwarding restriction...")
             temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_downloads")
             os.makedirs(temp_dir, exist_ok=True)
-            downloaded = await client.download_media(orig_msg, file=temp_dir)
+            downloaded = await c.download_media(orig_msg, file=temp_dir)
             if downloaded and os.path.exists(downloaded):
                 try:
                     logger.info(f"📤 Uploading bypass video ({os.path.basename(downloaded)}) to {target}...")
-                    await client.send_file(
+                    await c.send_file(
                         target,
                         file=downloaded,
                         caption=caption,
@@ -585,6 +586,12 @@ async def delivery_worker_loop() -> None:
 
     while True:
         try:
+            me = await client.get_me()
+            if getattr(me, "bot", False):
+                logger.warning("⚠️ Running as Bot (@videocoolect_bot). Telegram does not allow bots to fetch messages from source channels. Waiting for user account login via 'python video_collector/login.py'...")
+                await asyncio.sleep(60)
+                continue
+
             is_active = await get_setting("is_collector_active", "1")
             if is_active != "1":
                 await asyncio.sleep(10)
