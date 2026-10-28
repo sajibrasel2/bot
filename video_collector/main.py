@@ -544,7 +544,44 @@ async def deliver_video_message(orig_msg, target: Any, caption: str, client_inst
         return True
     except Exception as e_send:
         err_msg = str(e_send).lower()
-        if "protected chat" in err_msg or "forward" in err_msg or "restricted" in err_msg:
+        if "admin" in err_msg or "permission" in err_msg or "cannot write" in err_msg or "chatadminrequired" in err_msg:
+            # Fallback: Post via VC_BOT_TOKEN which is confirmed admin in the channel
+            logger.info(f"🤖 Userbot lacks admin rights in {target}. Falling back to deliver via Bot Token (@videocoolect_bot)...")
+            try:
+                import aiohttp
+                temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_downloads")
+                os.makedirs(temp_dir, exist_ok=True)
+                downloaded = await c.download_media(orig_msg, file=temp_dir)
+                if downloaded and os.path.exists(downloaded):
+                    try:
+                        async with aiohttp.ClientSession() as session:
+                            url = f"https://api.telegram.org/bot{VC_BOT_TOKEN}/sendVideo"
+                            data = aiohttp.FormData()
+                            clean_t = str(target).strip()
+                            if not clean_t.startswith("-100") and not clean_t.startswith("@"):
+                                clean_t = f"@{clean_t.lstrip('@')}"
+                            data.add_field("chat_id", clean_t)
+                            data.add_field("caption", caption)
+                            data.add_field("supports_streaming", "true")
+                            data.add_field("video", open(downloaded, "rb"), filename=os.path.basename(downloaded))
+                            async with session.post(url, data=data) as resp:
+                                if resp.status == 200:
+                                    logger.info(f"✅ Successfully delivered to {target} via Bot Token fallback!")
+                                    return True
+                                else:
+                                    res_text = await resp.text()
+                                    logger.error(f"❌ Bot Token delivery failed: {res_text}")
+                    finally:
+                        try:
+                            if os.path.exists(downloaded):
+                                os.remove(downloaded)
+                        except Exception:
+                            pass
+            except Exception as e_bot_fallback:
+                logger.error(f"❌ Bot Token fallback exception: {e_bot_fallback}")
+            return False
+
+        elif "protected chat" in err_msg or "forward" in err_msg or "restricted" in err_msg:
             logger.info("🛡️ Protected content detected! Downloading video locally to bypass forwarding restriction...")
             temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_downloads")
             os.makedirs(temp_dir, exist_ok=True)
@@ -572,6 +609,7 @@ async def deliver_video_message(orig_msg, target: Any, caption: str, client_inst
         else:
             logger.error(f"❌ Delivery error for target {target}: {e_send}")
             return False
+
 
 
 async def delivery_worker_loop() -> None:
