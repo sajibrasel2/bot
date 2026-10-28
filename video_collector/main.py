@@ -25,7 +25,7 @@ from telethon.tl.functions.channels import JoinChannelRequest
 from telethon.tl.types import Channel, Chat, DocumentAttributeAnimated, DocumentAttributeVideo
 
 from video_collector.config import (
-    TG_API_ID, TG_API_HASH, SESSION_NAME, FORWARD_DELAY_SECONDS
+    TG_API_ID, TG_API_HASH, SESSION_NAME, FORWARD_DELAY_SECONDS, VC_BOT_TOKEN
 )
 from video_collector.database import (
     init_db, get_source_channel_targets, get_delivery_channel_targets,
@@ -757,10 +757,50 @@ async def main() -> None:
     await init_db()
 
     logger.info("Starting Telethon Client...")
-    await client.start()
+    await client.connect()
+
+    if not await client.is_user_authorized():
+        # Check sessions/ folder for any authorized session (e.g. from member adder)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sessions_dir = os.path.join(project_root, "sessions")
+        found_sess = None
+        if os.path.isdir(sessions_dir):
+            for fname in os.listdir(sessions_dir):
+                if fname.endswith(".session"):
+                    cand_base = os.path.join(sessions_dir, fname[:-8])
+                    try:
+                        cand_c = TelegramClient(cand_base, TG_API_ID, TG_API_HASH)
+                        await cand_c.connect()
+                        if await cand_c.is_user_authorized():
+                            found_sess = cand_base
+                            await cand_c.disconnect()
+                            break
+                        await cand_c.disconnect()
+                    except Exception:
+                        pass
+
+        if found_sess:
+            import shutil
+            logger.info(f"🔄 Using existing authorized account from {found_sess}.session")
+            shutil.copyfile(found_sess + ".session", session_path + ".session")
+            await client.disconnect()
+            await client.connect()
+
+        # If still not authorized, use VC_BOT_TOKEN (so it runs without interactive input prompt)
+        if not await client.is_user_authorized():
+            if VC_BOT_TOKEN:
+                logger.info("🤖 Starting Telethon client using VC_BOT_TOKEN (@videocoolect_bot)...")
+                await client.start(bot_token=VC_BOT_TOKEN)
+            else:
+                logger.error("❌ No authorized session and no VC_BOT_TOKEN! Please run 'python video_collector/login.py'")
+                return
 
     me = await client.get_me()
-    logger.info(f"✅ Logged in successfully as: {me.first_name} (@{me.username or me.phone}) [ID: {me.id}]")
+    is_bot = getattr(me, "bot", False)
+    account_type = "🤖 Bot Account" if is_bot else "👤 Userbot Account"
+    logger.info(f"✅ Logged in successfully as: {me.first_name} (@{me.username or me.phone}) [ID: {me.id}] - {account_type}")
+    if is_bot:
+        logger.info("💡 Note: Running as Bot. Ensure @videocoolect_bot is added as Administrator in delivery channel with Post Messages permission. To also crawl other public channels without admin, run 'python video_collector/login.py' once in terminal.")
 
     # Purge any delivery items that accidentally entered queue
     await purge_delivery_items_from_queue()
