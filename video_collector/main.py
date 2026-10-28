@@ -2,7 +2,7 @@
 Video Collector Userbot — Powered by Telethon & MTProto
 Monitors source channels/groups (WITHOUT requiring admin permissions),
 extracts videos, delivers them sequentially (1 video every 30 minutes)
-to your delivery channel (@darkromance4u), and immediately deletes
+to your delivery channel (@darkromanceadda), and immediately deletes
 delivered videos from the MySQL queue database.
 """
 
@@ -804,7 +804,7 @@ async def main() -> None:
     # Start 15-minute sequential delivery worker
     asyncio.create_task(delivery_worker_loop())
 
-    logger.info("🎯 Video Collector is now running! (1 video every 15 mins -> @darkromance4u)")
+    logger.info("🎯 Video Collector is now running! (1 video every 15 mins -> @darkromanceadda)")
     await client.run_until_disconnected()
 
 

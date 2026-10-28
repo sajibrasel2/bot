@@ -34,9 +34,9 @@ async def _auto_delete(message, delay: int = AUTO_DELETE_SECONDS) -> None:
 DEFAULT_WELCOME = (
     "✨ <b>Welcome, {mention}!</b>\n"
     "🏠 <b>{chatname}</b> • Member <b>#{count}</b>\n\n"
-    "🔞 <b>Official VIP Groups:</b>\n"
-    "👉 <a href=\"https://t.me/darkfantasyloverzone\">Group 1 (Dark Romance)</a>\n"
-    "👉 <a href=\"https://t.me/mastiunlimitedzone\">Group 2 (Masti Unlimited)</a>\n\n"
+    "🔞 <b>Official VIP Links:</b>\n"
+    "👉 <a href=\"https://t.me/darkromanceadda24\">Dark Romance ১৮+ আড্ডা (Group)</a>\n"
+    "👉 <a href=\"https://t.me/darkromanceadda\">Dark Romance Adda (Channel)</a>\n\n"
     "🌐 <i>Tap below to access live portal & private rooms:</i>"
 )
 
@@ -137,7 +137,7 @@ WELCOME_BUTTONS_EN = {
 }
 
 # Viral Telegram share URL (Prompts user to forward/share the group link to 5 friends/groups)
-SHARE_GROUP_URL = "https://t.me/darkfantasyloverzone"
+SHARE_GROUP_URL = "https://t.me/darkromanceadda24"
 SHARE_TEXT_ENCODED = urllib.parse.quote("🔥 Join now for exclusive 18+ live video chat & VIP videos! 🔞👉 " + SHARE_GROUP_URL)
 FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_ENCODED}"
 
@@ -153,8 +153,8 @@ def _build_button(settings: dict):
 
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(text="🔥 Group 1 (Dark Romance)", url="https://t.me/darkfantasyloverzone"),
-            InlineKeyboardButton(text="🔥 Group 2 (Masti Unlimited)", url="https://t.me/mastiunlimitedzone")
+            InlineKeyboardButton(text="🔥 Dark Romance Group", url="https://t.me/darkromanceadda24"),
+            InlineKeyboardButton(text="📢 VIP Channel", url="https://t.me/darkromanceadda")
         ],
         [InlineKeyboardButton(text="📤 Share to 5 Friends (Unlock Free) 🔓", url=FORWARD_LINK)],
         [InlineKeyboardButton(text=btn_vid, url=main_site_url)],

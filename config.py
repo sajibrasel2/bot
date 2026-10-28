@@ -12,8 +12,8 @@ def _get_int(key: str, default: int) -> int:
     except ValueError:
         return default
 
-BOT_TOKEN: str = os.getenv("BOT_TOKEN", "8473429418:AAEOS6cbQ_sKiP64gVVHNhguXo6Pf-c-NV8")
-BOT_USERNAME: str = os.getenv("BOT_USERNAME", "Sweetnikkibot")
+BOT_TOKEN: str = os.getenv("BOT_TOKEN", "9088802515:AAF3a4tnpAnCwMjuAZgQweBexM_LXxgiLK8")
+BOT_USERNAME: str = os.getenv("BOT_USERNAME", "Sweetyqueen_bot")
 OWNER_ID: int = _get_int("OWNER_ID", 8904339611)
 LOG_CHANNEL_ID: int = _get_int("LOG_CHANNEL_ID", 0)
 WEB_APP_URL: str = os.getenv("WEB_APP_URL", "https://techandclick.site/bot/")

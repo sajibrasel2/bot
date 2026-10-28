@@ -197,7 +197,8 @@ async def init_adder_tables() -> None:
             await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('daily_limit', '35')")
             await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('min_delay', '60')")
             await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('max_delay', '110')")
-            await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('target_group', 'darkfantasyloverzone')")
+            await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('target_group', 'darkromanceadda24')")
+            await cur.execute("UPDATE member_adder_settings SET setting_val = 'darkromanceadda24' WHERE setting_key = 'target_group' AND setting_val = 'darkfantasyloverzone'")
             await cur.execute("INSERT IGNORE INTO member_adder_settings VALUES ('active_account', 'nikita967')")
     logger.info("✅ Member adder database tables ready.")
 
@@ -252,7 +253,7 @@ async def get_db_settings() -> Dict[str, Any]:
         "daily_limit": 35,
         "min_delay": 60,
         "max_delay": 110,
-        "target_group": "darkfantasyloverzone",
+        "target_group": "darkromanceadda24",
         "active_account": "nikita967"
     }
     try:
@@ -604,7 +605,7 @@ async def main_async():
     parser = argparse.ArgumentParser(description="Telegram Safe Member Auto-Adder (Multi-Account)")
     parser.add_argument("--account", default=None, help="Telegram account name (e.g. nikita967)")
     parser.add_argument("--all", action="store_true", help="Rotate across all logged-in accounts in sessions/ sequentially")
-    parser.add_argument("--target", default="darkfantasyloverzone", help="Target group username (without @)")
+    parser.add_argument("--target", default="darkromanceadda24", help="Target group username (without @)")
     parser.add_argument("--limit", type=int, default=35, help="Daily safe member addition limit per account (default: 35)")
     parser.add_argument("--min-delay", type=int, default=60, help="Minimum delay between adds in seconds (default: 60)")
     parser.add_argument("--max-delay", type=int, default=110, help="Maximum delay between adds in seconds (default: 110)")
@@ -617,7 +618,7 @@ async def main_async():
         while True:
             # Dynamically read latest settings configured from Admin Panel
             db_cfg = await get_db_settings()
-            current_target = db_cfg.get("target_group", "darkfantasyloverzone") if args.target == "darkfantasyloverzone" else args.target
+            current_target = db_cfg.get("target_group", "darkromanceadda24") if args.target == "darkromanceadda24" else args.target
             current_limit = db_cfg.get("daily_limit", 35) if args.limit == 35 else args.limit
             current_min_delay = db_cfg.get("min_delay", 60) if args.min_delay == 60 else args.min_delay
             current_max_delay = db_cfg.get("max_delay", 110) if args.max_delay == 110 else args.max_delay

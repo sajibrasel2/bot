@@ -135,11 +135,11 @@ $default_videos = [
 
 $default_settings = [
     'popunder_enabled' => '1',
-    'popunder_url' => 'https://t.me/darkfantasyloverzone',
+    'popunder_url' => 'https://t.me/darkromanceadda24',
     'popunder_script' => '',
     'social_ad_enabled' => '1',
     'social_ad_script' => '',
-    'telegram_group_url' => 'https://t.me/darkfantasyloverzone',
+    'telegram_group_url' => 'https://t.me/darkromanceadda24',
     'portal_title' => 'ADULT HUB LIVE — VIP PRIVATE LEAKS & WEBCAMS',
     'portal_blur' => '14'
 ];

@@ -155,7 +155,7 @@ async def main():
             print("─" * 65)
 
             # 4. Target Group Adder Stats
-            target_group = "darkfantasyloverzone"
+            target_group = "darkromanceadda24"
             # Read from settings if present
             if "member_adder_settings" in tables:
                 await cur.execute("SELECT setting_val FROM member_adder_settings WHERE setting_key='target_group'")

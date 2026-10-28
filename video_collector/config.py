@@ -19,8 +19,8 @@ SESSION_NAME: str = os.getenv("VC_SESSION_NAME", "collector_userbot")
 
 # ── Video Collector Bot Config ───────────────────
 # You can set this in .env or update it via Web Admin Panel
-VC_BOT_TOKEN: str = os.getenv("VC_BOT_TOKEN", "8949426682:AAEPX3e3kOrVYFGqTfE3PiiW3CYnSGjY8jc")
-VC_BOT_USERNAME: str = os.getenv("VC_BOT_USERNAME", "newideos_bot")
+VC_BOT_TOKEN: str = os.getenv("VC_BOT_TOKEN", "8335808536:AAE-zP-qFTVhwx4uBiii_LrHAbXokWo_bXY")
+VC_BOT_USERNAME: str = os.getenv("VC_BOT_USERNAME", "videocoolect_bot")
 VC_OWNER_ID: int = _get_int("OWNER_ID", 8904339611)
 
 # ── MySQL Config (Uses same DB) ──────────────────

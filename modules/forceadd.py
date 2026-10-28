@@ -24,8 +24,8 @@ from config import OWNER_ID
 
 logger = logging.getLogger(__name__)
 
-MAIN_DARK_ROMANCE_GROUP = "https://t.me/darkfantasyloverzone"
-BACKUP_MASTI_GROUP = "https://t.me/mastiunlimitedzone"
+MAIN_DARK_ROMANCE_GROUP = "https://t.me/darkromanceadda24"
+BACKUP_MASTI_GROUP = "https://t.me/darkromanceadda"
 
 try:
     from telegram import LinkPreviewOptions
@@ -194,10 +194,10 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
     buttons = [
         [
             InlineKeyboardButton(text="👥 মেম্বার অ্যাড করুন", url=share_url),
-            InlineKeyboardButton(text="🔥 মূল গ্রুপ ১", url=MAIN_DARK_ROMANCE_GROUP),
+            InlineKeyboardButton(text="🔥 Dark Romance Group", url=MAIN_DARK_ROMANCE_GROUP),
         ],
         [
-            InlineKeyboardButton(text="🔥 ব্যাকআপ গ্রুপ ২", url=BACKUP_MASTI_GROUP),
+            InlineKeyboardButton(text="📢 VIP Channel", url=BACKUP_MASTI_GROUP),
             InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
         ],
         [

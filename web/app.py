@@ -266,9 +266,9 @@ def ensure_db_schema():
                         [
                             ("portal_title", "EXCLUSIVE DESI & VIRAL VAULT"),
                             ("portal_blur", "15"),
-                            ("telegram_group_url", "https://t.me/darkfantasyloverzone"),
+                            ("telegram_group_url", "https://t.me/darkromanceadda24"),
                             ("popunder_enabled", "1"),
-                            ("popunder_url", "https://t.me/darkfantasyloverzone"),
+                            ("popunder_url", "https://t.me/darkromanceadda24"),
                             ("popunder_script", ""),
                             ("social_ad_enabled", "1"),
                             ("social_ad_script", "")
@@ -1091,14 +1091,14 @@ def _get_global_settings():
             "📢 <i>কোনো মেয়ে গ্রুপের ভেরিফাইড হতে চাইলে এডমিনকে মেসেজ করুন। ধন্যবাদ।</i>\n\n"
             "👉 <b>অনলাইন সদস্যরা:</b> {mentions_text}\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে জয়েন থাকুন:</b>\n"
-            "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা (Group 1)</a>\n"
-            "👉 <a href=\"https://t.me/mastiunlimitedzone\">Masti Unlimited ১৮+ আড্ডা (Group 2)</a>"
+            "🔞 <b>আমাদের মূল ১৮+ গ্রুপ ও চ্যানেলে জয়েন থাকুন:</b>\n"
+            "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা</a>\n"
+            "👉 <a href=\"https://t.me/darkromanceadda\">Dark Romance Adda (Channel)</a>"
         )
     settings = {
         "site_gate_enabled": "0",
         "site_gate_required_invites": "10",
-        "site_gate_custom_link": "https://t.me/darkfantasyloverzone",
+        "site_gate_custom_link": "https://t.me/darkromanceadda24",
         "service_alert_enabled": "1",
         "service_alert_interval": "15",
         "service_girls_json": json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False),
@@ -1141,7 +1141,7 @@ def api_check_invites():
     settings = _get_global_settings()
     gate_enabled = (settings.get("site_gate_enabled", "1") == "1")
     required = int(settings.get("site_gate_required_invites", "10") or 10)
-    custom_link = settings.get("site_gate_custom_link", "https://t.me/darkfantasyloverzone")
+    custom_link = settings.get("site_gate_custom_link", "https://t.me/darkromanceadda24")
 
     action = request.args.get("action") or (request.get_json(silent=True) or {}).get("action") or ""
     if action == "gate_status":
@@ -1234,7 +1234,7 @@ def site_settings():
     if request.method == "POST":
         gate_en = "1" if request.form.get("site_gate_enabled") == "1" else "0"
         req_inv = request.form.get("site_gate_required_invites", "10").strip()
-        custom_link = request.form.get("site_gate_custom_link", "https://t.me/darkfantasyloverzone").strip()
+        custom_link = request.form.get("site_gate_custom_link", "https://t.me/darkromanceadda24").strip()
 
         try:
             req_inv_int = max(1, int(req_inv))
@@ -1433,13 +1433,14 @@ def video_collector():
         except Exception:
             pass
 
-        # Pre-seed default delivery channel @darkromance4u if not exists
+        # Pre-seed default delivery channel @darkromanceadda if not exists and deactivate old banned ones
         try:
+            _execute("UPDATE vc_channels SET is_active = 0 WHERE channel_username = 'darkromance4u'")
             _execute("""
                 INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
-                SELECT NULL, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
+                SELECT NULL, 'Dark Romance Adda', 'darkromanceadda', 'delivery', 1
                 WHERE NOT EXISTS (
-                    SELECT 1 FROM vc_channels WHERE channel_username = 'darkromance4u' AND channel_type = 'delivery'
+                    SELECT 1 FROM vc_channels WHERE channel_username = 'darkromanceadda' AND channel_type = 'delivery'
                 )
             """)
         except Exception:
@@ -1550,7 +1551,7 @@ def video_collector_add():
         username = target_str.strip()
 
     if not username and cid is None:
-        flash("❌ সঠিক চ্যানেল লিংক, আইডি বা ইউজারনেম (e.g. @darkromance4u) দিন।", "error")
+        flash("❌ সঠিক চ্যানেল লিংক, আইডি বা ইউজারনেম (e.g. @darkromanceadda) দিন।", "error")
         return redirect(url_for("video_collector"))
 
     title = channel_title or (f"@{username}" if username else f"Channel {cid}")
@@ -1919,7 +1920,8 @@ def member_adder_page():
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('daily_limit', '35')")
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('min_delay', '60')")
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('max_delay', '110')")
-        _execute("INSERT IGNORE INTO member_adder_settings VALUES ('target_group', 'darkfantasyloverzone')")
+        _execute("INSERT IGNORE INTO member_adder_settings VALUES ('target_group', 'darkromanceadda24')")
+        _execute("UPDATE member_adder_settings SET setting_val = 'darkromanceadda24' WHERE setting_key = 'target_group' AND setting_val = 'darkfantasyloverzone'")
         _execute("INSERT IGNORE INTO member_adder_settings VALUES ('active_account', 'nikita967')")
         
         # Ensure users table has created_at and updated_at
@@ -1972,7 +1974,7 @@ def member_adder_page():
         "daily_limit": "35",
         "min_delay": "60",
         "max_delay": "110",
-        "target_group": "darkfantasyloverzone",
+        "target_group": "darkromanceadda24",
         "active_account": "nikita967"
     }
     for r in settings_rows:
@@ -2009,7 +2011,7 @@ def member_adder_settings():
     daily_limit = request.form.get("daily_limit", "35").strip()
     min_delay = request.form.get("min_delay", "60").strip()
     max_delay = request.form.get("max_delay", "110").strip()
-    target_group = request.form.get("target_group", "darkfantasyloverzone").strip().lstrip("@")
+    target_group = request.form.get("target_group", "darkromanceadda24").strip().lstrip("@")
     active_account = request.form.get("active_account", "nikita967").strip().lstrip("@")
 
     if not daily_limit.isdigit() or int(daily_limit) < 1 or int(daily_limit) > 50:
@@ -2019,7 +2021,7 @@ def member_adder_settings():
     if not max_delay.isdigit() or int(max_delay) < int(min_delay):
         max_delay = "110"
     if not target_group:
-        target_group = "darkfantasyloverzone"
+        target_group = "darkromanceadda24"
     if not active_account:
         active_account = "nikita967"
 
@@ -2470,7 +2472,7 @@ def portal_save_settings():
     settings_to_update = {
         "portal_title": request.form.get("portal_title", "EXCLUSIVE DESI & VIRAL VAULT").strip(),
         "portal_blur": request.form.get("portal_blur", "15").strip(),
-        "telegram_group_url": request.form.get("telegram_group_url", "https://t.me/darkfantasyloverzone").strip(),
+        "telegram_group_url": request.form.get("telegram_group_url", "https://t.me/darkromanceadda24").strip(),
         "popunder_enabled": "1" if request.form.get("popunder_enabled") == "1" else "0",
         "popunder_url": request.form.get("popunder_url", "").strip(),
         "popunder_script": request.form.get("popunder_script", "").strip(),

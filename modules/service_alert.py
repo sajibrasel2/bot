@@ -75,7 +75,7 @@ def generate_service_alert_message(users: list, g_settings: dict) -> str:
 
     admin_username = (g_settings.get("service_admin_username", "rafi0002") or "rafi0002").lstrip("@")
     admin_link = g_settings.get("service_admin_link") or f"https://t.me/{admin_username}"
-    main_group_link = g_settings.get("site_gate_custom_link", "https://t.me/darkfantasyloverzone") or "https://t.me/darkfantasyloverzone"
+    main_group_link = g_settings.get("site_gate_custom_link", "https://t.me/darkromanceadda24") or "https://t.me/darkromanceadda24"
     raw_template = g_settings.get("service_alert_text") or DEFAULT_SERVICE_ALERT_TEXT
 
     # Select random active members from chat database to tag (up to 20 users)

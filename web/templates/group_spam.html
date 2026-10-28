@@ -259,7 +259,7 @@
     <div class="form-group" style="margin-bottom:0;">
       <label class="form-label">অনুমোদিত বায়ো লিংকসমূহ (কমা দিয়ে আলাদা করুন)</label>
       <textarea class="form-control" name="antibiolink_whitelist" rows="3"
-        placeholder="https://t.me/darkromance4u, https://t.me/darkfantasyloverzone, https://t.me/mastiunlimitedzone">{{ s.antibiolink_whitelist or 'https://t.me/darkromance4u, https://t.me/darkfantasyloverzone, https://t.me/mastiunlimitedzone' }}</textarea>
+        placeholder="https://t.me/darkromanceadda, https://t.me/darkromanceadda24">{{ s.antibiolink_whitelist or 'https://t.me/darkromanceadda, https://t.me/darkromanceadda24' }}</textarea>
       <div class="form-hint" style="margin-top:8px;line-height:1.6;">
         <i class="fa-solid fa-circle-info" style="color:#5b8dee;"></i> 
         এই তালিকার বাইরের কোনো লিংক, চ্যানেল বা ডোমেইন কারো প্রোফাইল বায়োতে থাকলে তার মেসেজ অটো ডিলিট হবে এবং ৫ সেকেন্ড পর সতর্কতা মুছে যাবে।
@@ -267,7 +267,7 @@
     </div>
 
     <!-- Current Whitelist Tags Preview -->
-    {% set wl_items = (s.antibiolink_whitelist or 'https://t.me/darkromance4u, https://t.me/darkfantasyloverzone, https://t.me/mastiunlimitedzone').split(',') %}
+    {% set wl_items = (s.antibiolink_whitelist or 'https://t.me/darkromanceadda, https://t.me/darkromanceadda24').split(',') %}
     {% set wl_clean = wl_items | map('trim') | select | list %}
     {% if wl_clean %}
     <div style="background:#1e2535;border-radius:8px;padding:12px;border:1px solid #2e3a52;margin-top:14px;">

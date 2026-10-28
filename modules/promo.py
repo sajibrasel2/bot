@@ -61,7 +61,7 @@ STATUSES = [
 OPERATOR_PREFIXES = ["০১৭", "০১৩", "০১৯", "০১৪", "০১৮", "০১৬"]
 
 # Viral Telegram share URL (Prompts user to forward/share the group link to 5 friends/groups)
-SHARE_GROUP_URL = "https://t.me/darkfantasyloverzone"
+SHARE_GROUP_URL = "https://t.me/darkromanceadda24"
 SHARE_TEXT_ENCODED = urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + SHARE_GROUP_URL)
 FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_ENCODED}"
 
@@ -118,8 +118,8 @@ def generate_promo_message(users: list) -> tuple:
 
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(text="🔥 মূল গ্রুপ ১ (Dark Romance)", url="https://t.me/darkfantasyloverzone"),
-            InlineKeyboardButton(text="🔥 মূল গ্রুপ ২ (Masti Unlimited)", url="https://t.me/mastiunlimitedzone")
+            InlineKeyboardButton(text="🔥 Dark Romance Group", url="https://t.me/darkromanceadda24"),
+            InlineKeyboardButton(text="📢 VIP Channel", url="https://t.me/darkromanceadda")
         ],
         [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
         [InlineKeyboardButton(text=btn_vid, url=main_site_url)],
@@ -388,8 +388,8 @@ async def cmd_hotvideo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             InlineKeyboardButton(text="💬 PRIVATE 1-ON-1 VIDEO CHAT", url=site_url)
         ],
         [
-            InlineKeyboardButton(text="🔥 VIP Group 1", url="https://t.me/darkfantasyloverzone"),
-            InlineKeyboardButton(text="🔥 VIP Group 2", url="https://t.me/mastiunlimitedzone")
+            InlineKeyboardButton(text="🔥 Dark Romance Group", url="https://t.me/darkromanceadda24"),
+            InlineKeyboardButton(text="📢 VIP Channel", url="https://t.me/darkromanceadda")
         ]
     ])
 

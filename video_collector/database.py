@@ -186,12 +186,16 @@ async def init_db() -> None:
                 VALUES ('total_forwarded', 0)
             """)
 
-            # Pre-seed default delivery channel @darkromance4u if not exists
+            # Pre-seed default delivery channel @darkromanceadda if not exists
+            try:
+                await cur.execute("UPDATE vc_channels SET is_active = 0 WHERE channel_username = 'darkromance4u'")
+            except Exception:
+                pass
             await cur.execute("""
                 INSERT INTO vc_channels (channel_id, channel_title, channel_username, channel_type, is_active)
-                SELECT NULL, 'Dark Romance 4U', 'darkromance4u', 'delivery', 1
+                SELECT NULL, 'Dark Romance Adda', 'darkromanceadda', 'delivery', 1
                 WHERE NOT EXISTS (
-                    SELECT 1 FROM vc_channels WHERE channel_username = 'darkromance4u' AND channel_type = 'delivery'
+                    SELECT 1 FROM vc_channels WHERE channel_username = 'darkromanceadda' AND channel_type = 'delivery'
                 )
             """)
 
@@ -268,7 +272,7 @@ async def get_delivery_channel_targets() -> List[Any]:
 
             # Fallback default if none configured
             if not targets:
-                targets.append("darkromance4u")
+                targets.append("darkromanceadda")
             return targets
 
 
@@ -448,7 +452,7 @@ async def is_delivery_chat(chat_id: int, chat_username: str = "", chat_title: st
     title_lower = (chat_title or "").lower()
 
     # Exclude delivery channel and its discussion groups by title/username
-    if "dark romance" in title_lower or clean_user == "darkromance4u":
+    if "dark romance" in title_lower or clean_user in ("darkromanceadda", "darkromanceadda24", "darkromance4u"):
         return True
 
     # Known linked group ID for Dark Romance: -1004446159364 / 4446159364

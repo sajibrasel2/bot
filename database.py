@@ -235,9 +235,9 @@ async def init_db() -> None:
             """)
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('site_gate_enabled', '0') ON DUPLICATE KEY UPDATE setting_val='0'")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_required_invites', '10')")
-            await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/darkfantasyloverzone')")
-            # Auto-migrate old banned group link to new group link
-            await cur.execute("UPDATE global_settings SET setting_val = 'https://t.me/darkfantasyloverzone' WHERE setting_key = 'site_gate_custom_link' AND setting_val = 'https://t.me/alltimefantasyzone'")
+            await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('site_gate_custom_link', 'https://t.me/darkromanceadda24') ON DUPLICATE KEY UPDATE setting_val='https://t.me/darkromanceadda24'")
+            # Auto-migrate old links to new darkromanceadda24
+            await cur.execute("UPDATE global_settings SET setting_val = 'https://t.me/darkromanceadda24' WHERE setting_key = 'site_gate_custom_link'")
             await cur.execute("INSERT IGNORE INTO global_settings (setting_key, setting_val) VALUES ('service_alert_enabled', '1')")
             await cur.execute("INSERT INTO global_settings (setting_key, setting_val) VALUES ('service_alert_interval', '15') ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)")
             default_girls_json = json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False)
@@ -260,13 +260,9 @@ async def init_db() -> None:
                 "UPDATE chat_settings SET promo_sticker=%s WHERE promo_sticker IS NULL",
                 (DEFAULT_PROMO_STICKER,)
             )
-            # Auto-migrate old group link in antibiolink_whitelist
+            # Auto-migrate all antibiolink_whitelist to new channel and group
             await cur.execute(
-                "UPDATE chat_settings SET antibiolink_whitelist = REPLACE(antibiolink_whitelist, 'alltimefantasyzone', 'darkfantasyloverzone') WHERE antibiolink_whitelist LIKE '%alltimefantasyzone%'"
-            )
-            # Auto-migrate/ensure mastiunlimitedzone in antibiolink_whitelist
-            await cur.execute(
-                "UPDATE chat_settings SET antibiolink_whitelist = CONCAT(antibiolink_whitelist, ', https://t.me/mastiunlimitedzone') WHERE antibiolink_whitelist NOT LIKE '%mastiunlimitedzone%'"
+                "UPDATE chat_settings SET antibiolink_whitelist = 'https://t.me/darkromanceadda, https://t.me/darkromanceadda24'"
             )
             # Reset old long Bengali welcome text to default empty so new English welcome message activates
             await cur.execute(
@@ -388,9 +384,9 @@ DEFAULT_SERVICE_ALERT_TEXT = (
     "📢 <i>কোনো মেয়ে গ্রুপের ভেরিফাইড হতে চাইলে এডমিনকে মেসেজ করুন। ধন্যবাদ।</i>\n\n"
     "👉 <b>অনলাইন সদস্যরা:</b> {mentions_text}\n"
     "━━━━━━━━━━━━━━━━━━━━━━━\n"
-    "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে জয়েন থাকুন:</b>\n"
-    "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা (Group 1)</a>\n"
-    "👉 <a href=\"https://t.me/mastiunlimitedzone\">Masti Unlimited ১৮+ আড্ডা (Group 2)</a>"
+    "🔞 <b>আমাদের মূল ১৮+ গ্রুপ ও চ্যানেলে জয়েন থাকুন:</b>\n"
+    "👉 <a href=\"{main_group_link}\">Dark Romance ১৮+ আড্ডা</a>\n"
+    "👉 <a href=\"https://t.me/darkromanceadda\">Dark Romance Adda (Channel)</a>"
 )
 
 
@@ -413,7 +409,7 @@ async def get_chat_settings(chat_id: int) -> dict:
         "welcome_sticker": DEFAULT_WELCOME_STICKER, "promo_sticker": DEFAULT_PROMO_STICKER,
         "force_add_enabled": 0, "force_add_count": 5,
         "antibiolink_enabled": 1,
-        "antibiolink_whitelist": "https://t.me/darkromance4u, https://t.me/darkfantasyloverzone, https://t.me/mastiunlimitedzone",
+        "antibiolink_whitelist": "https://t.me/darkromanceadda, https://t.me/darkromanceadda24",
         "max_message_chars": 100,
     }
     pool = await get_pool()
@@ -794,7 +790,7 @@ async def get_all_global_settings() -> dict:
             res = {
                 "site_gate_enabled": "0",
                 "site_gate_required_invites": "10",
-                "site_gate_custom_link": "https://t.me/darkfantasyloverzone",
+                "site_gate_custom_link": "https://t.me/darkromanceadda24",
                 "service_alert_enabled": "1",
                 "service_alert_interval": "15",
                 "service_girls_json": json.dumps([{"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}], ensure_ascii=False),

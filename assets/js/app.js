@@ -36,9 +36,9 @@ document.addEventListener('gestureend', (e) => e.preventDefault());
 // ========================================================
 // 2. Constants, Links & Gate States
 // ========================================================
-const TG_GROUP_LINK = 'https://t.me/darkfantasyloverzone';
-const TG_GROUP_LINK_2 = 'https://t.me/mastiunlimitedzone';
-const TG_SHARE_TEXT = encodeURIComponent('🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 https://t.me/darkfantasyloverzone এবং ব্যাকআপ: https://t.me/mastiunlimitedzone');
+const TG_GROUP_LINK = 'https://t.me/darkromanceadda24';
+const TG_GROUP_LINK_2 = 'https://t.me/darkromanceadda';
+const TG_SHARE_TEXT = encodeURIComponent('🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 https://t.me/darkromanceadda24 এবং চ্যানেল: https://t.me/darkromanceadda');
 const TG_SHARE_URL = `https://t.me/share/url?url=${encodeURIComponent(TG_GROUP_LINK)}&text=${TG_SHARE_TEXT}`;
 
 const DIRECT_LINK_1 = 'https://omg10.com/4/11017767';

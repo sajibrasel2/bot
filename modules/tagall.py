@@ -38,10 +38,10 @@ _active_tags: dict = {}
 # Bangladesh Standard Time timezone (UTC+6)
 BST = datetime.timezone(datetime.timedelta(hours=6))
 
-NIGHT_GROUP_1 = "https://t.me/darkfantasyloverzone"
-NIGHT_GROUP_2 = "https://t.me/mastiunlimitedzone"
+NIGHT_GROUP_1 = "https://t.me/darkromanceadda24"
+NIGHT_GROUP_2 = "https://t.me/darkromanceadda"
 NIGHT_SITE_URL = "https://techandclick.site/bot/?v=live"
-NIGHT_SHARE_URL = "https://t.me/share/url?url=" + urllib.parse.quote(NIGHT_GROUP_1) + "&text=" + urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + NIGHT_GROUP_1 + " এবং ব্যাকআপ: " + NIGHT_GROUP_2)
+NIGHT_SHARE_URL = "https://t.me/share/url?url=" + urllib.parse.quote(NIGHT_GROUP_1) + "&text=" + urllib.parse.quote("🔥 সরাসরি মেয়েদের সাথে লাইভ ভিডিও চ্যাট ও আড্ডা দিতে এখনই জয়েন করুন! 🔞👉 " + NIGHT_GROUP_1 + " এবং চ্যানেল: " + NIGHT_GROUP_2)
 
 try:
     from telegram import LinkPreviewOptions
@@ -306,15 +306,15 @@ async def send_daily_night_broadcast(bot, chat_id: int) -> bool:
             "💋 সরাসরি মেয়েদের সাথে লাইভ ভিডিও কল, ইমো চ্যাট ও গোপন ভাইরাল ভিডিও দেখার জন্য এখনই আমাদের ভিআইপি গ্রুপগুলোতে জয়েন করুন!\n\n"
             f"👉 <b>অনলাইন একাকী সদস্যরা:</b> {mentions_text}\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "🔞 <b>আমাদের মূল ১৮+ গ্রুপগুলোতে এখনই জয়েন থাকুন:</b>\n"
-            f"👉 <a href=\"{NIGHT_GROUP_1}\">🔥 মূল গ্রুপ ১ (Dark Romance ১৮+)</a>\n"
-            f"👉 <a href=\"{NIGHT_GROUP_2}\">🔥 ব্যাকআপ গ্রুপ ২ (Masti Unlimited ১৮+)</a>"
+            "🔞 <b>আমাদের মূল ১৮+ গ্রুপ ও চ্যানেলে এখনই জয়েন থাকুন:</b>\n"
+            f"👉 <a href=\"{NIGHT_GROUP_1}\">🔥 Dark Romance ১৮+ আড্ডা (Group)</a>\n"
+            f"👉 <a href=\"{NIGHT_GROUP_2}\">🔥 Dark Romance Adda (VIP Channel)</a>"
         )
 
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton(text="🔥 মূল গ্রুপ ১ (Dark Romance)", url=NIGHT_GROUP_1),
-                InlineKeyboardButton(text="🔥 মূল গ্রুপ ২ (Masti Unlimited)", url=NIGHT_GROUP_2),
+                InlineKeyboardButton(text="🔥 Dark Romance Group", url=NIGHT_GROUP_1),
+                InlineKeyboardButton(text="📢 VIP Channel", url=NIGHT_GROUP_2),
             ],
             [
                 InlineKeyboardButton(text="💋 লাইভ ভিডিও চ্যাট ও হট শো (VIP Room) 🔞", url=NIGHT_SITE_URL),

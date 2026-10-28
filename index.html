@@ -1141,11 +1141,11 @@
       videos: [],
       settings: {
         popunder_enabled: "1",
-        popunder_url: "https://t.me/darkfantasyloverzone",
+        popunder_url: "https://t.me/darkromanceadda24",
         popunder_script: "",
         social_ad_enabled: "1",
         social_ad_script: "",
-        telegram_group_url: "https://t.me/darkfantasyloverzone",
+        telegram_group_url: "https://t.me/darkromanceadda24",
         portal_blur: "14"
       }
     };
@@ -1504,7 +1504,7 @@
     // Modal unlock action
     function handleModalUnlock(type) {
       firePopunder(true);
-      const tgUrl = portalData.settings.telegram_group_url || "https://t.me/darkfantasyloverzone";
+      const tgUrl = portalData.settings.telegram_group_url || "https://t.me/darkromanceadda24";
       const popUrl = portalData.settings.popunder_url || tgUrl;
 
       setTimeout(() => {
@@ -1515,7 +1515,7 @@
     // General user action triggers
     function triggerPortalAction(source) {
       firePopunder();
-      const tgUrl = portalData.settings.telegram_group_url || "https://t.me/darkfantasyloverzone";
+      const tgUrl = portalData.settings.telegram_group_url || "https://t.me/darkromanceadda24";
       setTimeout(() => {
         window.open(tgUrl, "_blank");
       }, 300);
@@ -1589,7 +1589,7 @@
       if (portalData.settings.popunder_enabled === "0" && !force) return;
       if (popunderCooldown && !force) return;
 
-      const popUrl = portalData.settings.popunder_url || portalData.settings.telegram_group_url || "https://t.me/darkfantasyloverzone";
+      const popUrl = portalData.settings.popunder_url || portalData.settings.telegram_group_url || "https://t.me/darkromanceadda24";
       
       try {
         const pop = window.open(popUrl, "_blank");
