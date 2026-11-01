@@ -301,26 +301,15 @@ async def send_daily_night_broadcast(bot, chat_id: int) -> bool:
         mentions_text = " ".join(mentions_list) if mentions_list else "<i>গ্রুপের সকল সক্রিয় সদস্য</i>"
 
         text = (
-            "🔥 <b>রাত ১০:০০ টার স্পেশাল ১৮+ নাইট আড্ডা শুরু হয়েছে!</b> 🔞\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "💋 সরাসরি মেয়েদের সাথে লাইভ ভিডিও কল, ইমো চ্যাট ও গোপন ভাইরাল ভিডিও দেখার জন্য এখনই আমাদের ভিআইপি গ্রুপগুলোতে জয়েন করুন!\n\n"
-            f"👉 <b>অনলাইন একাকী সদস্যরা:</b> {mentions_text}\n"
-            "━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "🔞 <b>আমাদের মূল ১৮+ গ্রুপ ও চ্যানেলে এখনই জয়েন থাকুন:</b>\n"
-            f"👉 <a href=\"{NIGHT_GROUP_1}\">🔥 Dark Romance ১৮+ আড্ডা (Group)</a>\n"
-            f"👉 <a href=\"{NIGHT_GROUP_2}\">🔥 Dark Romance Adda (VIP Channel)</a>"
+            "🔥 <b>রাত ১০:০০ টার স্পেশাল নাইট আড্ডা শুরু!</b> 🔞\n"
+            f"👉 <b>চ্যানেল:</b> @darkromanceadda\n"
+            f"👉 <b>সদস্যরা:</b> {mentions_text}"
         )
 
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton(text="🔥 Dark Romance Group", url=NIGHT_GROUP_1),
                 InlineKeyboardButton(text="📢 VIP Channel", url=NIGHT_GROUP_2),
-            ],
-            [
-                InlineKeyboardButton(text="💋 লাইভ ভিডিও চ্যাট ও হট শো (VIP Room) 🔞", url=NIGHT_SITE_URL),
-            ],
-            [
-                InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার করুন (Free Unlock) 🔓", url=NIGHT_SHARE_URL),
+                InlineKeyboardButton(text="💋 Live Cam & Chat", url=NIGHT_SITE_URL),
             ]
         ])
 

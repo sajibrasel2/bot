@@ -54,18 +54,15 @@ def generate_service_alert_message(users: list, g_settings: dict) -> str:
         g_name = html.escape(str(g.get("name") or "সার্ভিস গার্ল").strip())
         g_uname = html.escape(str(g.get("username") or "zerin627").strip().lstrip("@"))
         g_link = str(g.get("link") or f"https://t.me/{g_uname}").strip()
-        girls_block = (
-            f"👉 <b>সার্ভিস গার্ল:</b> <b>{g_name}</b> (👉 <a href=\"{g_link}\">@{g_uname}</a>)\n"
-            f"💬 <b>ইনবক্স মেসেজ লিংক:</b> <a href=\"{g_link}\">উনাকে সরাসরি মেসেজ দিতে এখানে চাপ দিন ➜</a>"
-        )
+        girls_block = f"👉 <a href=\"{g_link}\"><b>{g_name}</b> (@{g_uname})</a>"
     else:
-        lines = ["👉 <b>আমাদের অফিসিয়াল ভেরিফায়েড সার্ভিস গার্লস তালিকা:</b>"]
+        lines = []
         for idx, g in enumerate(girls, 1):
             bn_num = str(idx).translate(BN_DIGITS)
-            g_name = html.escape(str(g.get("name") or f"সার্ভিস গার্ল {idx}").strip())
+            g_name = html.escape(str(g.get("name") or f"গার্ল {idx}").strip())
             g_uname = html.escape(str(g.get("username") or "").strip().lstrip("@"))
             g_link = str(g.get("link") or f"https://t.me/{g_uname}").strip()
-            lines.append(f"{bn_num}. 👑 <b>{g_name}:</b> <a href=\"{g_link}\">@{g_uname}</a> (👉 <a href=\"{g_link}\">মেসেজ দিতে এখানে চাপুন ➜</a>)")
+            lines.append(f"{bn_num}. <a href=\"{g_link}\"><b>{g_name}</b> (@{g_uname})</a>")
         girls_block = "\n".join(lines)
 
     first_girl = girls[0] if girls else {"name": "জেরিন (Zerin)", "username": "zerin627", "link": "https://t.me/zerin627"}

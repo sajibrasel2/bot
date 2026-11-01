@@ -32,17 +32,13 @@ async def _auto_delete(message, delay: int = AUTO_DELETE_SECONDS) -> None:
 
 
 DEFAULT_WELCOME = (
-    "✨ <b>Welcome, {mention}!</b>\n"
-    "🏠 <b>{chatname}</b> • Member <b>#{count}</b>\n\n"
-    "🔞 <b>Official VIP Links:</b>\n"
-    "👉 <a href=\"https://t.me/darkromanceadda24\">Dark Romance ১৮+ আড্ডা (Group)</a>\n"
-    "👉 <a href=\"https://t.me/darkromanceadda\">Dark Romance Adda (Channel)</a>\n\n"
-    "🌐 <i>Tap below to access live portal & private rooms:</i>"
+    "✨ <b>স্বাগতম, {mention}!</b>\n"
+    "🏠 <b>{chatname}</b> • সদস্য <b>#{count}</b>\n"
+    "📢 <b>চ্যানেল:</b> @darkromanceadda"
 )
 
 DEFAULT_GOODBYE = (
-    "👋 <b>Goodbye, {full}!</b>\n"
-    "<i>We wish you all the best.</i>"
+    "👋 <b>বিদায়, {full}!</b>"
 )
 
 DEFAULT_BUTTON_TEXT = "🔥 🔞 🔴 LIVE PORTAL • Enter Now 🔞 🔥"
@@ -143,22 +139,16 @@ FORWARD_LINK = f"https://t.me/share/url?url={SHARE_GROUP_URL}&text={SHARE_TEXT_E
 
 
 def _build_button(settings: dict):
-    """Generates sleek, professional inline buttons leading directly to main portal."""
+    """Generates sleek, compact inline buttons."""
     custom_url = (settings.get("welcome_button_url") or "").strip()
     base_url = custom_url.rstrip("/") if (custom_url and "techandclick.site" in custom_url) else "https://techandclick.site/bot"
     main_site_url = base_url if "?" in base_url else f"{base_url}/?v=live"
 
-    btn_vid = random.choice(WELCOME_BUTTONS_EN["videos"])
-    btn_portal = random.choice(WELCOME_BUTTONS_EN["portal"])
-
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(text="🔥 Dark Romance Group", url="https://t.me/darkromanceadda24"),
-            InlineKeyboardButton(text="📢 VIP Channel", url="https://t.me/darkromanceadda")
-        ],
-        [InlineKeyboardButton(text="📤 Share to 5 Friends (Unlock Free) 🔓", url=FORWARD_LINK)],
-        [InlineKeyboardButton(text=btn_vid, url=main_site_url)],
-        [InlineKeyboardButton(text=btn_portal, url=main_site_url)],
+            InlineKeyboardButton(text="📢 VIP Channel", url="https://t.me/darkromanceadda"),
+            InlineKeyboardButton(text="🔥 Live Portal", url=main_site_url)
+        ]
     ])
 
 
@@ -215,12 +205,7 @@ async def _send_welcome(chat, user, context: ContextTypes.DEFAULT_TYPE) -> None:
         curr_un = f"@{user.username}" if user.username else "None"
 
         name_history_block = (
-            f"\n\n━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🚨 <b>Notice: Name Change Detected!</b>\n"
-            f"🏷️ <b>Previous Name:</b> <s>{old_fn}</s> (<code>{old_un}</code>)\n"
-            f"🆕 <b>Current Name:</b> <b>{curr_fn}</b> (<code>{curr_un}</code>)\n"
-            f"🆔 <b>User ID:</b> <code>{user.id}</code>\n"
-            f"🛡️ <i>(Identity history logged for member safety)</i>"
+            f"\n⚠️ <i>পূর্বের নাম: <s>{old_fn}</s> ({old_un})</i>"
         )
 
     text = settings.get("welcome_text") or DEFAULT_WELCOME

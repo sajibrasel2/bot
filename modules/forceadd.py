@@ -94,16 +94,11 @@ async def handle_member_invites(update: Update, context: ContextTypes.DEFAULT_TY
             # Permanently mark as unlocked so raising requirement later will never re-lock them!
             await unlock_user_forceadd(chat.id, inviter.id)
             try:
-                congrats_markup = InlineKeyboardMarkup([
-                    [InlineKeyboardButton(text="🔥 মূল গ্রুপে জয়েন করুন", url=MAIN_DARK_ROMANCE_GROUP)]
-                ])
                 congrats = await msg.reply_html(
-                    f"🎉 <b>অভিনন্দন {mention_html(inviter.id, inviter.first_name)}!</b>\n"
-                    f"✅ আপনি <b>{total_invites} জন বন্ধুকে</b> অ্যাড করেছেন। আপনার চ্যাট এখন আজীবনের জন্য আনলক! 🔓",
-                    reply_markup=congrats_markup,
+                    f"🎉 {mention_html(inviter.id, inviter.first_name)}, আপনার চ্যাট আনলক হয়েছে! 🔓",
                     **_DISABLE_PREVIEW
                 )
-                asyncio.create_task(_auto_delete(congrats, 15))
+                asyncio.create_task(_auto_delete(congrats, 10))
             except Exception:
                 pass
 
@@ -183,25 +178,16 @@ async def check_force_add_lock(update: Update, context: ContextTypes.DEFAULT_TYP
 
     remaining = req_count - user_invites
     alert_text = (
-        f"⛔ <b>চ্যাট লক করা আছে!</b> {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
-        f"🔒 চ্যাট আনলক করতে আরও <b>{remaining} জন বন্ধুকে</b> অ্যাড করুন।\n"
-        f"📊 আপনার অগ্রগতি: <code>{user_invites}/{req_count}</code> জন"
+        f"🔒 {mention_html(user.id, user.first_name)}, চ্যাট আনলক করতে আরও <b>{remaining}</b> জন ফ্রেন্ড অ্যাড করুন ({user_invites}/{req_count})।"
     )
 
-    share_text = urllib.parse.quote(f"🔥 আমাদের এক্সক্লুসিভ গ্রুপে জয়েন করুন ও আড্ডা দিন! 🔞👉 {MAIN_DARK_ROMANCE_GROUP}")
+    share_text = urllib.parse.quote(f"🔥 গ্রুপে জয়েন করুন: {MAIN_DARK_ROMANCE_GROUP}")
     share_url = f"https://t.me/share/url?url={MAIN_DARK_ROMANCE_GROUP}&text={share_text}"
 
     buttons = [
         [
-            InlineKeyboardButton(text="👥 মেম্বার অ্যাড করুন", url=share_url),
-            InlineKeyboardButton(text="🔥 Dark Romance Group", url=MAIN_DARK_ROMANCE_GROUP),
-        ],
-        [
-            InlineKeyboardButton(text="📢 VIP Channel", url=BACKUP_MASTI_GROUP),
-            InlineKeyboardButton(text="📊 আমার অগ্রগতি", callback_data=f"myinv_{user.id}"),
-        ],
-        [
-            InlineKeyboardButton(text="🏆 শীর্ষ ইনভাইটার", callback_data=f"topinv_{chat.id}"),
+            InlineKeyboardButton(text="👥 মেম্বার অ্যাড", url=share_url),
+            InlineKeyboardButton(text="📊 প্রগ্রেস", callback_data=f"myinv_{user.id}")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(buttons)
@@ -238,22 +224,15 @@ async def cmd_myinvites(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     if enabled:
         if is_unlocked:
-            status_text = "✅ <b>অবস্থা:</b> আজীবনের জন্য আনলক 🎉"
+            status_text = "আনলক করা 🔓"
         else:
             remaining = max(1, req_count - count)
-            status_text = f"🔒 <b>অবস্থা:</b> লক করা (আরও {remaining} জন প্রয়োজন)"
+            status_text = f"লক করা (বাকি {remaining} জন)"
     else:
-        status_text = "ℹ️ এই গ্রুপে মেম্বার অ্যাড সিস্টেম বর্তমানে বন্ধ আছে।"
+        status_text = "সিস্টেম বন্ধ"
 
     text = (
-        f"📊 <b>আপনার ইনভাইট অগ্রগতি</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 {mention_html(user.id, user.first_name)} (<code>{user.id}</code>)\n"
-        f"👥 মোট অ্যাড করেছেন: <b>{count} জন</b>\n"
-        f"🎯 প্রয়োজনীয় লক্ষ্য: <b>{req_count} জন</b>\n"
-        f"{status_text}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🏆 লিডারবোর্ড দেখতে <code>/top</code> লিখুন।"
+        f"📊 {mention_html(user.id, user.first_name)}: অ্যাড <b>{count}/{req_count}</b> জন ({status_text})"
     )
 
     try:

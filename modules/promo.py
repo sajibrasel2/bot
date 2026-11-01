@@ -94,38 +94,19 @@ def generate_promo_message(users: list) -> tuple:
         mentions_text = "অনলাইন মেম্বাররা"
 
     text = (
-        f"🔥 🔞 <b>সিক্রেট ভিআইপি লাইভ পার্টনার</b> 🔞 🔥\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🌸 <b>নাম:</b> {name} ({age} বছর)\n"
-        f"📍 <b>জেলা:</b> {district}\n"
-        f"📱 <b>ইমো/হোয়াটসঅ্যাপ:</b> <code>{phone}</code>\n"
-        f"💬 <b>স্ট্যাটাস:</b> <i>\"{status}\"</i>\n\n"
-        f"👉 <b>একটিভ পার্টনার:</b> {mentions_text}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔓 <b>ফুল নাম্বার ও লাইভ ভিডিও কল আনলক করতে:</b>\n"
-        f"১. নিচের <b>\"📤 ৫ জনকে শেয়ার করুন\"</b> বাটনে ক্লিক করে ৫টি গ্রুপ বা বন্ধুদের ফরোয়ার্ড করুন।\n"
-        f"২. নিচের <b>\"🔴 সরাসরি চ্যাট করুন\"</b> বাটনে ক্লিক করে রুমে যুক্ত হোন!"
+        f"🔥 <b>{name}</b> ({age} বছর, {district})\n"
+        f"📱 <code>{phone}</code> • <i>\"{status}\"</i>\n"
+        f"👉 {mentions_text}"
     )
-
-    from modules.welcome import VIRAL_BUTTON_SETS
 
     base_url = "https://techandclick.site/bot"
     main_site_url = f"{base_url}/?v=live"
-    btn_vid = random.choice(VIRAL_BUTTON_SETS["videos"])
-    btn_cat = random.choice(VIRAL_BUTTON_SETS["categories"])
-    btn_girl = random.choice(VIRAL_BUTTON_SETS["girls"])
-    extra_txt, _ = random.choice(VIRAL_BUTTON_SETS["extra"])
 
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(text="🔥 Dark Romance Group", url="https://t.me/darkromanceadda24"),
+            InlineKeyboardButton(text="💬 সরাসরি চ্যাট", url=main_site_url),
             InlineKeyboardButton(text="📢 VIP Channel", url="https://t.me/darkromanceadda")
-        ],
-        [InlineKeyboardButton(text="📤 ৫ জনকে শেয়ার/ফরোয়ার্ড করুন (Unlock) 🔓", url=FORWARD_LINK)],
-        [InlineKeyboardButton(text=btn_vid, url=main_site_url)],
-        [InlineKeyboardButton(text=btn_cat, url=main_site_url)],
-        [InlineKeyboardButton(text=btn_girl, url=main_site_url)],
-        [InlineKeyboardButton(text=extra_txt, url=main_site_url)],
+        ]
     ])
 
     return text, keyboard
@@ -364,32 +345,14 @@ async def cmd_hotvideo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     site_url = "https://techandclick.site/bot/?v=live"
 
     text = (
-        f"🔥 🔞 <b>EXCLUSIVE VIP HOT VIDEOS & LIVE</b> 🔞 🔥\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"👋 <b>Welcome, {mention}!</b>\n"
-        f"🎥 <b>1080p Ultra HD</b> Uncut Viral Videos & Private Cam.\n"
-        f"⚡ <i>Instant Streaming • No Buffering • 100% Free Access</i>\n\n"
-        f"👇 <b>ভিডিও ও লাইভ দেখতে নিচের বাটনে ক্লিক করুন:</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⏱️ <i>Notice: This access message will self-destruct in 10s!</i>"
+        f"🔥 <b>18+ VIP Videos & Live Cam</b>\n"
+        f"👋 {mention}, নিচের বাটনে ক্লিক করে লাইভ স্ট্রিম ও ভিডিও দেখুন:"
     )
 
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton(text="🔥 🔞 WATCH VIRAL HOT VIDEOS 🔞 🔥", url=site_url)
-        ],
-        [
-            InlineKeyboardButton(text="⚡ 🔴 ENTER LIVE VIP STREAMING", url=site_url)
-        ],
-        [
-            InlineKeyboardButton(text="💋 BANGLA BOUDHI & DESHI CLIPS", url=site_url)
-        ],
-        [
-            InlineKeyboardButton(text="💬 PRIVATE 1-ON-1 VIDEO CHAT", url=site_url)
-        ],
-        [
-            InlineKeyboardButton(text="🔥 Dark Romance Group", url="https://t.me/darkromanceadda24"),
-            InlineKeyboardButton(text="📢 VIP Channel", url="https://t.me/darkromanceadda")
+            InlineKeyboardButton(text="🔥 Watch Videos", url=site_url),
+            InlineKeyboardButton(text="📢 Channel", url="https://t.me/darkromanceadda")
         ]
     ])
 

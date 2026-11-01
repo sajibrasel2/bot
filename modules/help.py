@@ -206,29 +206,15 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         asyncio.create_task(upsert_user(user.id, chat.id, user.username or "", user.first_name or ""))
     if chat.type != "private":
         sent = await update.message.reply_html(
-            f"👋 হ্যালো {user.mention_html()}!\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🤖 আমি এই গ্রুপের ম্যানেজার বট।\n"
-            f"📖 বিস্তারিত দেখতে আমাকে ইনবক্সে /help পাঠান।"
+            f"👋 হ্যালো {user.mention_html()}! কমান্ড দেখতে ইনবক্সে /help পাঠান।"
         )
         from modules.utils import auto_delete_message
         asyncio.create_task(auto_delete_message(sent, delay=5))
         asyncio.create_task(auto_delete_message(update.message, delay=5))
         return
     await update.message.reply_html(
-        f"╔═══════════════════════╗\n"
-        f"     🌸  <b>হ্যালো!</b>  🌸\n"
-        f"╚═══════════════════════╝\n\n"
-        f"👋 স্বাগতম, <b>{user.first_name}</b>!\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🤖 আমি একটি প্রফেশনাল\n"
-        f"   <b>গ্রুপ ম্যানেজার বট</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📌 <b>শুরু করতে:</b>\n"
-        f"  ▸ আমাকে আপনার গ্রুপে যোগ করুন\n"
-        f"  ▸ Admin পারমিশন দিন\n"
-        f"  ▸ নিচের বাটন থেকে কমান্ড দেখুন\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━",
+        f"👋 <b>স্বাগতম, {user.first_name}!</b>\n"
+        f"🤖 আমি গ্রুপ ম্যানেজার বট। গ্রুপ ম্যানেজ করতে আমাকে আপনার গ্রুপে অ্যাডমিন করুন।",
         reply_markup=_start_keyboard()
     )
 
