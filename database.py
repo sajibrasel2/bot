@@ -641,6 +641,15 @@ async def update_chat_info(chat_id: int, title: str = "", member_count: int = 0)
             )
 
 
+async def remove_dead_chat(chat_id: int) -> None:
+    """Removes an inaccessible/deleted chat from chat_settings and users to keep sync clean."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("DELETE FROM chat_settings WHERE chat_id = %s", (chat_id,))
+            await cur.execute("DELETE FROM users WHERE chat_id = %s", (chat_id,))
+
+
 async def add_banned_user(chat_id: int, user_id: int, first_name: str = "", username: str = "", reason: str = "", banned_by: int = 0) -> None:
     """Records a banned user in the database."""
     pool = await get_pool()

@@ -133,7 +133,7 @@ async def post_init(app: Application) -> None:
 
 async def sync_group_info(app: Application) -> None:
     """Periodically fetches and saves group title and member counts for all groups."""
-    from database import get_all_chat_ids, update_chat_info
+    from database import get_all_chat_ids, update_chat_info, remove_dead_chat
     # Small initial delay to let bot finish starting
     await asyncio.sleep(5)
     while True:
@@ -149,8 +149,14 @@ async def sync_group_info(app: Application) -> None:
                         count = 0
                     if title or count > 0:
                         await update_chat_info(chat_id, title=title, member_count=count)
-                except Exception:
-                    pass
+                except Exception as e_chat:
+                    err_txt = str(e_chat).lower()
+                    if "chat not found" in err_txt or "kicked" in err_txt or "deactivated" in err_txt or "not a member" in err_txt or "not found" in err_txt:
+                        try:
+                            await remove_dead_chat(chat_id)
+                            logger.info(f"🧹 Cleaned dead/inaccessible chat {chat_id} from database")
+                        except Exception:
+                            pass
         except Exception as e:
             logger.debug(f"Group sync error: {e}")
         await asyncio.sleep(300) # Sync every 5 minutes
