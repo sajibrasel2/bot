@@ -172,8 +172,8 @@ async def service_alert_loop(app: Application) -> None:
                 if c.type in ("group", "supergroup") and c.linked_chat_id and (c.linked_chat_id in all_unique_ids):
                     continue
                 target_chats.add(cid)
-            except Exception:
-                target_chats.add(cid)
+            except Exception as e_c:
+                logger.debug(f"Skipping inaccessible chat {cid}: {e_c}")
 
         for chat_id in target_chats:
             try:
